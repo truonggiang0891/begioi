@@ -39,12 +39,13 @@ const playSound = (type) => {
 // --- HẰNG SỐ ---
 const MAX_TIME = 90 * 60; // 90 phút (giây)
 const MIN_TIME = 0;
-const PENALTY_SEC = 60; // Phạt 1 phút (60 giây)
-const ADMIN_PIN = '1234';
+const ADMIN_PIN = 'Truonggiang1@';
 const SETTINGS_KEY = 'math_settings';
+const USER_NAME_KEY = 'math_userName';
 const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
+  penaltySec: 60,
 };
 
 const clampNumber = (value, fallback, min, max) => {
@@ -56,6 +57,7 @@ const clampNumber = (value, fallback, min, max) => {
 const normalizeSettings = (settings = {}) => ({
   timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
   rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
+  penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
 });
 
 const loadSettings = () => {
@@ -100,9 +102,10 @@ export default function App() {
     const savedWrong = localStorage.getItem('math_wrongTotal');
     return savedWrong ? parseInt(savedWrong, 10) : 0;
   });
+  const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(loadSettings);
-  const [activeRole, setActiveRole] = useState('user');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [adminError, setAdminError] = useState('');
@@ -115,10 +118,10 @@ export default function App() {
   const [showParentConfirm, setShowParentConfirm] = useState(false);
   
   const timerRef = useRef(null);
-  const isAdmin = activeRole === 'admin';
+  const displayName = userName.trim() || 'bé';
 
-  const handleUserLogin = () => {
-    setActiveRole('user');
+  const closeAdminPanel = () => {
+    setIsAdmin(false);
     setShowAdminLogin(false);
     setAdminPin('');
     setAdminError('');
@@ -134,7 +137,7 @@ export default function App() {
       return;
     }
 
-    setActiveRole('admin');
+    setIsAdmin(true);
     setDraftSettings(settings);
     setShowAdminLogin(false);
     setAdminPin('');
@@ -165,7 +168,8 @@ export default function App() {
     localStorage.setItem('math_unseenList', JSON.stringify(unseenList));
     localStorage.setItem('math_wrongTotal', wrongTotal.toString());
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, settings]);
+    localStorage.setItem(USER_NAME_KEY, userName);
+  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, settings, userName]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback(() => {
@@ -237,7 +241,7 @@ export default function App() {
   function handleTimeout() {
     playSound('wrong');
     setGameState('timeout_paused');
-    updateScreenTime(-PENALTY_SEC);
+    updateScreenTime(-settings.penaltySec);
     setWrongTotal(prev => prev + 1);
     if (currentQ?.isUnseen) {
       // Loại khỏi danh sách chưa làm
@@ -297,7 +301,7 @@ export default function App() {
       // SAI
       playSound('wrong');
       setGameState('wrong_paused');
-      updateScreenTime(-PENALTY_SEC);
+      updateScreenTime(-settings.penaltySec);
       setWrongTotal(prev => prev + 1);
       if (currentQ.isUnseen) {
         // Loại khỏi danh sách chưa làm
@@ -338,6 +342,7 @@ export default function App() {
     localStorage.removeItem('math_correctTotal');
     localStorage.removeItem('math_unseenList');
     localStorage.removeItem('math_wrongTotal');
+    localStorage.removeItem(USER_NAME_KEY);
     window.location.reload();
   };
 
@@ -357,35 +362,22 @@ export default function App() {
     <div className="min-h-screen bg-sky-100 font-sans flex flex-col items-center py-4 px-3 md:py-6 md:px-4">
       {/* ROLE LOGIN */}
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-2 md:p-3">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={handleUserLogin}
-            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
-              !isAdmin
-                ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
-                : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
-            }`}
-          >
-            <UserRound size={18} className="md:w-5 md:h-5" /> Người dùng
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setShowAdminLogin(prev => !prev);
-              setAdminError('');
-              setSettingsSaved(false);
-            }}
-            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
-              isAdmin
-                ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
-                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
-            }`}
-          >
-            <ShieldCheck size={18} className="md:w-5 md:h-5" /> Admin
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (isAdmin) return;
+            setShowAdminLogin(prev => !prev);
+            setAdminError('');
+            setSettingsSaved(false);
+          }}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-3 font-extrabold text-sm md:text-base transition-all ${
+            isAdmin
+              ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
+              : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
+          }`}
+        >
+          <ShieldCheck size={18} className="md:w-5 md:h-5" /> Admin
+        </button>
 
         {!isAdmin && showAdminLogin && (
           <form onSubmit={handleAdminLogin} className="mt-3">
@@ -394,7 +386,6 @@ export default function App() {
                 <LockKeyhole size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
                 <input
                   type="password"
-                  inputMode="numeric"
                   value={adminPin}
                   onChange={(event) => {
                     setAdminPin(event.target.value);
@@ -484,6 +475,36 @@ export default function App() {
               </div>
             </label>
 
+            <label className="block">
+              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                <XCircle size={18} className="text-red-500" /> Thời gian bị trừ khi trả lời sai
+              </span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="5"
+                  max="600"
+                  step="5"
+                  value={clampNumber(draftSettings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600)}
+                  onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
+                  className="flex-1 accent-red-500"
+                />
+                <div className="flex items-center rounded-xl border-2 border-red-100 bg-red-50 overflow-hidden">
+                  <input
+                    type="number"
+                    min="5"
+                    max="600"
+                    step="5"
+                    value={draftSettings.penaltySec}
+                    onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
+                    className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-red-700 outline-none"
+                    aria-label="Thời gian bị trừ khi trả lời sai"
+                  />
+                  <span className="pr-3 text-sm font-bold text-red-500">giây</span>
+                </div>
+              </div>
+            </label>
+
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="submit"
@@ -493,10 +514,10 @@ export default function App() {
               </button>
               <button
                 type="button"
-                onClick={handleUserLogin}
+                onClick={closeAdminPanel}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-100 px-5 py-3 text-base font-extrabold text-gray-700 hover:bg-gray-200 transition-all"
               >
-                <LogOut size={19} /> Về người dùng
+                <LogOut size={19} /> Đóng Admin
               </button>
             </div>
 
@@ -514,9 +535,25 @@ export default function App() {
         <div className="bg-blue-500 text-white text-center py-3 md:py-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
-          <h1 className="text-2xl md:text-4xl font-extrabold uppercase tracking-wide relative z-10 drop-shadow-md">
-            Bé Học Bảng Cộng
+          <h1 className="relative z-10 px-3 text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
+            Xin chào {displayName}
           </h1>
+        </div>
+
+        <div className="px-3 md:px-4 pt-3 bg-white">
+          <label className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl md:rounded-2xl bg-blue-50 border-2 border-blue-100 px-3 py-3">
+            <span className="flex items-center gap-2 text-blue-700 text-sm md:text-base font-extrabold whitespace-nowrap">
+              <UserRound size={18} className="md:w-5 md:h-5" /> Tên người dùng
+            </span>
+            <input
+              type="text"
+              value={userName}
+              onChange={(event) => setUserName(event.target.value.slice(0, 28))}
+              placeholder="Nhập tên"
+              aria-label="Tên người dùng"
+              className="min-w-0 flex-1 rounded-lg border-2 border-blue-100 bg-white px-3 py-2 text-base font-bold text-blue-900 outline-none focus:border-blue-400"
+            />
+          </label>
         </div>
         
         {/* STATS */}
@@ -687,7 +724,9 @@ export default function App() {
                 <div className="text-2xl md:text-4xl font-bold text-gray-700 my-4 md:my-6 bg-gray-100 py-3 px-6 md:py-4 md:px-8 rounded-xl md:rounded-2xl w-full">
                   Đáp án là: <span className="text-green-500 text-5xl md:text-6xl font-black block mt-2">{currentQ.ans}</span>
                 </div>
-                <div className="text-red-500 font-bold text-base md:text-lg mb-4 md:mb-6">- 1 phút điện thoại 😢</div>
+                <div className="text-red-500 font-bold text-base md:text-lg mb-4 md:mb-6">
+                  - {formatTime(settings.penaltySec)} điện thoại 😢
+                </div>
                 <button
                   onClick={generateQuestion}
                   className="bg-blue-500 hover:bg-blue-600 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-4 md:px-12 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-2 active:shadow-none transition-all w-full"
