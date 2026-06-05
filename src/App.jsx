@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const playSound = (type) => {
@@ -39,9 +39,33 @@ const playSound = (type) => {
 // --- HẰNG SỐ ---
 const MAX_TIME = 90 * 60; // 90 phút (giây)
 const MIN_TIME = 0;
-const REWARD_SEC = 30; // Thưởng 30 giây
 const PENALTY_SEC = 60; // Phạt 1 phút (60 giây)
-const TIME_LIMIT = 9; // 9 giây mỗi câu
+const ADMIN_PIN = '1234';
+const SETTINGS_KEY = 'math_settings';
+const DEFAULT_SETTINGS = {
+  timeLimit: 9,
+  rewardSec: 30,
+};
+
+const clampNumber = (value, fallback, min, max) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(Math.round(parsed), min), max);
+};
+
+const normalizeSettings = (settings = {}) => ({
+  timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
+  rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
+});
+
+const loadSettings = () => {
+  try {
+    const savedSettings = localStorage.getItem(SETTINGS_KEY);
+    return savedSettings ? normalizeSettings(JSON.parse(savedSettings)) : DEFAULT_SETTINGS;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+};
 
 // Tạo mốc 100 câu hỏi cố định theo bảng cộng 1 đến 10 (cộng từ 0 đến 9)
 const generateInitialPool = () => {
@@ -76,14 +100,62 @@ export default function App() {
     const savedWrong = localStorage.getItem('math_wrongTotal');
     return savedWrong ? parseInt(savedWrong, 10) : 0;
   });
+  const [settings, setSettings] = useState(loadSettings);
+  const [draftSettings, setDraftSettings] = useState(loadSettings);
+  const [activeRole, setActiveRole] = useState('user');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [settingsSaved, setSettingsSaved] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
-  const [timer, setTimer] = useState(TIME_LIMIT);
+  const [timer, setTimer] = useState(settings.timeLimit);
   const [gameState, setGameState] = useState('idle'); // idle, playing, wrong_paused, timeout_paused, celebrating, congrats, summary
   const [selectedAns, setSelectedAns] = useState(null);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
   
   const timerRef = useRef(null);
+  const isAdmin = activeRole === 'admin';
+
+  const handleUserLogin = () => {
+    setActiveRole('user');
+    setShowAdminLogin(false);
+    setAdminPin('');
+    setAdminError('');
+    setSettingsSaved(false);
+  };
+
+  const handleAdminLogin = (event) => {
+    event.preventDefault();
+
+    if (adminPin.trim() !== ADMIN_PIN) {
+      setAdminError('Mã Admin chưa đúng');
+      setSettingsSaved(false);
+      return;
+    }
+
+    setActiveRole('admin');
+    setDraftSettings(settings);
+    setShowAdminLogin(false);
+    setAdminPin('');
+    setAdminError('');
+    setSettingsSaved(false);
+  };
+
+  const updateDraftSetting = (key, value) => {
+    setDraftSettings(prev => ({ ...prev, [key]: value }));
+    setSettingsSaved(false);
+  };
+
+  const saveAdminSettings = (event) => {
+    event.preventDefault();
+
+    const nextSettings = normalizeSettings(draftSettings);
+    setSettings(nextSettings);
+    setDraftSettings(nextSettings);
+    setTimer(prev => Math.min(prev, nextSettings.timeLimit));
+    setSettingsSaved(true);
+  };
 
   // --- LƯU DỮ LIỆU ---
   useEffect(() => {
@@ -92,7 +164,8 @@ export default function App() {
     localStorage.setItem('math_correctTotal', correctTotal.toString());
     localStorage.setItem('math_unseenList', JSON.stringify(unseenList));
     localStorage.setItem('math_wrongTotal', wrongTotal.toString());
-  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal]);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, settings]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback(() => {
@@ -134,10 +207,10 @@ export default function App() {
     const shuffledOptions = Array.from(options).sort(() => Math.random() - 0.5);
     
     setCurrentQ({ a, b, ans: correctAns, options: shuffledOptions, isReview, isUnseen });
-    setTimer(TIME_LIMIT);
+    setTimer(settings.timeLimit);
     setSelectedAns(null);
     setGameState('playing');
-  }, [reviewList, unseenList]);
+  }, [reviewList, unseenList, settings.timeLimit]);
 
   // --- XỬ LÝ TRẢ LỜI ---
   function updateScreenTime(amount) {
@@ -200,7 +273,7 @@ export default function App() {
       playSound('correct');
       setGameState('celebrating');
       setCorrectTotal(prev => prev + 1);
-      updateScreenTime(REWARD_SEC);
+      updateScreenTime(settings.rewardSec);
       
       if (currentQ.isUnseen) {
         setUnseenList(prev => {
@@ -282,6 +355,160 @@ export default function App() {
   // --- RENDER COMPONENT ---
   return (
     <div className="min-h-screen bg-sky-100 font-sans flex flex-col items-center py-4 px-3 md:py-6 md:px-4">
+      {/* ROLE LOGIN */}
+      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-2 md:p-3">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleUserLogin}
+            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
+              !isAdmin
+                ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
+                : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
+            }`}
+          >
+            <UserRound size={18} className="md:w-5 md:h-5" /> Người dùng
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowAdminLogin(prev => !prev);
+              setAdminError('');
+              setSettingsSaved(false);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
+              isAdmin
+                ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
+            }`}
+          >
+            <ShieldCheck size={18} className="md:w-5 md:h-5" /> Admin
+          </button>
+        </div>
+
+        {!isAdmin && showAdminLogin && (
+          <form onSubmit={handleAdminLogin} className="mt-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <label className="relative flex-1">
+                <LockKeyhole size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  value={adminPin}
+                  onChange={(event) => {
+                    setAdminPin(event.target.value);
+                    setAdminError('');
+                  }}
+                  placeholder="Mã Admin"
+                  aria-label="Mã Admin"
+                  className="w-full rounded-xl border-2 border-purple-100 bg-purple-50 py-3 pl-10 pr-3 text-base font-bold text-purple-900 outline-none focus:border-purple-400"
+                />
+              </label>
+              <button
+                type="submit"
+                className="rounded-xl bg-purple-500 px-5 py-3 text-sm md:text-base font-extrabold text-white shadow-[0_4px_0_rgb(126,34,206)] active:translate-y-1 active:shadow-none transition-all"
+              >
+                Đăng nhập
+              </button>
+            </div>
+            {adminError && (
+              <div className="mt-2 text-center text-sm font-bold text-red-500">{adminError}</div>
+            )}
+          </form>
+        )}
+      </div>
+
+      {isAdmin && (
+        <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white mb-4 md:mb-6 p-4 md:p-5">
+          <div className="flex items-center gap-2 text-purple-700 font-black text-lg md:text-xl mb-4">
+            <Settings size={22} className="md:w-6 md:h-6" /> Cài đặt Admin
+          </div>
+
+          <form onSubmit={saveAdminSettings} className="space-y-5">
+            <label className="block">
+              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                <Clock size={18} className="text-blue-500" /> Thời gian đếm ngược mỗi câu
+              </span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="3"
+                  max="60"
+                  value={clampNumber(draftSettings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60)}
+                  onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
+                  className="flex-1 accent-blue-500"
+                />
+                <div className="flex items-center rounded-xl border-2 border-blue-100 bg-blue-50 overflow-hidden">
+                  <input
+                    type="number"
+                    min="3"
+                    max="60"
+                    value={draftSettings.timeLimit}
+                    onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
+                    className="w-16 bg-transparent px-2 py-2 text-right text-lg font-black text-blue-700 outline-none"
+                    aria-label="Thời gian đếm ngược mỗi câu"
+                  />
+                  <span className="pr-3 text-sm font-bold text-blue-500">giây</span>
+                </div>
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                <Smartphone size={18} className="text-green-500" /> Thời gian xem điện thoại mỗi câu đúng
+              </span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="5"
+                  max="600"
+                  step="5"
+                  value={clampNumber(draftSettings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600)}
+                  onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
+                  className="flex-1 accent-green-500"
+                />
+                <div className="flex items-center rounded-xl border-2 border-green-100 bg-green-50 overflow-hidden">
+                  <input
+                    type="number"
+                    min="5"
+                    max="600"
+                    step="5"
+                    value={draftSettings.rewardSec}
+                    onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
+                    className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-green-700 outline-none"
+                    aria-label="Thời gian xem điện thoại mỗi câu đúng"
+                  />
+                  <span className="pr-3 text-sm font-bold text-green-500">giây</span>
+                </div>
+              </div>
+            </label>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="submit"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-500 px-5 py-3 text-base font-extrabold text-white shadow-[0_4px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none transition-all"
+              >
+                <Save size={19} /> Lưu cài đặt
+              </button>
+              <button
+                type="button"
+                onClick={handleUserLogin}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-100 px-5 py-3 text-base font-extrabold text-gray-700 hover:bg-gray-200 transition-all"
+              >
+                <LogOut size={19} /> Về người dùng
+              </button>
+            </div>
+
+            {settingsSaved && (
+              <div className="text-center text-sm md:text-base font-extrabold text-green-600">
+                Đã lưu cài đặt
+              </div>
+            )}
+          </form>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4 md:mb-6">
         <div className="bg-blue-500 text-white text-center py-3 md:py-4 relative overflow-hidden">
@@ -396,7 +623,7 @@ export default function App() {
             <div className="absolute top-0 left-0 w-full h-2 md:h-3 bg-gray-100 rounded-t-2xl md:rounded-t-3xl overflow-hidden">
               <div 
                 className={`h-full transition-all duration-1000 ease-linear ${timer > 4 ? 'bg-green-400' : timer > 2 ? 'bg-yellow-400' : 'bg-red-500'}`}
-                style={{ width: `${(timer / TIME_LIMIT) * 100}%` }}
+                style={{ width: `${(timer / settings.timeLimit) * 100}%` }}
               ></div>
             </div>
 
@@ -480,7 +707,7 @@ export default function App() {
                   <div className="absolute -bottom-3 left-1/2 text-2xl md:text-4xl animate-ping opacity-70 delay-200">✨</div>
                 </div>
                 <div className="absolute top-1/4 md:top-1/4 text-lg md:text-3xl font-black text-green-500 bg-white/95 px-4 py-2 md:px-6 md:py-2 rounded-full shadow-lg border-2 border-green-200 animate-pulse text-center">
-                  + 30 giây xem điện thoại 🎉
+                  + {formatTime(settings.rewardSec)} xem điện thoại 🎉
                 </div>
               </div>
             )}
