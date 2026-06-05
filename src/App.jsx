@@ -103,12 +103,15 @@ export default function App() {
     return savedWrong ? parseInt(savedWrong, 10) : 0;
   });
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
+  const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(loadSettings);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showUserNameForm, setShowUserNameForm] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [adminError, setAdminError] = useState('');
+  const [userNameSaved, setUserNameSaved] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
@@ -119,6 +122,30 @@ export default function App() {
   
   const timerRef = useRef(null);
   const displayName = userName.trim() || 'bé';
+
+  const toggleUserNameForm = () => {
+    const shouldOpen = !showUserNameForm;
+    setShowUserNameForm(shouldOpen);
+    setUserNameSaved(false);
+
+    if (shouldOpen) {
+      setDraftUserName(userName);
+      setIsAdmin(false);
+      setShowAdminLogin(false);
+      setAdminError('');
+      setSettingsSaved(false);
+    }
+  };
+
+  const saveUserName = (event) => {
+    event.preventDefault();
+
+    const nextName = draftUserName.trim().slice(0, 28);
+    setUserName(nextName);
+    setDraftUserName(nextName);
+    setShowUserNameForm(false);
+    setUserNameSaved(true);
+  };
 
   const closeAdminPanel = () => {
     setIsAdmin(false);
@@ -139,6 +166,8 @@ export default function App() {
 
     setIsAdmin(true);
     setDraftSettings(settings);
+    setShowUserNameForm(false);
+    setUserNameSaved(false);
     setShowAdminLogin(false);
     setAdminPin('');
     setAdminError('');
@@ -362,22 +391,71 @@ export default function App() {
     <div className="min-h-screen bg-sky-100 font-sans flex flex-col items-center py-4 px-3 md:py-6 md:px-4">
       {/* ROLE LOGIN */}
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-2 md:p-3">
-        <button
-          type="button"
-          onClick={() => {
-            if (isAdmin) return;
-            setShowAdminLogin(prev => !prev);
-            setAdminError('');
-            setSettingsSaved(false);
-          }}
-          className={`flex w-full items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-3 font-extrabold text-sm md:text-base transition-all ${
-            isAdmin
-              ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
-              : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
-          }`}
-        >
-          <ShieldCheck size={18} className="md:w-5 md:h-5" /> Admin
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={toggleUserNameForm}
+            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
+              showUserNameForm
+                ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
+                : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
+            }`}
+          >
+            <UserRound size={18} className="md:w-5 md:h-5" /> Người dùng
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (isAdmin) return;
+              setShowUserNameForm(false);
+              setUserNameSaved(false);
+              setShowAdminLogin(prev => !prev);
+              setAdminError('');
+              setSettingsSaved(false);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
+              isAdmin
+                ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
+            }`}
+          >
+            <ShieldCheck size={18} className="md:w-5 md:h-5" /> Admin
+          </button>
+        </div>
+
+        {showUserNameForm && (
+          <form onSubmit={saveUserName} className="mt-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <label className="relative flex-1">
+                <UserRound size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
+                <input
+                  type="text"
+                  value={draftUserName}
+                  onChange={(event) => {
+                    setDraftUserName(event.target.value.slice(0, 28));
+                    setUserNameSaved(false);
+                  }}
+                  placeholder="Nhập tên"
+                  aria-label="Người dùng"
+                  className="w-full rounded-xl border-2 border-blue-100 bg-blue-50 py-3 pl-10 pr-3 text-base font-bold text-blue-900 outline-none focus:border-blue-400"
+                />
+              </label>
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm md:text-base font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none transition-all"
+              >
+                <Save size={18} /> Lưu
+              </button>
+            </div>
+          </form>
+        )}
+
+        {userNameSaved && (
+          <div className="mt-2 text-center text-sm font-extrabold text-green-600">
+            Đã lưu người dùng
+          </div>
+        )}
 
         {!isAdmin && showAdminLogin && (
           <form onSubmit={handleAdminLogin} className="mt-3">
@@ -538,22 +616,6 @@ export default function App() {
           <h1 className="relative z-10 px-3 text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
             Xin chào {displayName}
           </h1>
-        </div>
-
-        <div className="px-3 md:px-4 pt-3 bg-white">
-          <label className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl md:rounded-2xl bg-blue-50 border-2 border-blue-100 px-3 py-3">
-            <span className="flex items-center gap-2 text-blue-700 text-sm md:text-base font-extrabold whitespace-nowrap">
-              <UserRound size={18} className="md:w-5 md:h-5" /> Tên người dùng
-            </span>
-            <input
-              type="text"
-              value={userName}
-              onChange={(event) => setUserName(event.target.value.slice(0, 28))}
-              placeholder="Nhập tên"
-              aria-label="Tên người dùng"
-              className="min-w-0 flex-1 rounded-lg border-2 border-blue-100 bg-white px-3 py-2 text-base font-bold text-blue-900 outline-none focus:border-blue-400"
-            />
-          </label>
         </div>
         
         {/* STATS */}
