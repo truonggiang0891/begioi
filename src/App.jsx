@@ -562,7 +562,7 @@ export default function App() {
   return (
     <div className={`app-shell bg-sky-100 font-sans flex flex-col items-center ${canScrollPage ? 'app-shell--scroll' : 'app-shell--main'}`}>
       {/* ROLE LOGIN */}
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-2 p-1.5 md:p-2">
+      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -853,7 +853,7 @@ export default function App() {
       )}
 
       {/* HEADER */}
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-1.5 md:mb-4">
+      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4">
         <div className="bg-blue-500 text-white text-center py-1.5 md:py-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
@@ -1085,7 +1085,7 @@ export default function App() {
       </div>
       
       {/* NÚT RESET ẨN BÊN DƯỚI DÀNH CHO PHỤ HUYNH */}
-      <div className="mt-1 md:mt-6">
+      <div className="mt-2 md:mt-6">
          {!showParentConfirm ? (
            <button 
               onClick={() => setShowParentConfirm(true)}
