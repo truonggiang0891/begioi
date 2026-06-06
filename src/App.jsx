@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
@@ -47,10 +47,12 @@ const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
 const AVATAR_SIZE = 160;
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+const ALL_ADDITION_TABLES = Array.from({ length: 10 }, (_, index) => index + 1);
 const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
   penaltySec: 60,
+  selectedTables: ALL_ADDITION_TABLES,
 };
 
 const clampNumber = (value, fallback, min, max) => {
@@ -59,10 +61,22 @@ const clampNumber = (value, fallback, min, max) => {
   return Math.min(Math.max(Math.round(parsed), min), max);
 };
 
+const normalizeSelectedTables = (tables) => {
+  if (!Array.isArray(tables)) return ALL_ADDITION_TABLES;
+
+  const uniqueTables = Array.from(new Set(tables
+    .map(table => Number(table))
+    .filter(table => Number.isInteger(table) && table >= 1 && table <= 10)
+  )).sort((a, b) => a - b);
+
+  return uniqueTables.length > 0 ? uniqueTables : ALL_ADDITION_TABLES;
+};
+
 const normalizeSettings = (settings = {}) => ({
   timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
   rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
   penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
+  selectedTables: normalizeSelectedTables(settings.selectedTables),
 });
 
 const loadSettings = () => {
@@ -111,15 +125,17 @@ const resizeAvatarFile = (file) => new Promise((resolve, reject) => {
 });
 
 // Tạo mốc 100 câu hỏi cố định theo bảng cộng 1 đến 10 (cộng từ 0 đến 9)
-const generateInitialPool = () => {
+const generateInitialPool = (tables = ALL_ADDITION_TABLES) => {
   const pool = [];
-  for (let a = 1; a <= 10; a++) {
+  tables.forEach((a) => {
     for (let b = 0; b <= 9; b++) {
       pool.push({ a, b });
     }
-  }
+  });
   return pool;
 };
+
+const questionMatchesTables = (question, tables) => tables.includes(question.a);
 
 export default function App() {
   // --- STATE ---
@@ -155,6 +171,7 @@ export default function App() {
   const [adminPin, setAdminPin] = useState('');
   const [adminError, setAdminError] = useState('');
   const [avatarError, setAvatarError] = useState('');
+  const [settingsError, setSettingsError] = useState('');
   const [settingsSaved, setSettingsSaved] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
@@ -165,6 +182,14 @@ export default function App() {
   
   const timerRef = useRef(null);
   const displayName = userName.trim() || 'bé';
+  const activeReviewList = useMemo(
+    () => reviewList.filter(question => questionMatchesTables(question, settings.selectedTables)),
+    [reviewList, settings.selectedTables]
+  );
+  const activeUnseenList = useMemo(
+    () => unseenList.filter(question => questionMatchesTables(question, settings.selectedTables)),
+    [unseenList, settings.selectedTables]
+  );
 
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
@@ -177,6 +202,7 @@ export default function App() {
       setIsAdmin(false);
       setShowAdminLogin(false);
       setAdminError('');
+      setSettingsError('');
       setSettingsSaved(false);
     }
   };
@@ -212,6 +238,7 @@ export default function App() {
     setShowAdminLogin(false);
     setAdminPin('');
     setAdminError('');
+    setSettingsError('');
     setSettingsSaved(false);
   };
 
@@ -231,21 +258,51 @@ export default function App() {
     setShowAdminLogin(false);
     setAdminPin('');
     setAdminError('');
+    setSettingsError('');
     setSettingsSaved(false);
   };
 
   const updateDraftSetting = (key, value) => {
     setDraftSettings(prev => ({ ...prev, [key]: value }));
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
+  const toggleDraftTable = (table) => {
+    setDraftSettings(prev => {
+      const selectedTables = prev.selectedTables?.includes(table)
+        ? prev.selectedTables.filter(item => item !== table)
+        : [...(prev.selectedTables || []), table].sort((a, b) => a - b);
+
+      return { ...prev, selectedTables };
+    });
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
+  const setAllDraftTables = (selected) => {
+    setDraftSettings(prev => ({
+      ...prev,
+      selectedTables: selected ? ALL_ADDITION_TABLES : [],
+    }));
+    setSettingsError('');
     setSettingsSaved(false);
   };
 
   const saveAdminSettings = (event) => {
     event.preventDefault();
 
+    if (!draftSettings.selectedTables || draftSettings.selectedTables.length === 0) {
+      setSettingsError('Vui lòng chọn ít nhất một bảng cộng');
+      setSettingsSaved(false);
+      return;
+    }
+
     const nextSettings = normalizeSettings(draftSettings);
     setSettings(nextSettings);
     setDraftSettings(nextSettings);
     setTimer(prev => Math.min(prev, nextSettings.timeLimit));
+    setSettingsError('');
     setSettingsSaved(true);
   };
 
@@ -269,24 +326,25 @@ export default function App() {
   const generateQuestion = useCallback(() => {
     let a, b, isReview = false, isUnseen = false;
     
-    const canPullReview = reviewList.length > 0;
-    const canPullUnseen = unseenList.length > 0;
+    const canPullReview = activeReviewList.length > 0;
+    const canPullUnseen = activeUnseenList.length > 0;
     
     if (!canPullReview && !canPullUnseen) {
-      // Chế độ chơi tự do (khi bé đã thuộc hết 100 câu)
-      a = Math.floor(Math.random() * 10) + 1;
+      // Chế độ chơi tự do (khi bé đã thuộc hết các câu trong bảng được chọn)
+      const randomTableIndex = Math.floor(Math.random() * settings.selectedTables.length);
+      a = settings.selectedTables[randomTableIndex];
       b = Math.floor(Math.random() * 10); // 0-9
     } else if (canPullReview && (!canPullUnseen || Math.random() < 0.6)) {
       // Ưu tiên ôn tập (tỉ lệ 60%)
-      const randomIndex = Math.floor(Math.random() * reviewList.length);
-      a = reviewList[randomIndex].a;
-      b = reviewList[randomIndex].b;
+      const randomIndex = Math.floor(Math.random() * activeReviewList.length);
+      a = activeReviewList[randomIndex].a;
+      b = activeReviewList[randomIndex].b;
       isReview = true;
     } else {
       // Bốc ngẫu nhiên 1 câu chưa làm
-      const randomIndex = Math.floor(Math.random() * unseenList.length);
-      a = unseenList[randomIndex].a;
-      b = unseenList[randomIndex].b;
+      const randomIndex = Math.floor(Math.random() * activeUnseenList.length);
+      a = activeUnseenList[randomIndex].a;
+      b = activeUnseenList[randomIndex].b;
       isUnseen = true;
     }
     
@@ -308,7 +366,7 @@ export default function App() {
     setTimer(settings.timeLimit);
     setSelectedAns(null);
     setGameState('playing');
-  }, [reviewList, unseenList, settings.timeLimit]);
+  }, [activeReviewList, activeUnseenList, settings.selectedTables, settings.timeLimit]);
 
   // --- XỬ LÝ TRẢ LỜI ---
   function updateScreenTime(amount) {
@@ -377,7 +435,8 @@ export default function App() {
         setUnseenList(prev => {
           const newList = prev.filter(q => !(q.a === currentQ.a && q.b === currentQ.b));
           // Kiểm tra điều kiện thắng
-          if (newList.length === 0 && reviewList.length === 0) {
+          const remainingSelectedUnseen = newList.filter(question => questionMatchesTables(question, settings.selectedTables));
+          if (remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
             setTimeout(() => setGameState('congrats'), 1600);
           }
           return newList;
@@ -417,7 +476,8 @@ export default function App() {
       }).filter(item => item.correctCount < 2); // Loại bỏ nếu đúng 2 lần liên tiếp
       
       // Kiểm tra nếu cả hai danh sách đều đã rỗng
-      if (newList.length === 0 && unseenList.length === 0) {
+      const remainingSelectedReview = newList.filter(question => questionMatchesTables(question, settings.selectedTables));
+      if (remainingSelectedReview.length === 0 && activeUnseenList.length === 0) {
         setTimeout(() => setGameState('congrats'), 1600);
       }
       
@@ -669,6 +729,51 @@ export default function App() {
               </div>
             </label>
 
+            <div className="rounded-xl border-2 border-amber-100 bg-amber-50 p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
+                <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-amber-800">
+                  <BookOpen size={18} className="text-amber-500" /> Phép tính cộng
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAllDraftTables(true)}
+                    className="rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-amber-700 border-2 border-amber-100 hover:border-amber-300 transition-colors"
+                  >
+                    Chọn tất cả
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAllDraftTables(false)}
+                    className="rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-gray-600 border-2 border-amber-100 hover:border-amber-300 transition-colors"
+                  >
+                    Bỏ chọn tất cả
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {ALL_ADDITION_TABLES.map((table) => (
+                  <label
+                    key={table}
+                    className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm md:text-base font-bold text-gray-700 border-2 border-amber-100"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={draftSettings.selectedTables?.includes(table) || false}
+                      onChange={() => toggleDraftTable(table)}
+                      className="h-4 w-4 accent-amber-500"
+                    />
+                    Bảng cộng {table}
+                  </label>
+                ))}
+              </div>
+
+              <div className="mt-2 text-xs md:text-sm font-bold text-amber-700">
+                Đang chọn: {(draftSettings.selectedTables || []).length}/10 bảng
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="submit"
@@ -688,6 +793,11 @@ export default function App() {
             {settingsSaved && (
               <div className="text-center text-sm md:text-base font-extrabold text-green-600">
                 Đã lưu cài đặt
+              </div>
+            )}
+            {settingsError && (
+              <div className="text-center text-sm md:text-base font-extrabold text-red-500">
+                {settingsError}
               </div>
             )}
           </form>
@@ -726,14 +836,14 @@ export default function App() {
             <div className="flex items-center gap-1 text-amber-700 font-bold text-[11px] sm:text-xs md:text-base">
               <BookOpen size={16} className="md:w-5 md:h-5" /> Cần ôn
             </div>
-            <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600">{reviewList.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600">{activeReviewList.length}</div>
           </div>
 
           <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-blue-100 rounded-xl md:rounded-2xl border-2 border-blue-200">
             <div className="flex items-center gap-1 text-blue-700 font-bold text-[11px] sm:text-xs md:text-base">
               <Star size={16} className="md:w-5 md:h-5" /> Chưa làm
             </div>
-            <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{unseenList.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{activeUnseenList.length}</div>
           </div>
           
           <div className="col-span-3 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
@@ -796,7 +906,7 @@ export default function App() {
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                 <BookOpen size={16} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn:
               </div>
-              <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{reviewList.length}</div>
+              <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{activeReviewList.length}</div>
               
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                 <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem:
