@@ -1,16 +1,28 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2 } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
-const SOUND_VOLUME = 0.23;
+const SOUND_BASE_VOLUME = 0.23;
+const DEFAULT_SOUND_VOLUME_PERCENT = 100;
+const MAX_SOUND_VOLUME_PERCENT = 250;
 
-const playSound = (type) => {
+const getSoundGain = (volumePercent = DEFAULT_SOUND_VOLUME_PERCENT) => {
+  const parsedPercent = Number(volumePercent);
+  const safePercent = Number.isFinite(parsedPercent)
+    ? Math.min(Math.max(Math.round(parsedPercent), 0), MAX_SOUND_VOLUME_PERCENT)
+    : DEFAULT_SOUND_VOLUME_PERCENT;
+
+  return SOUND_BASE_VOLUME * (safePercent / 100);
+};
+
+const playSound = (type, volumePercent) => {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const soundGain = getSoundGain(volumePercent);
     
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -20,7 +32,7 @@ const playSound = (type) => {
       osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Đô
       osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // Mi
       osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // Sol
-      gain.gain.setValueAtTime(SOUND_VOLUME, ctx.currentTime);
+      gain.gain.setValueAtTime(soundGain, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
       osc.start();
       osc.stop(ctx.currentTime + 0.5);
@@ -28,7 +40,7 @@ const playSound = (type) => {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(300, ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(150, ctx.currentTime + 0.4);
-      gain.gain.setValueAtTime(SOUND_VOLUME, ctx.currentTime);
+      gain.gain.setValueAtTime(soundGain, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
       osc.start();
       osc.stop(ctx.currentTime + 0.4);
@@ -52,6 +64,7 @@ const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
   penaltySec: 60,
+  soundVolumePercent: DEFAULT_SOUND_VOLUME_PERCENT,
   selectedTables: ALL_ADDITION_TABLES,
 };
 
@@ -76,6 +89,7 @@ const normalizeSettings = (settings = {}) => ({
   timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
   rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
   penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
+  soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
   selectedTables: normalizeSelectedTables(settings.selectedTables),
 });
 
@@ -394,7 +408,7 @@ export default function App() {
   }
 
   function handleTimeout() {
-    playSound('wrong');
+    playSound('wrong', settings.soundVolumePercent);
     setGameState('timeout_paused');
     updateScreenTime(-settings.penaltySec);
     setWrongTotal(prev => prev + 1);
@@ -444,7 +458,7 @@ export default function App() {
     
     if (option === currentQ.ans) {
       // ĐÚNG
-      playSound('correct');
+      playSound('correct', settings.soundVolumePercent);
       setGameState('celebrating');
       setCorrectTotal(prev => prev + 1);
       updateScreenTime(settings.rewardSec);
@@ -472,7 +486,7 @@ export default function App() {
       
     } else {
       // SAI
-      playSound('wrong');
+      playSound('wrong', settings.soundVolumePercent);
       setGameState('wrong_paused');
       updateScreenTime(-settings.penaltySec);
       setWrongTotal(prev => prev + 1);
@@ -773,6 +787,36 @@ export default function App() {
                     aria-label="Thời gian bị trừ khi trả lời sai"
                   />
                   <span className="pr-3 text-sm font-bold text-red-500">giây</span>
+                </div>
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                <Volume2 size={18} className="text-purple-500" /> Âm lượng âm thanh
+              </span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="0"
+                  max={MAX_SOUND_VOLUME_PERCENT}
+                  step="5"
+                  value={clampNumber(draftSettings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT)}
+                  onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
+                  className="flex-1 accent-purple-500"
+                />
+                <div className="flex items-center rounded-xl border-2 border-purple-100 bg-purple-50 overflow-hidden">
+                  <input
+                    type="number"
+                    min="0"
+                    max={MAX_SOUND_VOLUME_PERCENT}
+                    step="5"
+                    value={draftSettings.soundVolumePercent}
+                    onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
+                    className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-purple-700 outline-none"
+                    aria-label="Âm lượng âm thanh"
+                  />
+                  <span className="pr-3 text-sm font-bold text-purple-500">%</span>
                 </div>
               </div>
             </label>
