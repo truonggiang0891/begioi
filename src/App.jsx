@@ -793,6 +793,7 @@ export default function App() {
     screenTime,
   };
   const isFeedbackPaused = gameState === 'wrong_paused' || gameState === 'timeout_paused';
+  const isCelebrating = gameState === 'celebrating';
   const canScrollPage = showUserNameForm || showAdminLogin || isAdmin || showParentConfirm;
 
   // --- RENDER COMPONENT ---
@@ -1320,7 +1321,15 @@ export default function App() {
             </div>
 
             {/* QUESTION */}
-            <div className="text-center my-2 md:my-6 pt-3 md:pt-4">
+            <div className="text-center my-2 md:my-6 pt-1 md:pt-2">
+              <div className="flex h-9 md:h-12 items-center justify-center">
+                {isCelebrating && (
+                  <div className="inline-flex max-w-full items-center justify-center gap-1.5 md:gap-2 rounded-full border-2 border-green-200 bg-white px-3 py-1.5 md:px-5 md:py-2 text-sm md:text-xl font-black text-green-600 shadow-sm animate-bounce-in">
+                    <Star size={18} className="shrink-0 fill-yellow-300 text-yellow-400 md:w-6 md:h-6" />
+                    <span className="whitespace-nowrap">+ {formatTime(settings.rewardSec)} xem điện thoại</span>
+                  </div>
+                )}
+              </div>
               <div className={`font-black text-blue-900 drop-shadow-sm leading-tight ${
                 currentQ?.lessonType === 'custom'
                   ? 'text-3xl sm:text-4xl md:text-6xl'
@@ -1345,7 +1354,7 @@ export default function App() {
                   } else {
                     btnColor = "bg-gray-300 shadow-[0_6px_0_rgb(156,163,175)] md:shadow-[0_8px_0_rgb(156,163,175)] opacity-50";
                   }
-                } else if (gameState === 'celebrating') {
+                } else if (isCelebrating) {
                   if (opt === currentQ.ans) {
                     btnColor = "bg-green-400 shadow-[0_6px_0_rgb(22,163,74)] md:shadow-[0_8px_0_rgb(22,163,74)] transform scale-105";
                   } else {
@@ -1397,21 +1406,6 @@ export default function App() {
                       <StopCircle size={20} className="md:w-6 md:h-6" /> Kết thúc phiên học
                     </button>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* HIỆU ỨNG KHI ĐÚNG */}
-            {gameState === 'celebrating' && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30">
-                <div className="animate-bounce text-[80px] md:text-[120px] drop-shadow-2xl flex relative">
-                  ⭐
-                  <div className="absolute -top-6 -left-6 md:-top-10 md:-left-10 text-4xl md:text-6xl animate-ping opacity-70">✨</div>
-                  <div className="absolute top-6 -right-6 md:top-10 md:-right-10 text-3xl md:text-5xl animate-ping opacity-70 delay-100">✨</div>
-                  <div className="absolute -bottom-3 left-1/2 text-2xl md:text-4xl animate-ping opacity-70 delay-200">✨</div>
-                </div>
-                <div className="absolute top-1/4 md:top-1/4 text-lg md:text-3xl font-black text-green-500 bg-white/95 px-4 py-2 md:px-6 md:py-2 rounded-full shadow-lg border-2 border-green-200 animate-pulse text-center">
-                  + {formatTime(settings.rewardSec)} xem điện thoại 🎉
                 </div>
               </div>
             )}
