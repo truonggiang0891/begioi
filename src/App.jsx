@@ -971,23 +971,13 @@ export default function App() {
           </div>
         ) : (
           <>
-            {/* TIMER BAR */}
-            <div className="absolute top-0 left-0 w-full h-2 md:h-3 bg-gray-100 rounded-t-2xl md:rounded-t-3xl overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-1000 ease-linear ${timer > 4 ? 'bg-green-400' : timer > 2 ? 'bg-yellow-400' : 'bg-red-500'}`}
-                style={{ width: `${(timer / settings.timeLimit) * 100}%` }}
-              ></div>
-            </div>
-
-            <div className="text-center mb-1 mt-1 md:mt-2 flex justify-center items-center gap-1 md:gap-2">
-              <Clock size={20} className={`md:w-6 md:h-6 ${timer <= 3 ? 'text-red-500 animate-bounce' : 'text-gray-400'}`} />
-              <span className={`text-base md:text-xl font-bold ${timer <= 3 ? 'text-red-500' : 'text-gray-500'}`}>
-                Còn lại: {timer} giây
-              </span>
+            <div className="absolute top-2 right-3 md:top-3 md:right-4 z-10 flex items-center gap-1 text-[11px] md:text-sm font-semibold text-gray-400">
+              <Clock size={13} className="md:w-4 md:h-4 text-gray-300" />
+              <span>{timer} giây</span>
             </div>
 
             {/* QUESTION */}
-            <div className="text-center my-2 md:my-6">
+            <div className="text-center my-2 md:my-6 pt-3 md:pt-4">
               <div className="text-4xl sm:text-6xl md:text-8xl font-black text-blue-900 drop-shadow-sm">
                 {currentQ?.a} + {currentQ?.b} = ?
               </div>
