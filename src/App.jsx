@@ -560,7 +560,7 @@ export default function App() {
 
   // --- RENDER COMPONENT ---
   return (
-    <div className={`h-[100dvh] bg-sky-100 font-sans flex flex-col items-center py-1.5 px-2 md:py-5 md:px-4 ${canScrollPage ? 'overflow-x-hidden overflow-y-auto' : 'overflow-hidden'}`}>
+    <div className={`app-shell bg-sky-100 font-sans flex flex-col items-center ${canScrollPage ? 'app-shell--scroll' : 'app-shell--main'}`}>
       {/* ROLE LOGIN */}
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-2 p-1.5 md:p-2">
         <div className="grid grid-cols-2 gap-2">
