@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2 } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -60,11 +60,22 @@ const USER_AVATAR_KEY = 'math_userAvatar';
 const AVATAR_SIZE = 160;
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const ALL_ADDITION_TABLES = Array.from({ length: 10 }, (_, index) => index + 1);
+const LESSON_TYPES = [
+  { id: 'add', label: 'Cộng', tableLabel: 'Bảng cộng' },
+  { id: 'subtract', label: 'Trừ', tableLabel: 'Bảng trừ' },
+  { id: 'multiply', label: 'Nhân', tableLabel: 'Bảng nhân' },
+  { id: 'divide', label: 'Chia', tableLabel: 'Bảng chia' },
+  { id: 'custom', label: 'Tự nhập câu hỏi', tableLabel: 'Câu hỏi tự nhập' },
+];
+const LESSON_TYPE_IDS = new Set(LESSON_TYPES.map(type => type.id));
+const DEFAULT_LESSON_TYPE = 'add';
 const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
   penaltySec: 60,
   soundVolumePercent: DEFAULT_SOUND_VOLUME_PERCENT,
+  lessonType: DEFAULT_LESSON_TYPE,
+  customQuestionsText: '',
   selectedTables: ALL_ADDITION_TABLES,
 };
 
@@ -85,13 +96,31 @@ const normalizeSelectedTables = (tables) => {
   return uniqueTables.length > 0 ? uniqueTables : ALL_ADDITION_TABLES;
 };
 
+const normalizeLessonType = (lessonType) => (
+  LESSON_TYPE_IDS.has(lessonType) ? lessonType : DEFAULT_LESSON_TYPE
+);
+
+const normalizeCustomQuestionsText = (text) => String(text || '').slice(0, 3000);
+
 const normalizeSettings = (settings = {}) => ({
   timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
   rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
   penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
   soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
+  lessonType: normalizeLessonType(settings.lessonType),
+  customQuestionsText: normalizeCustomQuestionsText(settings.customQuestionsText),
   selectedTables: normalizeSelectedTables(settings.selectedTables),
 });
+
+const getLessonConfigKey = (settings = {}) => {
+  const normalizedSettings = normalizeSettings(settings);
+
+  return JSON.stringify({
+    lessonType: normalizedSettings.lessonType,
+    customQuestionsText: normalizedSettings.customQuestionsText,
+    selectedTables: normalizedSettings.selectedTables,
+  });
+};
 
 const loadSettings = () => {
   try {
@@ -138,21 +167,164 @@ const resizeAvatarFile = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
-// Tạo mốc 100 câu hỏi cố định theo bảng cộng 1 đến 10 (cộng từ 0 đến 9)
-const generateInitialPool = (tables = ALL_ADDITION_TABLES) => {
+const getLessonType = (lessonType) => (
+  LESSON_TYPES.find(type => type.id === normalizeLessonType(lessonType)) || LESSON_TYPES[0]
+);
+
+const makeQuestion = ({ lessonType, table, b, questionText, answerText, ans }) => {
+  const normalizedLessonType = normalizeLessonType(lessonType);
+
+  return {
+    id: `${normalizedLessonType}:${table}:${b}`,
+    lessonType: normalizedLessonType,
+    table,
+    a: table,
+    b,
+    ans,
+    questionText,
+    answerText,
+  };
+};
+
+const parseCustomQuestions = (text) => normalizeCustomQuestionsText(text)
+  .split(/\r?\n/)
+  .map((line, index) => {
+    const normalizedLine = line
+      .replace(/[×xX*]/g, '×')
+      .replace(/[÷:]/g, '÷')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const match = normalizedLine.match(/^(.+?)\s*=\s*(-?\d+)$/);
+    if (!match) return null;
+
+    const leftSide = match[1].replace(/\?+$/, '').trim();
+    const ans = Number(match[2]);
+    if (!leftSide || !Number.isInteger(ans)) return null;
+
+    return {
+      id: `custom:${index}:${leftSide}:${ans}`,
+      lessonType: 'custom',
+      table: 0,
+      a: 0,
+      b: index,
+      ans,
+      questionText: `${leftSide} = ?`,
+      answerText: `${leftSide} = ${ans}`,
+    };
+  })
+  .filter(Boolean);
+
+const generateInitialPool = (settings = DEFAULT_SETTINGS) => {
+  const normalizedSettings = normalizeSettings(settings);
+  if (normalizedSettings.lessonType === 'custom') {
+    return parseCustomQuestions(normalizedSettings.customQuestionsText);
+  }
+
   const pool = [];
-  tables.forEach((a) => {
+  normalizedSettings.selectedTables.forEach((table) => {
+    if (normalizedSettings.lessonType === 'subtract') {
+      for (let b = 0; b <= 9; b++) {
+        const minuend = table + b;
+        pool.push(makeQuestion({
+          lessonType: 'subtract',
+          table,
+          b,
+          ans: b,
+          questionText: `${minuend} - ${table} = ?`,
+          answerText: `${minuend} - ${table} = ${b}`,
+        }));
+      }
+      return;
+    }
+
     for (let b = 0; b <= 9; b++) {
-      pool.push({ a, b });
+      if (normalizedSettings.lessonType === 'multiply') {
+        const ans = table * b;
+        pool.push(makeQuestion({
+          lessonType: 'multiply',
+          table,
+          b,
+          ans,
+          questionText: `${table} × ${b} = ?`,
+          answerText: `${table} × ${b} = ${ans}`,
+        }));
+      } else if (normalizedSettings.lessonType === 'divide') {
+        const dividend = table * b;
+        pool.push(makeQuestion({
+          lessonType: 'divide',
+          table,
+          b,
+          ans: b,
+          questionText: `${dividend} ÷ ${table} = ?`,
+          answerText: `${dividend} ÷ ${table} = ${b}`,
+        }));
+      } else {
+        const ans = table + b;
+        pool.push(makeQuestion({
+          lessonType: 'add',
+          table,
+          b,
+          ans,
+          questionText: `${table} + ${b} = ?`,
+          answerText: `${table} + ${b} = ${ans}`,
+        }));
+      }
     }
   });
+
   return pool;
 };
 
-const questionMatchesTables = (question, tables) => tables.includes(question.a);
+const getQuestionKey = (question) => {
+  if (question?.id) return question.id;
+  if (Number.isInteger(question?.a) && Number.isInteger(question?.b)) {
+    return `add:${question.a}:${question.b}`;
+  }
+  return '';
+};
+
+const createAnswerOptions = (correctAns) => {
+  const options = new Set([correctAns]);
+  let distance = 1;
+  const minOption = correctAns >= 0 ? 0 : correctAns - 12;
+
+  while (options.size < 4 && distance < 12) {
+    const bigger = correctAns + distance;
+    const smaller = correctAns - distance;
+
+    if (bigger >= minOption) options.add(bigger);
+    if (options.size < 4 && smaller >= minOption) options.add(smaller);
+    distance += 1;
+  }
+
+  return Array.from(options).sort(() => Math.random() - 0.5);
+};
+
+const buildPlayableQuestion = (question, flags = {}) => ({
+  ...question,
+  options: createAnswerOptions(question.ans),
+  isReview: !!flags.isReview,
+  isUnseen: !!flags.isUnseen,
+});
+
+const stripQuestionForStorage = (question, correctCount = 0) => {
+  if (!question) return null;
+
+  const storedQuestion = { ...question };
+  delete storedQuestion.options;
+  delete storedQuestion.isReview;
+  delete storedQuestion.isUnseen;
+  delete storedQuestion.correctCount;
+
+  return {
+    ...storedQuestion,
+    correctCount: clampNumber(correctCount, 0, 0, 2),
+  };
+};
 
 export default function App() {
   // --- STATE ---
+  const initialSettings = useMemo(() => loadSettings(), []);
   const [screenTime, setScreenTime] = useState(() => {
     const savedTime = localStorage.getItem('math_screenTime');
     return savedTime ? parseInt(savedTime, 10) : 0;
@@ -163,7 +335,7 @@ export default function App() {
   });
   const [unseenList, setUnseenList] = useState(() => {
     const savedUnseen = localStorage.getItem('math_unseenList');
-    return savedUnseen ? JSON.parse(savedUnseen) : generateInitialPool();
+    return savedUnseen ? JSON.parse(savedUnseen) : generateInitialPool(initialSettings);
   });
   const [correctTotal, setCorrectTotal] = useState(() => {
     const savedCorrect = localStorage.getItem('math_correctTotal');
@@ -177,8 +349,8 @@ export default function App() {
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
   const [draftUserAvatar, setDraftUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
-  const [settings, setSettings] = useState(loadSettings);
-  const [draftSettings, setDraftSettings] = useState(loadSettings);
+  const [settings, setSettings] = useState(initialSettings);
+  const [draftSettings, setDraftSettings] = useState(initialSettings);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUserNameForm, setShowUserNameForm] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -199,13 +371,31 @@ export default function App() {
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
   const displayName = userName.trim() || 'bé';
+  const activePool = useMemo(() => generateInitialPool(settings), [settings]);
   const activeReviewList = useMemo(
-    () => reviewList.filter(question => questionMatchesTables(question, settings.selectedTables)),
-    [reviewList, settings.selectedTables]
+    () => {
+      const reviewByKey = new Map(reviewList.map(question => [getQuestionKey(question), question]));
+      return activePool
+        .filter(question => reviewByKey.has(question.id))
+        .map(question => ({
+          ...question,
+          correctCount: clampNumber(reviewByKey.get(question.id)?.correctCount, 0, 0, 2),
+        }));
+    },
+    [activePool, reviewList]
   );
   const activeUnseenList = useMemo(
-    () => unseenList.filter(question => questionMatchesTables(question, settings.selectedTables)),
-    [unseenList, settings.selectedTables]
+    () => {
+      const unseenKeys = new Set(unseenList.map(getQuestionKey));
+      return activePool.filter(question => unseenKeys.has(question.id));
+    },
+    [activePool, unseenList]
+  );
+  const currentLessonType = getLessonType(settings.lessonType);
+  const draftLessonType = getLessonType(draftSettings.lessonType);
+  const draftCustomQuestions = useMemo(
+    () => parseCustomQuestions(draftSettings.customQuestionsText),
+    [draftSettings.customQuestionsText]
   );
 
   const toggleUserNameForm = () => {
@@ -308,17 +498,41 @@ export default function App() {
 
   const saveAdminSettings = (event) => {
     event.preventDefault();
+    const nextLessonType = normalizeLessonType(draftSettings.lessonType);
 
-    if (!draftSettings.selectedTables || draftSettings.selectedTables.length === 0) {
-      setSettingsError('Vui lòng chọn ít nhất một bảng cộng');
+    if (nextLessonType === 'custom' && draftCustomQuestions.length === 0) {
+      setSettingsError('Vui lòng nhập ít nhất một câu hỏi hợp lệ');
+      setSettingsSaved(false);
+      return;
+    }
+
+    if (nextLessonType !== 'custom' && (!draftSettings.selectedTables || draftSettings.selectedTables.length === 0)) {
+      setSettingsError('Vui lòng chọn ít nhất một bảng luyện tập');
       setSettingsSaved(false);
       return;
     }
 
     const nextSettings = normalizeSettings(draftSettings);
+    const lessonChanged = getLessonConfigKey(settings) !== getLessonConfigKey(nextSettings);
     setSettings(nextSettings);
     setDraftSettings(nextSettings);
-    setTimer(prev => Math.min(prev, nextSettings.timeLimit));
+
+    if (lessonChanged) {
+      clearInterval(timerRef.current);
+      clearPendingTransitions();
+      setReviewList([]);
+      setUnseenList(generateInitialPool(nextSettings));
+      setCorrectTotal(0);
+      setWrongTotal(0);
+      setCurrentQ(null);
+      setSelectedAns(null);
+      setSummaryStats(null);
+      setGameState('idle');
+      setTimer(nextSettings.timeLimit);
+    } else {
+      setTimer(prev => Math.min(prev, nextSettings.timeLimit));
+    }
+
     setSettingsError('');
     setSettingsSaved(true);
   };
@@ -341,49 +555,41 @@ export default function App() {
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback(() => {
-    let a, b, isReview = false, isUnseen = false;
+    let selectedQuestion;
+    let isReview = false;
+    let isUnseen = false;
     
     const canPullReview = activeReviewList.length > 0;
     const canPullUnseen = activeUnseenList.length > 0;
+    const playablePool = activePool;
+
+    if (playablePool.length === 0) {
+      setCurrentQ(null);
+      setGameState('idle');
+      return;
+    }
     
     if (!canPullReview && !canPullUnseen) {
-      // Chế độ chơi tự do (khi bé đã thuộc hết các câu trong bảng được chọn)
-      const randomTableIndex = Math.floor(Math.random() * settings.selectedTables.length);
-      a = settings.selectedTables[randomTableIndex];
-      b = Math.floor(Math.random() * 10); // 0-9
+      // Chế độ chơi tự do (khi bé đã thuộc hết các câu trong bài được chọn)
+      const randomIndex = Math.floor(Math.random() * playablePool.length);
+      selectedQuestion = playablePool[randomIndex];
     } else if (canPullReview && (!canPullUnseen || Math.random() < 0.6)) {
       // Ưu tiên ôn tập (tỉ lệ 60%)
       const randomIndex = Math.floor(Math.random() * activeReviewList.length);
-      a = activeReviewList[randomIndex].a;
-      b = activeReviewList[randomIndex].b;
+      selectedQuestion = activeReviewList[randomIndex];
       isReview = true;
     } else {
       // Bốc ngẫu nhiên 1 câu chưa làm
       const randomIndex = Math.floor(Math.random() * activeUnseenList.length);
-      a = activeUnseenList[randomIndex].a;
-      b = activeUnseenList[randomIndex].b;
+      selectedQuestion = activeUnseenList[randomIndex];
       isUnseen = true;
     }
-    
-    const correctAns = a + b;
-    let options = new Set([correctAns]);
-    
-    // Tạo 3 đáp án sai gần giống
-    while (options.size < 4) {
-      const diff = Math.floor(Math.random() * 5) - 2; // -2 đến +2
-      let wrongAns = correctAns + diff;
-      if (wrongAns <= 0) wrongAns = correctAns + Math.floor(Math.random() * 4) + 1;
-      if (wrongAns !== correctAns) options.add(wrongAns);
-    }
-    
-    // Trộn đáp án
-    const shuffledOptions = Array.from(options).sort(() => Math.random() - 0.5);
-    
-    setCurrentQ({ a, b, ans: correctAns, options: shuffledOptions, isReview, isUnseen });
+
+    setCurrentQ(buildPlayableQuestion(selectedQuestion, { isReview, isUnseen }));
     setTimer(settings.timeLimit);
     setSelectedAns(null);
     setGameState('playing');
-  }, [activeReviewList, activeUnseenList, settings.selectedTables, settings.timeLimit]);
+  }, [activePool, activeReviewList, activeUnseenList, settings.timeLimit]);
 
   // --- XỬ LÝ TRẢ LỜI ---
   function updateScreenTime(amount) {
@@ -395,28 +601,38 @@ export default function App() {
     });
   }
 
-  function addToReview(a, b) {
+  function addToReview(question) {
+    const questionKey = getQuestionKey(question);
+    const questionForReview = stripQuestionForStorage(question, 0);
+    if (!questionKey || !questionForReview) return;
+
     setReviewList(prev => {
-      const exists = prev.find(item => item.a === a && item.b === b);
+      const exists = prev.find(item => getQuestionKey(item) === questionKey);
       if (exists) {
-        // Nếu đã có, reset số lần đúng liên tiếp về 0
-        return prev.map(item => item.a === a && item.b === b ? { ...item, correctCount: 0 } : item);
-      } else {
-        return [...prev, { a, b, correctCount: 0 }];
+        return prev.map(item => (
+          getQuestionKey(item) === questionKey
+            ? { ...questionForReview, correctCount: 0 }
+            : item
+        ));
       }
+
+      return [...prev, questionForReview];
     });
   }
 
   function handleTimeout() {
+    if (!currentQ) return;
+
     playSound('wrong', settings.soundVolumePercent);
     setGameState('timeout_paused');
     updateScreenTime(-settings.penaltySec);
     setWrongTotal(prev => prev + 1);
     if (currentQ?.isUnseen) {
       // Loại khỏi danh sách chưa làm
-      setUnseenList(prev => prev.filter(q => !(q.a === currentQ.a && q.b === currentQ.b)));
+      const currentKey = getQuestionKey(currentQ);
+      setUnseenList(prev => prev.filter(q => getQuestionKey(q) !== currentKey));
     }
-    addToReview(currentQ.a, currentQ.b);
+    addToReview(currentQ);
   }
 
   const clearPendingTransitions = () => {
@@ -455,6 +671,7 @@ export default function App() {
     if (gameState !== 'playing') return;
     clearInterval(timerRef.current);
     setSelectedAns(option);
+    const currentKey = getQuestionKey(currentQ);
     
     if (option === currentQ.ans) {
       // ĐÚNG
@@ -465,16 +682,17 @@ export default function App() {
       
       if (currentQ.isUnseen) {
         setUnseenList(prev => {
-          const newList = prev.filter(q => !(q.a === currentQ.a && q.b === currentQ.b));
+          const newList = prev.filter(q => getQuestionKey(q) !== currentKey);
           // Kiểm tra điều kiện thắng
-          const remainingSelectedUnseen = newList.filter(question => questionMatchesTables(question, settings.selectedTables));
+          const remainingKeys = new Set(newList.map(getQuestionKey));
+          const remainingSelectedUnseen = activePool.filter(question => remainingKeys.has(question.id));
           if (remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
             queueCongrats();
           }
           return newList;
         });
       } else if (currentQ.isReview) {
-        handleReviewSuccess(currentQ.a, currentQ.b);
+        handleReviewSuccess(currentQ);
       }
       
       // Chuyển câu sau 1.5s
@@ -492,25 +710,27 @@ export default function App() {
       setWrongTotal(prev => prev + 1);
       if (currentQ.isUnseen) {
         // Loại khỏi danh sách chưa làm
-        setUnseenList(prev => prev.filter(q => !(q.a === currentQ.a && q.b === currentQ.b)));
+        setUnseenList(prev => prev.filter(q => getQuestionKey(q) !== currentKey));
       }
-      addToReview(currentQ.a, currentQ.b);
+      addToReview(currentQ);
     }
   };
 
-  const handleReviewSuccess = (a, b) => {
-    if (!currentQ.isReview) return;
+  const handleReviewSuccess = (question) => {
+    if (!question?.isReview) return;
+    const questionKey = getQuestionKey(question);
     
     setReviewList(prev => {
       const newList = prev.map(item => {
-        if (item.a === a && item.b === b) {
-          return { ...item, correctCount: item.correctCount + 1 };
+        if (getQuestionKey(item) === questionKey) {
+          return { ...item, correctCount: clampNumber((item.correctCount || 0) + 1, 1, 0, 2) };
         }
         return item;
       }).filter(item => item.correctCount < 2); // Loại bỏ nếu đúng 2 lần liên tiếp
       
       // Kiểm tra nếu cả hai danh sách đều đã rỗng
-      const remainingSelectedReview = newList.filter(question => questionMatchesTables(question, settings.selectedTables));
+      const remainingKeys = new Set(newList.map(getQuestionKey));
+      const remainingSelectedReview = activePool.filter(item => remainingKeys.has(item.id));
       if (remainingSelectedReview.length === 0 && activeUnseenList.length === 0) {
         queueCongrats();
       }
@@ -522,7 +742,7 @@ export default function App() {
   const resetSessionData = () => {
     setScreenTime(0);
     setReviewList([]);
-    setUnseenList(generateInitialPool());
+    setUnseenList(generateInitialPool(settings));
     setCorrectTotal(0);
     setWrongTotal(0);
     setCurrentQ(null);
@@ -703,6 +923,59 @@ export default function App() {
           </div>
 
           <form onSubmit={saveAdminSettings} className="space-y-4 md:space-y-5">
+            <div className="rounded-xl border-2 border-indigo-100 bg-indigo-50 p-3">
+              <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-indigo-800 mb-3">
+                <PencilLine size={18} className="text-indigo-500" /> Quản lý bài học
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {LESSON_TYPES.map((type) => {
+                  const isSelected = normalizeLessonType(draftSettings.lessonType) === type.id;
+
+                  return (
+                    <label
+                      key={type.id}
+                      className={`flex min-h-11 items-center justify-center rounded-lg border-2 px-3 py-2 text-center text-sm md:text-base font-extrabold transition-colors ${
+                        isSelected
+                          ? 'border-indigo-500 bg-indigo-500 text-white shadow-[0_3px_0_rgb(67,56,202)]'
+                          : 'border-indigo-100 bg-white text-indigo-700 hover:border-indigo-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="lessonType"
+                        value={type.id}
+                        checked={isSelected}
+                        onChange={() => updateDraftSetting('lessonType', type.id)}
+                        className="sr-only"
+                      />
+                      {type.label}
+                    </label>
+                  );
+                })}
+              </div>
+
+              {normalizeLessonType(draftSettings.lessonType) === 'custom' && (
+                <div className="mt-3">
+                  <label className="block text-xs md:text-sm font-bold text-indigo-700 mb-2">
+                    Nhập mỗi câu trên một dòng, ví dụ: 2 + 3 = 5
+                  </label>
+                  <textarea
+                    value={draftSettings.customQuestionsText}
+                    onChange={(event) => updateDraftSetting('customQuestionsText', event.target.value)}
+                    rows={5}
+                    maxLength={3000}
+                    placeholder={`2 + 3 = 5\n10 - 4 = 6\n3 × 4 = 12\n12 ÷ 3 = 4`}
+                    className="w-full resize-y rounded-xl border-2 border-indigo-100 bg-white p-3 text-sm md:text-base font-bold text-gray-700 outline-none focus:border-indigo-400"
+                    aria-label="Câu hỏi tự nhập"
+                  />
+                  <div className="mt-2 text-xs md:text-sm font-bold text-indigo-700">
+                    Đã nhận: {draftCustomQuestions.length} câu hỏi hợp lệ
+                  </div>
+                </div>
+              )}
+            </div>
+
             <label className="block">
               <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
                 <Clock size={18} className="text-blue-500" /> Thời gian đếm ngược mỗi câu
@@ -821,50 +1094,52 @@ export default function App() {
               </div>
             </label>
 
-            <div className="rounded-xl border-2 border-amber-100 bg-amber-50 p-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
-                <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-amber-800">
-                  <BookOpen size={18} className="text-amber-500" /> Phép tính cộng
+            {normalizeLessonType(draftSettings.lessonType) !== 'custom' && (
+              <div className="rounded-xl border-2 border-amber-100 bg-amber-50 p-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
+                  <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-amber-800">
+                    <BookOpen size={18} className="text-amber-500" /> {draftLessonType.tableLabel}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAllDraftTables(true)}
+                      className="rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-amber-700 border-2 border-amber-100 hover:border-amber-300 transition-colors"
+                    >
+                      Chọn tất cả
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllDraftTables(false)}
+                      className="rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-gray-600 border-2 border-amber-100 hover:border-amber-300 transition-colors"
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAllDraftTables(true)}
-                    className="rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-amber-700 border-2 border-amber-100 hover:border-amber-300 transition-colors"
-                  >
-                    Chọn tất cả
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAllDraftTables(false)}
-                    className="rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-gray-600 border-2 border-amber-100 hover:border-amber-300 transition-colors"
-                  >
-                    Bỏ chọn tất cả
-                  </button>
+                  {ALL_ADDITION_TABLES.map((table) => (
+                    <label
+                      key={table}
+                      className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm md:text-base font-bold text-gray-700 border-2 border-amber-100"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={draftSettings.selectedTables?.includes(table) || false}
+                        onChange={() => toggleDraftTable(table)}
+                        className="h-4 w-4 accent-amber-500"
+                      />
+                      {draftLessonType.tableLabel} {table}
+                    </label>
+                  ))}
+                </div>
+
+                <div className="mt-2 text-xs md:text-sm font-bold text-amber-700">
+                  Đang chọn: {(draftSettings.selectedTables || []).length}/10 bảng
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {ALL_ADDITION_TABLES.map((table) => (
-                  <label
-                    key={table}
-                    className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm md:text-base font-bold text-gray-700 border-2 border-amber-100"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={draftSettings.selectedTables?.includes(table) || false}
-                      onChange={() => toggleDraftTable(table)}
-                      className="h-4 w-4 accent-amber-500"
-                    />
-                    Bảng cộng {table}
-                  </label>
-                ))}
-              </div>
-
-              <div className="mt-2 text-xs md:text-sm font-bold text-amber-700">
-                Đang chọn: {(draftSettings.selectedTables || []).length}/10 bảng
-              </div>
-            </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-2">
               <button
@@ -970,7 +1245,7 @@ export default function App() {
               Chúc mừng bé!
             </h2>
             <p className="text-base md:text-xl font-bold text-gray-600 mb-6 md:mb-8">
-              Bé đã thuộc hết bảng cộng và không còn câu nào cần ôn nữa! Tuyệt vời quá!
+              Bé đã hoàn thành bài {currentLessonType.label.toLowerCase()} và không còn câu nào cần ôn nữa! Tuyệt vời quá!
             </p>
             <button 
               onClick={generateQuestion}
@@ -1022,8 +1297,12 @@ export default function App() {
 
             {/* QUESTION */}
             <div className="text-center my-2 md:my-6 pt-3 md:pt-4">
-              <div className="text-4xl sm:text-6xl md:text-8xl font-black text-blue-900 drop-shadow-sm">
-                {currentQ?.a} + {currentQ?.b} = ?
+              <div className={`font-black text-blue-900 drop-shadow-sm leading-tight ${
+                currentQ?.lessonType === 'custom'
+                  ? 'text-3xl sm:text-4xl md:text-6xl'
+                  : 'text-4xl sm:text-6xl md:text-8xl'
+              }`}>
+                {currentQ?.questionText}
               </div>
             </div>
 
@@ -1074,7 +1353,7 @@ export default function App() {
                   <div className="w-full rounded-xl md:rounded-2xl bg-gray-100 px-3 py-2 md:px-8 md:py-4">
                     <div className="text-sm md:text-2xl font-bold text-gray-600">Đáp án đúng:</div>
                     <div className="mt-0.5 text-3xl sm:text-4xl md:text-6xl font-black text-green-500 leading-tight">
-                      {currentQ.a} + {currentQ.b} = {currentQ.ans}
+                      {currentQ?.answerText}
                     </div>
                   </div>
                   <div className="text-red-500 font-bold text-sm md:text-lg">
