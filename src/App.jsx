@@ -555,6 +555,7 @@ export default function App() {
     reviewCount: activeReviewList.length,
     screenTime,
   };
+  const isFeedbackPaused = gameState === 'wrong_paused' || gameState === 'timeout_paused';
 
   // --- RENDER COMPONENT ---
   return (
@@ -998,7 +999,7 @@ export default function App() {
                 let textColor = "text-white";
                 
                 // Trạng thái khi đã chọn hoặc hết giờ
-                if (gameState === 'wrong_paused' || gameState === 'timeout_paused') {
+                if (isFeedbackPaused) {
                   if (opt === currentQ.ans) {
                     btnColor = "bg-green-500 shadow-[0_6px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] animate-pulse";
                   } else if (opt === selectedAns) {
@@ -1028,7 +1029,7 @@ export default function App() {
             </div>
 
             {/* PHẢN HỒI KHI SAI / HẾT GIỜ */}
-            {(gameState === 'wrong_paused' || gameState === 'timeout_paused') && (
+            {isFeedbackPaused && (
               <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl md:rounded-3xl p-4 md:p-6 text-center border-4 md:border-8 border-red-100">
                 <XCircle className="w-16 h-16 md:w-20 md:h-20 text-red-500 mb-3 md:mb-4" />
                 <h3 className="text-2xl md:text-3xl font-black text-red-600 mb-2">
@@ -1040,12 +1041,20 @@ export default function App() {
                 <div className="text-red-500 font-bold text-base md:text-lg mb-4 md:mb-6">
                   - {formatTime(settings.penaltySec)} điện thoại 😢
                 </div>
-                <button
-                  onClick={generateQuestion}
-                  className="bg-blue-500 hover:bg-blue-600 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-4 md:px-12 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-2 active:shadow-none transition-all w-full"
-                >
-                  Tiếp tục nhé!
-                </button>
+                <div className="flex w-full flex-col gap-3">
+                  <button
+                    onClick={generateQuestion}
+                    className="bg-blue-500 hover:bg-blue-600 text-white text-lg md:text-3xl font-extrabold py-2.5 px-6 md:py-4 md:px-12 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-2 active:shadow-none transition-all w-full"
+                  >
+                    Tiếp tục nhé!
+                  </button>
+                  <button
+                    onClick={handleEndSession}
+                    className="flex items-center justify-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-base md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full w-full"
+                  >
+                    <StopCircle size={20} className="md:w-6 md:h-6" /> Kết thúc phiên học
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1065,14 +1074,16 @@ export default function App() {
             )}
 
             {/* NÚT KẾT THÚC BUỔI HỌC */}
-            <div className="relative z-40 mt-3 md:mt-8 pt-2.5 md:pt-5 border-t-2 border-gray-100 flex justify-center">
-              <button 
-                onClick={handleEndSession}
-                className="flex items-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-sm md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full"
-              >
-                <StopCircle size={22} className="md:w-6 md:h-6" /> Kết thúc phiên học
-              </button>
-            </div>
+            {!isFeedbackPaused && (
+              <div className="mt-3 md:mt-8 pt-2.5 md:pt-5 border-t-2 border-gray-100 flex justify-center">
+                <button
+                  onClick={handleEndSession}
+                  className="flex items-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-sm md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full"
+                >
+                  <StopCircle size={22} className="md:w-6 md:h-6" /> Kết thúc phiên học
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
