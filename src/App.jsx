@@ -866,7 +866,7 @@ export default function App() {
               )}
             </div>
             <h1 className="min-w-0 text-lg sm:text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
-              Xin chào, {displayName}
+              Xin chào {displayName}
             </h1>
           </div>
         </div>
