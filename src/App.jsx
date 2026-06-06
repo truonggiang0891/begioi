@@ -179,8 +179,11 @@ export default function App() {
   const [gameState, setGameState] = useState('idle'); // idle, playing, wrong_paused, timeout_paused, celebrating, congrats, summary
   const [selectedAns, setSelectedAns] = useState(null);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
+  const [summaryStats, setSummaryStats] = useState(null);
   
   const timerRef = useRef(null);
+  const nextQuestionTimeoutRef = useRef(null);
+  const congratsTimeoutRef = useRef(null);
   const displayName = userName.trim() || 'bé';
   const activeReviewList = useMemo(
     () => reviewList.filter(question => questionMatchesTables(question, settings.selectedTables)),
@@ -402,6 +405,21 @@ export default function App() {
     addToReview(currentQ.a, currentQ.b);
   }
 
+  const clearPendingTransitions = () => {
+    clearTimeout(nextQuestionTimeoutRef.current);
+    clearTimeout(congratsTimeoutRef.current);
+    nextQuestionTimeoutRef.current = null;
+    congratsTimeoutRef.current = null;
+  };
+
+  const queueCongrats = () => {
+    clearTimeout(congratsTimeoutRef.current);
+    congratsTimeoutRef.current = setTimeout(() => {
+      setGameState('congrats');
+      congratsTimeoutRef.current = null;
+    }, 1600);
+  };
+
   // --- TIMER ---
   useEffect(() => {
     if (gameState === 'playing') {
@@ -437,7 +455,7 @@ export default function App() {
           // Kiểm tra điều kiện thắng
           const remainingSelectedUnseen = newList.filter(question => questionMatchesTables(question, settings.selectedTables));
           if (remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
-            setTimeout(() => setGameState('congrats'), 1600);
+            queueCongrats();
           }
           return newList;
         });
@@ -446,8 +464,10 @@ export default function App() {
       }
       
       // Chuyển câu sau 1.5s
-      setTimeout(() => {
+      clearTimeout(nextQuestionTimeoutRef.current);
+      nextQuestionTimeoutRef.current = setTimeout(() => {
         generateQuestion();
+        nextQuestionTimeoutRef.current = null;
       }, 1500);
       
     } else {
@@ -478,19 +498,39 @@ export default function App() {
       // Kiểm tra nếu cả hai danh sách đều đã rỗng
       const remainingSelectedReview = newList.filter(question => questionMatchesTables(question, settings.selectedTables));
       if (remainingSelectedReview.length === 0 && activeUnseenList.length === 0) {
-        setTimeout(() => setGameState('congrats'), 1600);
+        queueCongrats();
       }
       
       return newList;
     });
   };
 
+  const resetSessionData = () => {
+    setScreenTime(0);
+    setReviewList([]);
+    setUnseenList(generateInitialPool());
+    setCorrectTotal(0);
+    setWrongTotal(0);
+    setCurrentQ(null);
+    setSelectedAns(null);
+    setTimer(settings.timeLimit);
+  };
+
   const handleEndSession = () => {
     clearInterval(timerRef.current);
+    clearPendingTransitions();
+    setSummaryStats({
+      correctTotal,
+      wrongTotal,
+      reviewCount: activeReviewList.length,
+      screenTime,
+    });
+    resetSessionData();
     setGameState('summary');
   };
 
   const resetAllData = () => {
+    setSummaryStats(null);
     localStorage.removeItem('math_screenTime');
     localStorage.removeItem('math_reviewList');
     localStorage.removeItem('math_correctTotal');
@@ -508,6 +548,12 @@ export default function App() {
     if (m > 0) str += `${m} phút `;
     if (s > 0) str += `${s} giây`;
     return str.trim();
+  };
+  const visibleSummary = summaryStats || {
+    correctTotal,
+    wrongTotal,
+    reviewCount: activeReviewList.length,
+    screenTime,
   };
 
   // --- RENDER COMPONENT ---
@@ -896,22 +942,22 @@ export default function App() {
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                 <CheckCircle size={16} className="md:w-5 md:h-5 text-green-500"/> Câu đúng:
               </div>
-              <div className="font-black text-lg md:text-2xl text-green-600 text-right">{correctTotal}</div>
+              <div className="font-black text-lg md:text-2xl text-green-600 text-right">{visibleSummary.correctTotal}</div>
               
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                 <XCircle size={16} className="md:w-5 md:h-5 text-red-500"/> Câu sai:
               </div>
-              <div className="font-black text-lg md:text-2xl text-red-600 text-right">{wrongTotal}</div>
+              <div className="font-black text-lg md:text-2xl text-red-600 text-right">{visibleSummary.wrongTotal}</div>
               
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                 <BookOpen size={16} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn:
               </div>
-              <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{activeReviewList.length}</div>
+              <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{visibleSummary.reviewCount}</div>
               
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                 <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem:
               </div>
-              <div className="font-black text-base md:text-xl text-purple-600 text-right">{formatTime(screenTime)}</div>
+              <div className="font-black text-base md:text-xl text-purple-600 text-right">{formatTime(visibleSummary.screenTime)}</div>
             </div>
 
             <button 
@@ -1019,7 +1065,7 @@ export default function App() {
             )}
 
             {/* NÚT KẾT THÚC BUỔI HỌC */}
-            <div className="mt-3 md:mt-8 pt-2.5 md:pt-5 border-t-2 border-gray-100 flex justify-center">
+            <div className="relative z-40 mt-3 md:mt-8 pt-2.5 md:pt-5 border-t-2 border-gray-100 flex justify-center">
               <button 
                 onClick={handleEndSession}
                 className="flex items-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-sm md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full"
