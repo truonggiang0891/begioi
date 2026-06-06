@@ -24,7 +24,7 @@ body {
 
 .app-shell--main {
   overflow: hidden;
-  padding-top: clamp(0.375rem, calc((100dvh - 640px) * 0.36), 4.5rem);
+  padding-top: clamp(0.375rem, calc((100dvh - 640px) * 0.47), 6rem);
   padding-bottom: 0.375rem;
 }
 
