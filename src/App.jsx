@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
-const SOUND_VOLUME = 0.2;
+const SOUND_VOLUME = 0.23;
 
 const playSound = (type) => {
   try {
@@ -44,6 +44,9 @@ const MIN_TIME = 0;
 const ADMIN_PIN = 'Truonggiang1@';
 const SETTINGS_KEY = 'math_settings';
 const USER_NAME_KEY = 'math_userName';
+const USER_AVATAR_KEY = 'math_userAvatar';
+const AVATAR_SIZE = 160;
+const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
@@ -70,6 +73,42 @@ const loadSettings = () => {
     return DEFAULT_SETTINGS;
   }
 };
+
+const resizeAvatarFile = (file) => new Promise((resolve, reject) => {
+  if (!ACCEPTED_AVATAR_TYPES.has(file.type)) {
+    reject(new Error('Unsupported avatar type'));
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onerror = () => reject(new Error('Cannot read avatar'));
+  reader.onload = () => {
+    const image = new Image();
+    image.onerror = () => reject(new Error('Cannot load avatar'));
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = AVATAR_SIZE;
+      canvas.height = AVATAR_SIZE;
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        reject(new Error('Cannot resize avatar'));
+        return;
+      }
+
+      const scale = Math.max(AVATAR_SIZE / image.width, AVATAR_SIZE / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      const x = (AVATAR_SIZE - width) / 2;
+      const y = (AVATAR_SIZE - height) / 2;
+
+      context.drawImage(image, x, y, width, height);
+      resolve(canvas.toDataURL('image/webp', 0.82));
+    };
+    image.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
 
 // Tạo mốc 100 câu hỏi cố định theo bảng cộng 1 đến 10 (cộng từ 0 đến 9)
 const generateInitialPool = () => {
@@ -106,6 +145,8 @@ export default function App() {
   });
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
+  const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
+  const [draftUserAvatar, setDraftUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(loadSettings);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -113,7 +154,7 @@ export default function App() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [adminError, setAdminError] = useState('');
-  const [userNameSaved, setUserNameSaved] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
   const [settingsSaved, setSettingsSaved] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
@@ -128,10 +169,11 @@ export default function App() {
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
     setShowUserNameForm(shouldOpen);
-    setUserNameSaved(false);
+    setAvatarError('');
 
     if (shouldOpen) {
       setDraftUserName(userName);
+      setDraftUserAvatar(userAvatar);
       setIsAdmin(false);
       setShowAdminLogin(false);
       setAdminError('');
@@ -145,8 +187,24 @@ export default function App() {
     const nextName = draftUserName.trim().slice(0, 28);
     setUserName(nextName);
     setDraftUserName(nextName);
+    setUserAvatar(draftUserAvatar);
     setShowUserNameForm(false);
-    setUserNameSaved(true);
+    setAvatarError('');
+  };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const avatar = await resizeAvatarFile(file);
+      setDraftUserAvatar(avatar);
+      setAvatarError('');
+    } catch {
+      setAvatarError('Ảnh cần là jpg, jpeg, png hoặc webp');
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const closeAdminPanel = () => {
@@ -169,7 +227,7 @@ export default function App() {
     setIsAdmin(true);
     setDraftSettings(settings);
     setShowUserNameForm(false);
-    setUserNameSaved(false);
+    setAvatarError('');
     setShowAdminLogin(false);
     setAdminPin('');
     setAdminError('');
@@ -193,14 +251,19 @@ export default function App() {
 
   // --- LƯU DỮ LIỆU ---
   useEffect(() => {
-    localStorage.setItem('math_screenTime', screenTime.toString());
-    localStorage.setItem('math_reviewList', JSON.stringify(reviewList));
-    localStorage.setItem('math_correctTotal', correctTotal.toString());
-    localStorage.setItem('math_unseenList', JSON.stringify(unseenList));
-    localStorage.setItem('math_wrongTotal', wrongTotal.toString());
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    localStorage.setItem(USER_NAME_KEY, userName);
-  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, settings, userName]);
+    try {
+      localStorage.setItem('math_screenTime', screenTime.toString());
+      localStorage.setItem('math_reviewList', JSON.stringify(reviewList));
+      localStorage.setItem('math_correctTotal', correctTotal.toString());
+      localStorage.setItem('math_unseenList', JSON.stringify(unseenList));
+      localStorage.setItem('math_wrongTotal', wrongTotal.toString());
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      localStorage.setItem(USER_NAME_KEY, userName);
+      localStorage.setItem(USER_AVATAR_KEY, userAvatar);
+    } catch {
+      console.log("Cannot save data");
+    }
+  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, settings, userName, userAvatar]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback(() => {
@@ -373,7 +436,6 @@ export default function App() {
     localStorage.removeItem('math_correctTotal');
     localStorage.removeItem('math_unseenList');
     localStorage.removeItem('math_wrongTotal');
-    localStorage.removeItem(USER_NAME_KEY);
     window.location.reload();
   };
 
@@ -390,14 +452,14 @@ export default function App() {
 
   // --- RENDER COMPONENT ---
   return (
-    <div className="min-h-screen bg-sky-100 font-sans flex flex-col items-center py-4 px-3 md:py-6 md:px-4">
+    <div className="min-h-screen bg-sky-100 font-sans flex flex-col items-center py-2 px-2 md:py-5 md:px-4">
       {/* ROLE LOGIN */}
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-2 md:p-3">
+      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-2 p-1.5 md:p-2">
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={toggleUserNameForm}
-            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-2 px-2 font-extrabold text-sm md:text-base transition-all ${
               showUserNameForm
                 ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
                 : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
@@ -411,12 +473,12 @@ export default function App() {
             onClick={() => {
               if (isAdmin) return;
               setShowUserNameForm(false);
-              setUserNameSaved(false);
+              setAvatarError('');
               setShowAdminLogin(prev => !prev);
               setAdminError('');
               setSettingsSaved(false);
             }}
-            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-3 px-2 font-extrabold text-sm md:text-base transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-2 px-2 font-extrabold text-sm md:text-base transition-all ${
               isAdmin
                 ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
                 : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
@@ -427,40 +489,62 @@ export default function App() {
         </div>
 
         {showUserNameForm && (
-          <form onSubmit={saveUserName} className="mt-3">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <label className="relative flex-1">
-                <UserRound size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
-                <input
-                  type="text"
-                  value={draftUserName}
-                  onChange={(event) => {
-                    setDraftUserName(event.target.value.slice(0, 28));
-                    setUserNameSaved(false);
-                  }}
-                  placeholder="Nhập tên"
-                  aria-label="Người dùng"
-                  className="w-full rounded-xl border-2 border-blue-100 bg-blue-50 py-3 pl-10 pr-3 text-base font-bold text-blue-900 outline-none focus:border-blue-400"
-                />
-              </label>
+          <form onSubmit={saveUserName} className="mt-2 rounded-xl border-2 border-blue-100 bg-blue-50 p-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-blue-100 shadow-sm">
+                {draftUserAvatar ? (
+                  <img src={draftUserAvatar} alt="Ảnh đại diện xem trước" className="h-full w-full object-cover" />
+                ) : (
+                  <UserRound size={22} className="text-blue-500" />
+                )}
+              </div>
+              <input
+                type="text"
+                value={draftUserName}
+                onChange={(event) => setDraftUserName(event.target.value.slice(0, 28))}
+                placeholder="Nhập tên"
+                aria-label="Người dùng"
+                className="min-w-0 flex-1 rounded-xl border-2 border-blue-100 bg-white py-2 px-3 text-base font-bold text-blue-900 outline-none focus:border-blue-400"
+              />
               <button
                 type="submit"
-                className="flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm md:text-base font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none transition-all"
+                className="flex items-center justify-center gap-1 rounded-xl bg-blue-500 px-3 py-2 text-sm md:text-base font-extrabold text-white shadow-[0_3px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none transition-all"
               >
                 <Save size={18} /> Lưu
               </button>
             </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-2 pl-[52px]">
+              <label className="cursor-pointer rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-blue-700 border-2 border-blue-100 hover:border-blue-300 transition-colors">
+                Tải ảnh đại diện
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                  className="sr-only"
+                />
+              </label>
+              {draftUserAvatar && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraftUserAvatar('');
+                    setAvatarError('');
+                  }}
+                  className="rounded-lg bg-white/80 px-3 py-2 text-xs md:text-sm font-bold text-gray-500 hover:text-red-500 transition-colors"
+                >
+                  Xóa ảnh
+                </button>
+              )}
+              {avatarError && (
+                <div className="text-xs font-bold text-red-500">{avatarError}</div>
+              )}
+            </div>
           </form>
         )}
 
-        {userNameSaved && (
-          <div className="mt-2 text-center text-sm font-extrabold text-green-600">
-            Đã lưu người dùng
-          </div>
-        )}
-
         {!isAdmin && showAdminLogin && (
-          <form onSubmit={handleAdminLogin} className="mt-3">
+          <form onSubmit={handleAdminLogin} className="mt-2">
             <div className="flex flex-col sm:flex-row gap-2">
               <label className="relative flex-1">
                 <LockKeyhole size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
@@ -473,12 +557,12 @@ export default function App() {
                   }}
                   placeholder="Mã Admin"
                   aria-label="Mã Admin"
-                  className="w-full rounded-xl border-2 border-purple-100 bg-purple-50 py-3 pl-10 pr-3 text-base font-bold text-purple-900 outline-none focus:border-purple-400"
+                  className="w-full rounded-xl border-2 border-purple-100 bg-purple-50 py-2 pl-10 pr-3 text-base font-bold text-purple-900 outline-none focus:border-purple-400"
                 />
               </label>
               <button
                 type="submit"
-                className="rounded-xl bg-purple-500 px-5 py-3 text-sm md:text-base font-extrabold text-white shadow-[0_4px_0_rgb(126,34,206)] active:translate-y-1 active:shadow-none transition-all"
+                className="rounded-xl bg-purple-500 px-5 py-2 text-sm md:text-base font-extrabold text-white shadow-[0_3px_0_rgb(126,34,206)] active:translate-y-1 active:shadow-none transition-all"
               >
                 Đăng nhập
               </button>
@@ -491,12 +575,12 @@ export default function App() {
       </div>
 
       {isAdmin && (
-        <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white mb-4 md:mb-6 p-4 md:p-5">
-          <div className="flex items-center gap-2 text-purple-700 font-black text-lg md:text-xl mb-4">
+        <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white mb-2 md:mb-4 p-3 md:p-5">
+          <div className="flex items-center gap-2 text-purple-700 font-black text-lg md:text-xl mb-3">
             <Settings size={22} className="md:w-6 md:h-6" /> Cài đặt Admin
           </div>
 
-          <form onSubmit={saveAdminSettings} className="space-y-5">
+          <form onSubmit={saveAdminSettings} className="space-y-4 md:space-y-5">
             <label className="block">
               <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
                 <Clock size={18} className="text-blue-500" /> Thời gian đếm ngược mỗi câu
@@ -611,43 +695,52 @@ export default function App() {
       )}
 
       {/* HEADER */}
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4 md:mb-6">
-        <div className="bg-blue-500 text-white text-center py-3 md:py-4 relative overflow-hidden">
+      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-1.5 md:mb-4">
+        <div className="bg-blue-500 text-white text-center py-1.5 md:py-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
-          <h1 className="relative z-10 px-3 text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
-            Xin chào {displayName}
-          </h1>
+          <div className="relative z-10 flex items-center justify-center gap-2 px-3">
+            <div className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-white/20">
+              {userAvatar ? (
+                <img src={userAvatar} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+              ) : (
+                <UserRound size={24} className="text-white" />
+              )}
+            </div>
+            <h1 className="min-w-0 text-lg sm:text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
+              Xin chào, {displayName}
+            </h1>
+          </div>
         </div>
         
         {/* STATS */}
-        <div className="p-3 md:p-4 grid grid-cols-3 gap-2 md:gap-3 bg-white">
-          <div className="flex flex-col items-center justify-center p-2 bg-green-100 rounded-xl md:rounded-2xl border-2 border-green-200">
+        <div className="p-1.5 md:p-4 grid grid-cols-3 gap-1.5 md:gap-3 bg-white">
+          <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-green-100 rounded-xl md:rounded-2xl border-2 border-green-200">
             <div className="flex items-center gap-1 text-green-700 font-bold text-[11px] sm:text-xs md:text-base">
               <CheckCircle size={16} className="md:w-5 md:h-5" /> Đã đúng
             </div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-black text-green-600">{correctTotal}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-green-600">{correctTotal}</div>
           </div>
           
-          <div className="flex flex-col items-center justify-center p-2 bg-amber-100 rounded-xl md:rounded-2xl border-2 border-amber-200">
+          <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-amber-100 rounded-xl md:rounded-2xl border-2 border-amber-200">
             <div className="flex items-center gap-1 text-amber-700 font-bold text-[11px] sm:text-xs md:text-base">
               <BookOpen size={16} className="md:w-5 md:h-5" /> Cần ôn
             </div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-black text-amber-600">{reviewList.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600">{reviewList.length}</div>
           </div>
 
-          <div className="flex flex-col items-center justify-center p-2 bg-blue-100 rounded-xl md:rounded-2xl border-2 border-blue-200">
+          <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-blue-100 rounded-xl md:rounded-2xl border-2 border-blue-200">
             <div className="flex items-center gap-1 text-blue-700 font-bold text-[11px] sm:text-xs md:text-base">
               <Star size={16} className="md:w-5 md:h-5" /> Chưa làm
             </div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-black text-blue-600">{unseenList.length}</div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{unseenList.length}</div>
           </div>
           
-          <div className="col-span-3 flex flex-col items-center justify-center p-2 md:p-3 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200 mt-1">
-            <div className="flex items-center gap-1 md:gap-2 text-purple-700 font-bold text-sm md:text-lg mb-1">
+          <div className="col-span-3 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
+            <div className="flex items-center gap-1 md:gap-2 text-purple-700 font-bold text-sm md:text-lg">
               <Smartphone size={20} className="md:w-6 md:h-6 animate-pulse" /> Giờ xem điện thoại
             </div>
-            <div className="text-2xl md:text-3xl font-black text-purple-600 text-center">
+            <div className="text-lg md:text-3xl font-black text-purple-600 text-center">
               {formatTime(screenTime)} <span className="text-lg md:text-xl text-purple-400">/ 90p</span>
             </div>
           </div>
@@ -655,15 +748,15 @@ export default function App() {
       </div>
 
       {/* MAIN GAME AREA */}
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 border-4 border-white relative min-h-[350px] md:min-h-[400px] flex flex-col justify-center">
+      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl p-2.5 md:p-6 border-4 border-white relative min-h-[240px] md:min-h-[390px] flex flex-col justify-center">
         
         {gameState === 'idle' ? (
           <div className="text-center">
-            <div className="text-6xl md:text-8xl mb-4 md:mb-6">🚀</div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-700 mb-6 md:mb-8">Bé đã sẵn sàng chưa?</h2>
+            <div className="text-5xl md:text-8xl mb-2 md:mb-6">🚀</div>
+            <h2 className="text-lg md:text-2xl font-bold text-gray-700 mb-3 md:mb-8">Bé đã sẵn sàng chưa?</h2>
             <button 
               onClick={generateQuestion}
-              className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-2xl md:text-3xl font-extrabold py-4 px-8 md:py-5 md:px-10 rounded-full shadow-[0_6px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3"
+              className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3"
             >
               <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" /> BẮT ĐẦU
             </button>
@@ -728,7 +821,7 @@ export default function App() {
               ></div>
             </div>
 
-            <div className="text-center mb-2 mt-1 md:mt-2 flex justify-center items-center gap-1 md:gap-2">
+            <div className="text-center mb-1 mt-1 md:mt-2 flex justify-center items-center gap-1 md:gap-2">
               <Clock size={20} className={`md:w-6 md:h-6 ${timer <= 3 ? 'text-red-500 animate-bounce' : 'text-gray-400'}`} />
               <span className={`text-base md:text-xl font-bold ${timer <= 3 ? 'text-red-500' : 'text-gray-500'}`}>
                 Còn lại: {timer} giây
@@ -736,14 +829,14 @@ export default function App() {
             </div>
 
             {/* QUESTION */}
-            <div className="text-center my-4 md:my-6">
-              <div className="text-5xl sm:text-6xl md:text-8xl font-black text-blue-900 drop-shadow-sm tracking-widest">
+            <div className="text-center my-2 md:my-6">
+              <div className="text-4xl sm:text-6xl md:text-8xl font-black text-blue-900 drop-shadow-sm">
                 {currentQ?.a} + {currentQ?.b} = ?
               </div>
             </div>
 
             {/* ANSWERS GRID */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4 md:mt-8">
+            <div className="grid grid-cols-2 gap-2.5 md:gap-4 mt-2 md:mt-8">
               {currentQ?.options.map((opt, idx) => {
                 let btnColor = "bg-sky-400 hover:bg-sky-500 shadow-[0_6px_0_rgb(2,132,199)] md:shadow-[0_8px_0_rgb(2,132,199)]";
                 let textColor = "text-white";
@@ -770,7 +863,7 @@ export default function App() {
                     key={idx}
                     disabled={gameState !== 'playing'}
                     onClick={() => handleAnswerClick(opt)}
-                    className={`${btnColor} ${textColor} text-4xl md:text-5xl font-black py-5 md:py-8 rounded-2xl md:rounded-3xl transition-all active:translate-y-2 active:shadow-[0_0px_0_rgb(2,132,199)] flex justify-center items-center`}
+                    className={`${btnColor} ${textColor} text-3xl md:text-5xl font-black py-3.5 md:py-8 rounded-2xl md:rounded-3xl transition-all active:translate-y-2 active:shadow-[0_0px_0_rgb(2,132,199)] flex justify-center items-center`}
                   >
                     {opt}
                   </button>
@@ -816,10 +909,10 @@ export default function App() {
             )}
 
             {/* NÚT KẾT THÚC BUỔI HỌC */}
-            <div className="mt-6 md:mt-8 pt-4 md:pt-5 border-t-2 border-gray-100 flex justify-center">
+            <div className="mt-3 md:mt-8 pt-2.5 md:pt-5 border-t-2 border-gray-100 flex justify-center">
               <button 
                 onClick={handleEndSession}
-                className="flex items-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-base md:text-lg transition-all py-3 px-6 md:py-3 md:px-8 rounded-full"
+                className="flex items-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-sm md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full"
               >
                 <StopCircle size={22} className="md:w-6 md:h-6" /> Kết thúc phiên học
               </button>
@@ -829,7 +922,7 @@ export default function App() {
       </div>
       
       {/* NÚT RESET ẨN BÊN DƯỚI DÀNH CHO PHỤ HUYNH */}
-      <div className="mt-6 md:mt-10">
+      <div className="mt-1 md:mt-6">
          {!showParentConfirm ? (
            <button 
               onClick={() => setShowParentConfirm(true)}
