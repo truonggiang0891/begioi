@@ -906,7 +906,7 @@ export default function App() {
       </div>
 
       {/* MAIN GAME AREA */}
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl p-2.5 md:p-6 border-4 border-white relative min-h-[240px] md:min-h-[390px] flex flex-col justify-center">
+      <div className={`w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl p-2.5 md:p-6 border-4 border-white relative ${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] flex flex-col justify-center`}>
         
         {gameState === 'idle' ? (
           <div className="text-center">
@@ -1021,30 +1021,35 @@ export default function App() {
 
             {/* PHẢN HỒI KHI SAI / HẾT GIỜ */}
             {isFeedbackPaused && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl md:rounded-3xl p-4 md:p-6 text-center border-4 md:border-8 border-red-100">
-                <XCircle className="w-16 h-16 md:w-20 md:h-20 text-red-500 mb-3 md:mb-4" />
-                <h3 className="text-2xl md:text-3xl font-black text-red-600 mb-2">
-                  {gameState === 'timeout_paused' ? 'Hết giờ mất rồi!' : 'Chưa đúng rồi nhé!'}
-                </h3>
-                <div className="text-2xl md:text-4xl font-bold text-gray-700 my-4 md:my-6 bg-gray-100 py-3 px-6 md:py-4 md:px-8 rounded-xl md:rounded-2xl w-full">
-                  Đáp án là: <span className="text-green-500 text-5xl md:text-6xl font-black block mt-2">{currentQ.ans}</span>
-                </div>
-                <div className="text-red-500 font-bold text-base md:text-lg mb-4 md:mb-6">
-                  - {formatTime(settings.penaltySec)} điện thoại 😢
-                </div>
-                <div className="flex w-full flex-col gap-3">
-                  <button
-                    onClick={generateQuestion}
-                    className="bg-blue-500 hover:bg-blue-600 text-white text-lg md:text-3xl font-extrabold py-2.5 px-6 md:py-4 md:px-12 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-2 active:shadow-none transition-all w-full"
-                  >
-                    Tiếp tục nhé!
-                  </button>
-                  <button
-                    onClick={handleEndSession}
-                    className="flex items-center justify-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-base md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full w-full"
-                  >
-                    <StopCircle size={20} className="md:w-6 md:h-6" /> Kết thúc phiên học
-                  </button>
+              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center overflow-hidden rounded-2xl md:rounded-3xl p-2.5 md:p-6 text-center border-4 md:border-8 border-red-100">
+                <div className="flex min-h-0 w-full flex-col items-center justify-center gap-2 md:gap-4">
+                  <h3 className="flex items-center justify-center gap-2 text-xl md:text-3xl font-black text-red-600 leading-tight">
+                    <XCircle size={22} className="md:w-8 md:h-8 shrink-0" />
+                    {gameState === 'timeout_paused' ? 'Hết giờ mất rồi!' : 'Chưa đúng rồi nhé!'}
+                  </h3>
+                  <div className="w-full rounded-xl md:rounded-2xl bg-gray-100 px-3 py-2 md:px-8 md:py-4">
+                    <div className="text-sm md:text-2xl font-bold text-gray-600">Đáp án đúng:</div>
+                    <div className="mt-0.5 text-3xl sm:text-4xl md:text-6xl font-black text-green-500 leading-tight">
+                      {currentQ.a} + {currentQ.b} = {currentQ.ans}
+                    </div>
+                  </div>
+                  <div className="text-red-500 font-bold text-sm md:text-lg">
+                    - {formatTime(settings.penaltySec)} xem điện thoại 😢
+                  </div>
+                  <div className="flex w-full flex-col gap-2 md:gap-3">
+                    <button
+                      onClick={generateQuestion}
+                      className="bg-blue-500 hover:bg-blue-600 text-white text-lg md:text-3xl font-extrabold py-2.5 px-6 md:py-4 md:px-12 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-2 active:shadow-none transition-all w-full"
+                    >
+                      Tiếp tục nhé!
+                    </button>
+                    <button
+                      onClick={handleEndSession}
+                      className="flex items-center justify-center gap-2 md:gap-3 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-base md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full w-full"
+                    >
+                      <StopCircle size={20} className="md:w-6 md:h-6" /> Kết thúc phiên học
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
