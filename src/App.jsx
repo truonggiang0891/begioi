@@ -957,7 +957,7 @@ export default function App() {
               <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{visibleSummary.reviewCount}</div>
               
               <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem:
+                <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem điện thoại:
               </div>
               <div className="font-black text-base md:text-xl text-purple-600 text-right">{formatTime(visibleSummary.screenTime)}</div>
             </div>
