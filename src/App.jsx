@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -359,6 +359,7 @@ export default function App() {
   const [avatarError, setAvatarError] = useState('');
   const [settingsError, setSettingsError] = useState('');
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [showAdminSettingsPanel, setShowAdminSettingsPanel] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
@@ -411,6 +412,7 @@ export default function App() {
       setAdminError('');
       setSettingsError('');
       setSettingsSaved(false);
+      setShowAdminSettingsPanel(false);
     }
   };
 
@@ -447,6 +449,7 @@ export default function App() {
     setAdminError('');
     setSettingsError('');
     setSettingsSaved(false);
+    setShowAdminSettingsPanel(false);
   };
 
   const handleAdminLogin = (event) => {
@@ -923,6 +926,145 @@ export default function App() {
           </div>
 
           <form onSubmit={saveAdminSettings} className="space-y-4 md:space-y-5">
+            <div className="rounded-xl border-2 border-slate-100 bg-slate-50 p-2">
+              <button
+                type="button"
+                onClick={() => setShowAdminSettingsPanel(prev => !prev)}
+                aria-expanded={showAdminSettingsPanel}
+                className="flex w-full items-center justify-between gap-3 rounded-lg bg-white px-3 py-3 text-left text-sm md:text-base font-extrabold text-slate-800 border-2 border-slate-100 hover:border-slate-300 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Settings size={18} className="text-slate-500" /> Thiết lập
+                </span>
+                <ChevronDown
+                  size={20}
+                  className={`text-slate-400 transition-transform ${showAdminSettingsPanel ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {showAdminSettingsPanel && (
+                <div className="space-y-4 pt-3">
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <Clock size={18} className="text-blue-500" /> Thời gian đếm ngược mỗi câu
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min="3"
+                        max="60"
+                        value={clampNumber(draftSettings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60)}
+                        onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
+                        className="flex-1 accent-blue-500"
+                      />
+                      <div className="flex items-center rounded-xl border-2 border-blue-100 bg-blue-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min="3"
+                          max="60"
+                          value={draftSettings.timeLimit}
+                          onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
+                          className="w-16 bg-transparent px-2 py-2 text-right text-lg font-black text-blue-700 outline-none"
+                          aria-label="Thời gian đếm ngược mỗi câu"
+                        />
+                        <span className="pr-3 text-sm font-bold text-blue-500">giây</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <Smartphone size={18} className="text-green-500" /> Thời gian xem điện thoại mỗi câu đúng
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min="5"
+                        max="600"
+                        step="5"
+                        value={clampNumber(draftSettings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600)}
+                        onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
+                        className="flex-1 accent-green-500"
+                      />
+                      <div className="flex items-center rounded-xl border-2 border-green-100 bg-green-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min="5"
+                          max="600"
+                          step="5"
+                          value={draftSettings.rewardSec}
+                          onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-green-700 outline-none"
+                          aria-label="Thời gian xem điện thoại mỗi câu đúng"
+                        />
+                        <span className="pr-3 text-sm font-bold text-green-500">giây</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <XCircle size={18} className="text-red-500" /> Thời gian bị trừ khi trả lời sai
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min="5"
+                        max="600"
+                        step="5"
+                        value={clampNumber(draftSettings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600)}
+                        onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
+                        className="flex-1 accent-red-500"
+                      />
+                      <div className="flex items-center rounded-xl border-2 border-red-100 bg-red-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min="5"
+                          max="600"
+                          step="5"
+                          value={draftSettings.penaltySec}
+                          onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-red-700 outline-none"
+                          aria-label="Thời gian bị trừ khi trả lời sai"
+                        />
+                        <span className="pr-3 text-sm font-bold text-red-500">giây</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <Volume2 size={18} className="text-purple-500" /> Âm lượng âm thanh
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max={MAX_SOUND_VOLUME_PERCENT}
+                        step="5"
+                        value={clampNumber(draftSettings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT)}
+                        onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
+                        className="flex-1 accent-purple-500"
+                      />
+                      <div className="flex items-center rounded-xl border-2 border-purple-100 bg-purple-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min="0"
+                          max={MAX_SOUND_VOLUME_PERCENT}
+                          step="5"
+                          value={draftSettings.soundVolumePercent}
+                          onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-purple-700 outline-none"
+                          aria-label="Âm lượng âm thanh"
+                        />
+                        <span className="pr-3 text-sm font-bold text-purple-500">%</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              )}
+            </div>
+
             <div className="rounded-xl border-2 border-indigo-100 bg-indigo-50 p-3">
               <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-indigo-800 mb-3">
                 <PencilLine size={18} className="text-indigo-500" /> Quản lý bài học
@@ -975,124 +1117,6 @@ export default function App() {
                 </div>
               )}
             </div>
-
-            <label className="block">
-              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
-                <Clock size={18} className="text-blue-500" /> Thời gian đếm ngược mỗi câu
-              </span>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="3"
-                  max="60"
-                  value={clampNumber(draftSettings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60)}
-                  onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
-                  className="flex-1 accent-blue-500"
-                />
-                <div className="flex items-center rounded-xl border-2 border-blue-100 bg-blue-50 overflow-hidden">
-                  <input
-                    type="number"
-                    min="3"
-                    max="60"
-                    value={draftSettings.timeLimit}
-                    onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
-                    className="w-16 bg-transparent px-2 py-2 text-right text-lg font-black text-blue-700 outline-none"
-                    aria-label="Thời gian đếm ngược mỗi câu"
-                  />
-                  <span className="pr-3 text-sm font-bold text-blue-500">giây</span>
-                </div>
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
-                <Smartphone size={18} className="text-green-500" /> Thời gian xem điện thoại mỗi câu đúng
-              </span>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="5"
-                  max="600"
-                  step="5"
-                  value={clampNumber(draftSettings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600)}
-                  onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
-                  className="flex-1 accent-green-500"
-                />
-                <div className="flex items-center rounded-xl border-2 border-green-100 bg-green-50 overflow-hidden">
-                  <input
-                    type="number"
-                    min="5"
-                    max="600"
-                    step="5"
-                    value={draftSettings.rewardSec}
-                    onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
-                    className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-green-700 outline-none"
-                    aria-label="Thời gian xem điện thoại mỗi câu đúng"
-                  />
-                  <span className="pr-3 text-sm font-bold text-green-500">giây</span>
-                </div>
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
-                <XCircle size={18} className="text-red-500" /> Thời gian bị trừ khi trả lời sai
-              </span>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="5"
-                  max="600"
-                  step="5"
-                  value={clampNumber(draftSettings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600)}
-                  onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
-                  className="flex-1 accent-red-500"
-                />
-                <div className="flex items-center rounded-xl border-2 border-red-100 bg-red-50 overflow-hidden">
-                  <input
-                    type="number"
-                    min="5"
-                    max="600"
-                    step="5"
-                    value={draftSettings.penaltySec}
-                    onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
-                    className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-red-700 outline-none"
-                    aria-label="Thời gian bị trừ khi trả lời sai"
-                  />
-                  <span className="pr-3 text-sm font-bold text-red-500">giây</span>
-                </div>
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
-                <Volume2 size={18} className="text-purple-500" /> Âm lượng âm thanh
-              </span>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="0"
-                  max={MAX_SOUND_VOLUME_PERCENT}
-                  step="5"
-                  value={clampNumber(draftSettings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT)}
-                  onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
-                  className="flex-1 accent-purple-500"
-                />
-                <div className="flex items-center rounded-xl border-2 border-purple-100 bg-purple-50 overflow-hidden">
-                  <input
-                    type="number"
-                    min="0"
-                    max={MAX_SOUND_VOLUME_PERCENT}
-                    step="5"
-                    value={draftSettings.soundVolumePercent}
-                    onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
-                    className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-purple-700 outline-none"
-                    aria-label="Âm lượng âm thanh"
-                  />
-                  <span className="pr-3 text-sm font-bold text-purple-500">%</span>
-                </div>
-              </div>
-            </label>
 
             {normalizeLessonType(draftSettings.lessonType) !== 'custom' && (
               <div className="rounded-xl border-2 border-amber-100 bg-amber-50 p-3">
