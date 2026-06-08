@@ -58,6 +58,8 @@ const ADMIN_PIN = 'Truonggiang1@';
 const SETTINGS_KEY = 'math_settings';
 const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
+const SESSION_HISTORY_KEY = 'math_sessionHistory';
+const MAX_SESSION_HISTORY = 10;
 const AVATAR_SIZE = 160;
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const ALL_ADDITION_TABLES = Array.from({ length: 10 }, (_, index) => index + 1);
@@ -93,6 +95,37 @@ const formatDateTime = (timestamp) => {
 
   const date = new Date(timestamp);
   return `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}:${padTwo(date.getSeconds())} ngày ${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}/${date.getFullYear()}`;
+};
+
+const normalizeSessionHistory = (history) => {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .map((entry) => ({
+      id: Number(entry.id || entry.startedAt || entry.endedAt),
+      startedAt: Number(entry.startedAt || entry.id || entry.endedAt),
+      endedAt: Number(entry.endedAt),
+      correctTotal: clampNumber(entry.correctTotal, 0, 0, 9999),
+      wrongTotal: clampNumber(entry.wrongTotal, 0, 0, 9999),
+      timeoutTotal: clampNumber(entry.timeoutTotal, 0, 0, 9999),
+      reviewCount: clampNumber(entry.reviewCount, 0, 0, 9999),
+      screenTime: clampNumber(entry.screenTime, 0, MIN_TIME, MAX_TIME),
+      durationSec: clampNumber(entry.durationSec, 0, 0, 24 * 60 * 60),
+      studentName: String(entry.studentName || 'bé').slice(0, 28),
+      lessonLabel: String(entry.lessonLabel || '').slice(0, 30),
+    }))
+    .filter((entry) => Number.isFinite(entry.id) && Number.isFinite(entry.endedAt))
+    .sort((a, b) => b.endedAt - a.endedAt)
+    .slice(0, MAX_SESSION_HISTORY);
+};
+
+const loadSessionHistory = () => {
+  try {
+    const savedHistory = localStorage.getItem(SESSION_HISTORY_KEY);
+    return savedHistory ? normalizeSessionHistory(JSON.parse(savedHistory)) : [];
+  } catch {
+    return [];
+  }
 };
 
 const normalizeSelectedTables = (tables) => {
@@ -359,6 +392,7 @@ export default function App() {
     const savedTimeout = localStorage.getItem('math_timeoutTotal');
     return savedTimeout ? parseInt(savedTimeout, 10) : 0;
   });
+  const [sessionHistory, setSessionHistory] = useState(() => loadSessionHistory());
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
@@ -378,6 +412,7 @@ export default function App() {
   const [currentQ, setCurrentQ] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
   const [gameState, setGameState] = useState('idle'); // idle, playing, wrong_paused, timeout_paused, celebrating, congrats, summary
+  const [practiceMode, setPracticeMode] = useState('normal'); // normal, review
   const [selectedAns, setSelectedAns] = useState(null);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
   const [summaryStats, setSummaryStats] = useState(null);
@@ -547,6 +582,7 @@ export default function App() {
       setCurrentQ(null);
       setSelectedAns(null);
       setSummaryStats(null);
+      setPracticeMode('normal');
       setGameState('idle');
       setTimer(nextSettings.timeLimit);
     } else {
@@ -566,13 +602,14 @@ export default function App() {
       localStorage.setItem('math_unseenList', JSON.stringify(unseenList));
       localStorage.setItem('math_wrongTotal', wrongTotal.toString());
       localStorage.setItem('math_timeoutTotal', timeoutTotal.toString());
+      localStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(sessionHistory));
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
       localStorage.setItem(USER_NAME_KEY, userName);
       localStorage.setItem(USER_AVATAR_KEY, userAvatar);
     } catch {
       console.log("Cannot save data");
     }
-  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, timeoutTotal, settings, userName, userAvatar]);
+  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, timeoutTotal, sessionHistory, settings, userName, userAvatar]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback((options = {}) => {
@@ -580,13 +617,23 @@ export default function App() {
     let isReview = false;
     let isUnseen = false;
 
-    const questionOptions = options?.activePool ? options : {};
+    const questionOptions = options || {};
+    const selectedPracticeMode = questionOptions.practiceMode || practiceMode;
     const playablePool = questionOptions.activePool || activePool;
     const reviewQuestions = questionOptions.activeReviewList || activeReviewList;
-    const unseenQuestions = questionOptions.activeUnseenList || activeUnseenList;
+    const unseenQuestions = selectedPracticeMode === 'review'
+      ? []
+      : questionOptions.activeUnseenList || activeUnseenList;
     
     const canPullReview = reviewQuestions.length > 0;
     const canPullUnseen = unseenQuestions.length > 0;
+
+    if (selectedPracticeMode === 'review' && !canPullReview) {
+      setCurrentQ(null);
+      setPracticeMode('normal');
+      setGameState('congrats');
+      return;
+    }
 
     if (playablePool.length === 0) {
       setCurrentQ(null);
@@ -618,7 +665,7 @@ export default function App() {
     setTimer(settings.timeLimit);
     setSelectedAns(null);
     setGameState('playing');
-  }, [activePool, activeReviewList, activeUnseenList, settings.timeLimit]);
+  }, [activePool, activeReviewList, activeUnseenList, practiceMode, settings.timeLimit]);
 
   // --- XỬ LÝ TRẢ LỜI ---
   function updateScreenTime(amount) {
@@ -664,12 +711,12 @@ export default function App() {
     addToReview(currentQ);
   }
 
-  const clearPendingTransitions = () => {
+  const clearPendingTransitions = useCallback(() => {
     clearTimeout(nextQuestionTimeoutRef.current);
     clearTimeout(congratsTimeoutRef.current);
     nextQuestionTimeoutRef.current = null;
     congratsTimeoutRef.current = null;
-  };
+  }, []);
 
   const queueCongrats = () => {
     clearTimeout(congratsTimeoutRef.current);
@@ -760,7 +807,7 @@ export default function App() {
       // Kiểm tra nếu cả hai danh sách đều đã rỗng
       const remainingKeys = new Set(newList.map(getQuestionKey));
       const remainingSelectedReview = activePool.filter(item => remainingKeys.has(item.id));
-      if (remainingSelectedReview.length === 0 && activeUnseenList.length === 0) {
+      if (remainingSelectedReview.length === 0 && (practiceMode === 'review' || activeUnseenList.length === 0)) {
         queueCongrats();
       }
       
@@ -768,13 +815,13 @@ export default function App() {
     });
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = useCallback(() => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
     setShowParentConfirm(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
-    setSummaryStats({
+    const nextSummary = {
       correctTotal,
       wrongTotal,
       timeoutTotal,
@@ -784,15 +831,52 @@ export default function App() {
       endedAt,
       studentName: displayName,
       studentAvatar: userAvatar,
-    });
+    };
+
+    setSummaryStats(nextSummary);
+    setSessionHistory(prev => normalizeSessionHistory([
+      {
+        ...nextSummary,
+        id: startedAt,
+        startedAt,
+        lessonLabel: currentLessonType.label,
+      },
+      ...prev.filter(entry => entry.id !== startedAt),
+    ]));
     setGameState('summary');
-  };
+  }, [
+    activeReviewList.length,
+    clearPendingTransitions,
+    correctTotal,
+    currentLessonType.label,
+    displayName,
+    screenTime,
+    timeoutTotal,
+    userAvatar,
+    wrongTotal,
+  ]);
 
   const handleContinueLearning = () => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    setPracticeMode('normal');
     setSummaryStats(null);
-    generateQuestion();
+    generateQuestion({ practiceMode: 'normal' });
+  };
+
+  const handleReviewPractice = () => {
+    if (activeReviewList.length === 0) return;
+
+    clearInterval(timerRef.current);
+    clearPendingTransitions();
+    setPracticeMode('review');
+    setSummaryStats(null);
+    generateQuestion({
+      activePool,
+      activeReviewList,
+      activeUnseenList: [],
+      practiceMode: 'review',
+    });
   };
 
   const handleRestartLearning = () => {
@@ -810,11 +894,13 @@ export default function App() {
     setCurrentQ(null);
     setSelectedAns(null);
     setSummaryStats(null);
+    setPracticeMode('normal');
     setTimer(settings.timeLimit);
     generateQuestion({
       activePool: freshPool,
       activeReviewList: [],
       activeUnseenList: freshPool,
+      practiceMode: 'normal',
     });
   };
 
@@ -826,6 +912,7 @@ export default function App() {
     localStorage.removeItem('math_unseenList');
     localStorage.removeItem('math_wrongTotal');
     localStorage.removeItem('math_timeoutTotal');
+    localStorage.removeItem(SESSION_HISTORY_KEY);
     window.location.reload();
   };
 
@@ -1000,6 +1087,46 @@ export default function App() {
         <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white mb-2 md:mb-4 p-3 md:p-5">
           <div className="flex items-center gap-2 text-purple-700 font-black text-lg md:text-xl mb-3">
             <Settings size={22} className="md:w-6 md:h-6" /> Cài đặt Admin
+          </div>
+
+          <div className="mb-4 rounded-xl border-2 border-blue-100 bg-blue-50 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-blue-800">
+                <BarChart size={18} className="text-blue-500" /> Lịch sử buổi học
+              </div>
+              <div className="rounded-full bg-white px-2 py-1 text-xs font-black text-blue-600">
+                {sessionHistory.length}/{MAX_SESSION_HISTORY}
+              </div>
+            </div>
+
+            {sessionHistory.length === 0 ? (
+              <div className="rounded-lg bg-white px-3 py-2 text-center text-xs md:text-sm font-bold text-gray-500">
+                Chưa có buổi học nào được lưu.
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                {sessionHistory.map((entry) => (
+                  <div key={entry.id} className="rounded-lg border-2 border-blue-100 bg-white p-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm md:text-base font-black text-blue-800">
+                          {entry.studentName}
+                          {entry.lessonLabel ? <span className="text-xs md:text-sm text-blue-500"> - {entry.lessonLabel}</span> : null}
+                        </div>
+                        <div className="text-[11px] md:text-xs font-bold text-gray-500">{formatDateTime(entry.endedAt)}</div>
+                      </div>
+                      <div className="shrink-0 text-right text-xs md:text-sm font-black text-purple-600">{formatTime(entry.screenTime)}</div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[11px] md:text-xs font-extrabold">
+                      <div className="rounded-md bg-green-50 px-1.5 py-1 text-green-700">Đúng {entry.correctTotal}</div>
+                      <div className="rounded-md bg-red-50 px-1.5 py-1 text-red-700">Sai {entry.wrongTotal}</div>
+                      <div className="rounded-md bg-orange-50 px-1.5 py-1 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
+                      <div className="rounded-md bg-sky-50 px-1.5 py-1 text-sky-700">{formatDuration(entry.durationSec)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <form onSubmit={saveAdminSettings} className="space-y-4 md:space-y-5">
@@ -1338,12 +1465,27 @@ export default function App() {
           <div className="text-center">
             <div className="text-5xl md:text-8xl mb-2 md:mb-6">🚀</div>
             <h2 className="text-lg md:text-2xl font-bold text-gray-700 mb-3 md:mb-8">Bé đã sẵn sàng chưa?</h2>
-            <button 
-              onClick={generateQuestion}
-              className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3"
-            >
-              <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" /> BẮT ĐẦU
-            </button>
+            <div className="grid gap-2 md:gap-3">
+              <button
+                onClick={() => {
+                  setPracticeMode('normal');
+                  generateQuestion({ practiceMode: 'normal' });
+                }}
+                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
+              >
+                <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" /> BẮT ĐẦU
+              </button>
+              {activeReviewList.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleReviewPractice}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-2.5 text-base md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(180,83,9)] active:translate-y-1 active:shadow-none transition-all"
+                >
+                  <BookOpen size={21} className="md:w-6 md:h-6" />
+                  Ôn câu sai
+                </button>
+              )}
+            </div>
           </div>
         ) : gameState === 'congrats' ? (
           <div className="text-center animate-bounce-in">
@@ -1444,13 +1586,25 @@ export default function App() {
                 <Play fill="white" size={22} className="md:w-6 md:h-6" />
                 Tiếp tục học
               </button>
-              <button
-                type="button"
-                onClick={handleRestartLearning}
-                className="bg-blue-500 hover:bg-blue-600 active:transform active:scale-95 text-white text-lg md:text-3xl font-bold py-2.5 px-6 md:py-3.5 md:px-10 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_6px_0_rgb(29,78,216)] transition-all mx-auto w-full"
-              >
-                Học lại từ đầu
-              </button>
+              <div className={`grid gap-2 ${visibleSummary.reviewCount > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {visibleSummary.reviewCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleReviewPractice}
+                    className="flex items-center justify-center gap-1.5 rounded-full bg-amber-500 px-3 py-2.5 md:py-3.5 text-base md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(180,83,9)] active:translate-y-1 active:shadow-none transition-all"
+                  >
+                    <BookOpen size={20} className="md:w-6 md:h-6" />
+                    Ôn câu sai
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleRestartLearning}
+                  className="bg-blue-500 hover:bg-blue-600 active:transform active:scale-95 text-white text-base md:text-3xl font-bold py-2.5 px-3 md:py-3.5 md:px-10 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_6px_0_rgb(29,78,216)] transition-all mx-auto w-full"
+                >
+                  Học lại từ đầu
+                </button>
+              </div>
             </div>
           </div>
         ) : (
