@@ -823,14 +823,31 @@ export default function App() {
 
       if (!blob) throw new Error('Cannot create summary image');
 
-      const imageUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
       const endedAtLabel = visibleSummary.endedAt
         ? new Date(visibleSummary.endedAt).toISOString().slice(0, 10)
         : new Date().toISOString().slice(0, 10);
+      const fileName = `ket-qua-${makeSafeFileName(visibleSummary.studentName)}-${endedAtLabel}.png`;
+      const imageFile = new File([blob], fileName, { type: 'image/png' });
+      const shareData = {
+        files: [imageFile],
+        title: 'Kết quả học tập',
+        text: `Kết quả học tập của ${visibleSummary.studentName}`,
+      };
+
+      if (navigator.canShare?.({ files: [imageFile] }) && navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (shareError) {
+          if (shareError?.name === 'AbortError') return;
+        }
+      }
+
+      const imageUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
       link.href = imageUrl;
-      link.download = `ket-qua-${makeSafeFileName(visibleSummary.studentName)}-${endedAtLabel}.png`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
