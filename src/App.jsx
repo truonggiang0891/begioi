@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import html2canvas from 'html2canvas';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, Download, Share2, ExternalLink, X } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -95,13 +94,6 @@ const formatDateTime = (timestamp) => {
   const date = new Date(timestamp);
   return `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}:${padTwo(date.getSeconds())} ngày ${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}/${date.getFullYear()}`;
 };
-
-const makeSafeFileName = (value) => String(value || 'be')
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .replace(/[^a-zA-Z0-9]+/g, '-')
-  .replace(/^-+|-+$/g, '')
-  .toLowerCase() || 'be';
 
 const normalizeSelectedTables = (tables) => {
   if (!Array.isArray(tables)) return ALL_ADDITION_TABLES;
@@ -363,6 +355,10 @@ export default function App() {
     const savedWrong = localStorage.getItem('math_wrongTotal');
     return savedWrong ? parseInt(savedWrong, 10) : 0;
   });
+  const [timeoutTotal, setTimeoutTotal] = useState(() => {
+    const savedTimeout = localStorage.getItem('math_timeoutTotal');
+    return savedTimeout ? parseInt(savedTimeout, 10) : 0;
+  });
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
@@ -385,16 +381,11 @@ export default function App() {
   const [selectedAns, setSelectedAns] = useState(null);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
   const [summaryStats, setSummaryStats] = useState(null);
-  const [isSavingSummary, setIsSavingSummary] = useState(false);
-  const [summarySaveError, setSummarySaveError] = useState('');
-  const [summaryImage, setSummaryImage] = useState(null);
   
   const timerRef = useRef(null);
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
   const sessionStartedAtRef = useRef(null);
-  const summaryCaptureRef = useRef(null);
-  const summaryImageUrlRef = useRef('');
   const displayName = userName.trim() || 'bé';
   const activePool = useMemo(() => generateInitialPool(settings), [settings]);
   const activeReviewList = useMemo(
@@ -422,21 +413,6 @@ export default function App() {
     () => parseCustomQuestions(draftSettings.customQuestionsText),
     [draftSettings.customQuestionsText]
   );
-
-  const setPreparedSummaryImage = useCallback((nextImage) => {
-    if (summaryImageUrlRef.current) {
-      URL.revokeObjectURL(summaryImageUrlRef.current);
-    }
-
-    summaryImageUrlRef.current = nextImage?.url || '';
-    setSummaryImage(nextImage);
-  }, []);
-
-  useEffect(() => () => {
-    if (summaryImageUrlRef.current) {
-      URL.revokeObjectURL(summaryImageUrlRef.current);
-    }
-  }, []);
 
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
@@ -567,11 +543,10 @@ export default function App() {
       setUnseenList(generateInitialPool(nextSettings));
       setCorrectTotal(0);
       setWrongTotal(0);
+      setTimeoutTotal(0);
       setCurrentQ(null);
       setSelectedAns(null);
       setSummaryStats(null);
-      setSummarySaveError('');
-      setPreparedSummaryImage(null);
       setGameState('idle');
       setTimer(nextSettings.timeLimit);
     } else {
@@ -590,23 +565,28 @@ export default function App() {
       localStorage.setItem('math_correctTotal', correctTotal.toString());
       localStorage.setItem('math_unseenList', JSON.stringify(unseenList));
       localStorage.setItem('math_wrongTotal', wrongTotal.toString());
+      localStorage.setItem('math_timeoutTotal', timeoutTotal.toString());
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
       localStorage.setItem(USER_NAME_KEY, userName);
       localStorage.setItem(USER_AVATAR_KEY, userAvatar);
     } catch {
       console.log("Cannot save data");
     }
-  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, settings, userName, userAvatar]);
+  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, timeoutTotal, settings, userName, userAvatar]);
 
   // --- LOGIC SINH CÂU HỎI ---
-  const generateQuestion = useCallback(() => {
+  const generateQuestion = useCallback((options = {}) => {
     let selectedQuestion;
     let isReview = false;
     let isUnseen = false;
+
+    const questionOptions = options?.activePool ? options : {};
+    const playablePool = questionOptions.activePool || activePool;
+    const reviewQuestions = questionOptions.activeReviewList || activeReviewList;
+    const unseenQuestions = questionOptions.activeUnseenList || activeUnseenList;
     
-    const canPullReview = activeReviewList.length > 0;
-    const canPullUnseen = activeUnseenList.length > 0;
-    const playablePool = activePool;
+    const canPullReview = reviewQuestions.length > 0;
+    const canPullUnseen = unseenQuestions.length > 0;
 
     if (playablePool.length === 0) {
       setCurrentQ(null);
@@ -617,7 +597,6 @@ export default function App() {
     if (!sessionStartedAtRef.current) {
       sessionStartedAtRef.current = Date.now();
     }
-    setSummarySaveError('');
     
     if (!canPullReview && !canPullUnseen) {
       // Chế độ chơi tự do (khi bé đã thuộc hết các câu trong bài được chọn)
@@ -625,13 +604,13 @@ export default function App() {
       selectedQuestion = playablePool[randomIndex];
     } else if (canPullReview && (!canPullUnseen || Math.random() < 0.6)) {
       // Ưu tiên ôn tập (tỉ lệ 60%)
-      const randomIndex = Math.floor(Math.random() * activeReviewList.length);
-      selectedQuestion = activeReviewList[randomIndex];
+      const randomIndex = Math.floor(Math.random() * reviewQuestions.length);
+      selectedQuestion = reviewQuestions[randomIndex];
       isReview = true;
     } else {
       // Bốc ngẫu nhiên 1 câu chưa làm
-      const randomIndex = Math.floor(Math.random() * activeUnseenList.length);
-      selectedQuestion = activeUnseenList[randomIndex];
+      const randomIndex = Math.floor(Math.random() * unseenQuestions.length);
+      selectedQuestion = unseenQuestions[randomIndex];
       isUnseen = true;
     }
 
@@ -676,7 +655,7 @@ export default function App() {
     playSound('wrong', settings.soundVolumePercent);
     setGameState('timeout_paused');
     updateScreenTime(-settings.penaltySec);
-    setWrongTotal(prev => prev + 1);
+    setTimeoutTotal(prev => prev + 1);
     if (currentQ?.isUnseen) {
       // Loại khỏi danh sách chưa làm
       const currentKey = getQuestionKey(currentQ);
@@ -789,20 +768,6 @@ export default function App() {
     });
   };
 
-  const resetSessionData = () => {
-    sessionStartedAtRef.current = null;
-    setScreenTime(0);
-    setReviewList([]);
-    setUnseenList(generateInitialPool(settings));
-    setCorrectTotal(0);
-    setWrongTotal(0);
-    setCurrentQ(null);
-    setSelectedAns(null);
-    setSummarySaveError('');
-    setPreparedSummaryImage(null);
-    setTimer(settings.timeLimit);
-  };
-
   const handleEndSession = () => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
@@ -811,6 +776,7 @@ export default function App() {
     setSummaryStats({
       correctTotal,
       wrongTotal,
+      timeoutTotal,
       reviewCount: activeReviewList.length,
       screenTime,
       durationSec: Math.max(0, Math.round((endedAt - startedAt) / 1000)),
@@ -818,94 +784,37 @@ export default function App() {
       studentName: displayName,
       studentAvatar: userAvatar,
     });
-    resetSessionData();
     setGameState('summary');
   };
 
-  const createSummaryImage = async () => {
-    const canvas = await html2canvas(summaryCaptureRef.current, {
-      backgroundColor: '#ffffff',
-      scale: Math.min(window.devicePixelRatio || 2, 3),
-      useCORS: true,
-      logging: false,
+  const handleContinueLearning = () => {
+    clearInterval(timerRef.current);
+    clearPendingTransitions();
+    setSummaryStats(null);
+    generateQuestion();
+  };
+
+  const handleRestartLearning = () => {
+    const freshPool = generateInitialPool(settings);
+
+    clearInterval(timerRef.current);
+    clearPendingTransitions();
+    sessionStartedAtRef.current = null;
+    setScreenTime(0);
+    setReviewList([]);
+    setUnseenList(freshPool);
+    setCorrectTotal(0);
+    setWrongTotal(0);
+    setTimeoutTotal(0);
+    setCurrentQ(null);
+    setSelectedAns(null);
+    setSummaryStats(null);
+    setTimer(settings.timeLimit);
+    generateQuestion({
+      activePool: freshPool,
+      activeReviewList: [],
+      activeUnseenList: freshPool,
     });
-
-    const blob = await new Promise((resolve) => {
-      canvas.toBlob(resolve, 'image/png');
-    });
-
-    if (!blob) throw new Error('Cannot create summary image');
-
-    const endedAtLabel = visibleSummary.endedAt
-      ? new Date(visibleSummary.endedAt).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10);
-    const fileName = `ket-qua-${makeSafeFileName(visibleSummary.studentName)}-${endedAtLabel}.png`;
-
-    return {
-      file: new File([blob], fileName, { type: 'image/png' }),
-      fileName,
-      url: URL.createObjectURL(blob),
-    };
-  };
-
-  const handleSaveSummaryImage = async () => {
-    if (!summaryCaptureRef.current || isSavingSummary) return;
-
-    setIsSavingSummary(true);
-    setSummarySaveError('');
-
-    try {
-      const nextImage = await createSummaryImage();
-      setPreparedSummaryImage(nextImage);
-    } catch {
-      setSummarySaveError('Chưa chụp được ảnh, vui lòng thử lại lần nữa');
-    } finally {
-      setIsSavingSummary(false);
-    }
-  };
-
-  const handleShareSummaryImage = async () => {
-    if (!summaryImage?.file) return;
-
-    const shareData = {
-      files: [summaryImage.file],
-      title: 'Kết quả học tập',
-      text: `Kết quả học tập của ${visibleSummary.studentName}`,
-    };
-
-    if (!navigator.share || !navigator.canShare?.({ files: [summaryImage.file] })) {
-      setSummarySaveError('Trên iPhone, bạn có thể bấm giữ vào ảnh xem trước rồi chọn Lưu vào Ảnh.');
-      return;
-    }
-
-    try {
-      setSummarySaveError('');
-      await navigator.share(shareData);
-    } catch (shareError) {
-      if (shareError?.name !== 'AbortError') {
-        setSummarySaveError('Chưa mở được bảng lưu ảnh. Hãy bấm giữ vào ảnh xem trước để lưu.');
-      }
-    }
-  };
-
-  const handleOpenSummaryImage = () => {
-    if (!summaryImage?.url) return;
-
-    const openedWindow = window.open(summaryImage.url, '_blank', 'noopener,noreferrer');
-    if (!openedWindow) {
-      setSummarySaveError('Trình duyệt đang chặn mở ảnh. Hãy bấm giữ vào ảnh xem trước để lưu.');
-    }
-  };
-
-  const handleDownloadSummaryImage = () => {
-    if (!summaryImage?.url) return;
-
-    const link = document.createElement('a');
-    link.href = summaryImage.url;
-    link.download = summaryImage.fileName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
   };
 
   const resetAllData = () => {
@@ -915,6 +824,7 @@ export default function App() {
     localStorage.removeItem('math_correctTotal');
     localStorage.removeItem('math_unseenList');
     localStorage.removeItem('math_wrongTotal');
+    localStorage.removeItem('math_timeoutTotal');
     window.location.reload();
   };
 
@@ -944,6 +854,7 @@ export default function App() {
   const visibleSummary = summaryStats || {
     correctTotal,
     wrongTotal,
+    timeoutTotal,
     reviewCount: activeReviewList.length,
     screenTime,
     durationSec: 0,
@@ -1440,7 +1351,7 @@ export default function App() {
           </div>
         ) : gameState === 'summary' ? (
           <div className="text-center animate-bounce-in">
-            <div ref={summaryCaptureRef} className="rounded-2xl bg-white p-3 md:p-5">
+            <div className="rounded-2xl bg-white p-3 md:p-5">
               <BarChart className="w-11 h-11 md:w-16 md:h-16 text-blue-500 mx-auto mb-2 md:mb-4" />
               <h2 className="text-2xl md:text-3xl font-black text-blue-700 mb-3 md:mb-5 uppercase">Tổng Kết Kết Quả</h2>
 
@@ -1470,6 +1381,11 @@ export default function App() {
                 <div className="font-black text-lg md:text-2xl text-red-600 text-right">{visibleSummary.wrongTotal}</div>
 
                 <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <Clock size={16} className="md:w-5 md:h-5 text-orange-500"/> Hết giờ:
+                </div>
+                <div className="font-black text-lg md:text-2xl text-orange-600 text-right">{visibleSummary.timeoutTotal}</div>
+
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
                   <BookOpen size={16} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn:
                 </div>
                 <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{visibleSummary.reviewCount}</div>
@@ -1494,90 +1410,20 @@ export default function App() {
             <div className="mt-4 md:mt-6 grid gap-2 md:gap-3">
               <button
                 type="button"
-                onClick={handleSaveSummaryImage}
-                disabled={isSavingSummary}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-lg md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none disabled:opacity-70 transition-all"
+                onClick={handleContinueLearning}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-green-500 px-6 py-3 text-lg md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none transition-all"
               >
-                <Download size={22} className="md:w-6 md:h-6" />
-                {isSavingSummary ? 'Đang chụp ảnh...' : 'Chụp ảnh kết quả'}
+                <Play fill="white" size={22} className="md:w-6 md:h-6" />
+                Tiếp tục học
               </button>
-              {summarySaveError && (
-                <div className="text-sm md:text-base font-bold text-red-500">{summarySaveError}</div>
-              )}
               <button
-                onClick={generateQuestion}
-                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-2xl font-bold py-3 px-8 md:py-4 md:px-10 rounded-full shadow-[0_4px_0_rgb(21,128,61)] md:shadow-[0_6px_0_rgb(21,128,61)] transition-all mx-auto w-full"
+                type="button"
+                onClick={handleRestartLearning}
+                className="bg-blue-500 hover:bg-blue-600 active:transform active:scale-95 text-white text-xl md:text-2xl font-bold py-3 px-8 md:py-4 md:px-10 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_6px_0_rgb(29,78,216)] transition-all mx-auto w-full"
               >
-                Làm lại (Học tiếp)
+                Học lại từ đầu
               </button>
             </div>
-
-            {summaryImage && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-3 md:p-6">
-                <div className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-3 md:p-5 text-left shadow-2xl">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-lg md:text-xl font-black text-blue-700">Ảnh kết quả đã sẵn sàng</div>
-                      <div className="mt-1 text-xs md:text-sm font-semibold text-gray-500">
-                        Trên iPhone, bấm Lưu vào Ảnh iPhone hoặc bấm giữ ảnh bên dưới để lưu.
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPreparedSummaryImage(null);
-                        setSummarySaveError('');
-                      }}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 active:scale-95"
-                      aria-label="Đóng ảnh kết quả"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-
-                  <div className="mt-3 rounded-xl border-2 border-blue-100 bg-blue-50 p-2">
-                    <img
-                      src={summaryImage.url}
-                      alt="Ảnh tổng kết kết quả"
-                      className="w-full rounded-lg bg-white shadow-sm"
-                    />
-                  </div>
-
-                  <div className="mt-3 grid gap-2">
-                    <button
-                      type="button"
-                      onClick={handleShareSummaryImage}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-3 text-base md:text-lg font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none transition-all"
-                    >
-                      <Share2 size={20} />
-                      Lưu vào Ảnh iPhone
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleOpenSummaryImage}
-                      className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-blue-100 bg-white px-4 py-2.5 text-sm md:text-base font-extrabold text-blue-600 active:scale-[0.99] transition-all"
-                    >
-                      <ExternalLink size={18} />
-                      Mở ảnh riêng
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadSummaryImage}
-                      className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-gray-100 bg-gray-50 px-4 py-2.5 text-sm md:text-base font-extrabold text-gray-600 active:scale-[0.99] transition-all"
-                    >
-                      <Download size={18} />
-                      Tải file ảnh
-                    </button>
-                  </div>
-
-                  {summarySaveError && (
-                    <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-center text-xs md:text-sm font-bold text-amber-700">
-                      {summarySaveError}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <>
