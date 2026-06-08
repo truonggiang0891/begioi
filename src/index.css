@@ -35,6 +35,13 @@ body {
   padding-bottom: 0.375rem;
 }
 
+.app-shell--summary {
+  justify-content: center;
+  overflow: hidden;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
 @media (min-width: 768px) {
   .app-shell {
     padding-left: 1rem;
@@ -45,5 +52,10 @@ body {
   .app-shell--scroll {
     padding-top: 1.25rem;
     padding-bottom: 1.25rem;
+  }
+
+  .app-shell--summary {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 }

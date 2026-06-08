@@ -771,6 +771,7 @@ export default function App() {
   const handleEndSession = () => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    setShowParentConfirm(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
     setSummaryStats({
@@ -862,14 +863,18 @@ export default function App() {
     studentName: displayName,
     studentAvatar: userAvatar,
   };
+  const isSummary = gameState === 'summary';
   const isFeedbackPaused = gameState === 'wrong_paused' || gameState === 'timeout_paused';
   const isCelebrating = gameState === 'celebrating';
-  const canScrollPage = showUserNameForm || showAdminLogin || isAdmin || showParentConfirm || gameState === 'summary';
+  const canScrollPage = showUserNameForm || showAdminLogin || isAdmin || showParentConfirm;
 
   // --- RENDER COMPONENT ---
   return (
-    <div className={`app-shell bg-sky-100 font-sans flex flex-col items-center ${canScrollPage ? 'app-shell--scroll' : 'app-shell--main'}`}>
+    <div className={`app-shell bg-sky-100 font-sans flex flex-col items-center ${
+      isSummary ? 'app-shell--summary' : canScrollPage ? 'app-shell--scroll' : 'app-shell--main'
+    }`}>
       {/* ROLE LOGIN */}
+      {!isSummary && (
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -989,6 +994,7 @@ export default function App() {
           </form>
         )}
       </div>
+      )}
 
       {isAdmin && (
         <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white mb-2 md:mb-4 p-3 md:p-5">
@@ -1267,6 +1273,7 @@ export default function App() {
       )}
 
       {/* HEADER */}
+      {!isSummary && (
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4">
         <div className="bg-blue-500 text-white text-center py-1.5 md:py-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
@@ -1318,9 +1325,14 @@ export default function App() {
           </div>
         </div>
       </div>
+      )}
 
       {/* MAIN GAME AREA */}
-      <div className={`w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl p-2.5 md:p-6 border-4 border-white relative ${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] flex flex-col justify-center`}>
+      <div className={`w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white relative flex flex-col justify-center ${
+        isSummary
+          ? 'p-2 md:p-4'
+          : `${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] p-2.5 md:p-6`
+      }`}>
         
         {gameState === 'idle' ? (
           <div className="text-center">
@@ -1351,67 +1363,83 @@ export default function App() {
           </div>
         ) : gameState === 'summary' ? (
           <div className="text-center animate-bounce-in">
-            <div className="rounded-2xl bg-white p-3 md:p-5">
-              <BarChart className="w-11 h-11 md:w-16 md:h-16 text-blue-500 mx-auto mb-2 md:mb-4" />
-              <h2 className="text-2xl md:text-3xl font-black text-blue-700 mb-3 md:mb-5 uppercase">Tổng Kết Kết Quả</h2>
+            <div className="rounded-2xl bg-white px-1 py-1 md:p-3">
+              <BarChart className="w-8 h-8 md:w-12 md:h-12 text-blue-500 mx-auto mb-1 md:mb-2" />
+              <h2 className="text-xl md:text-3xl font-black text-blue-700 mb-2 md:mb-3 uppercase leading-tight">Tổng Kết Kết Quả</h2>
 
-              <div className="mb-3 md:mb-5 flex items-center justify-center gap-3 rounded-xl border-2 border-blue-100 bg-blue-50 px-3 py-2.5 md:px-4 md:py-3">
-                <div className="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-blue-200">
+              <div className="mb-2 md:mb-3 flex items-center justify-center gap-2 rounded-xl border-2 border-blue-100 bg-blue-50 px-2 py-1.5 md:px-4 md:py-2.5">
+                <div className="flex h-9 w-9 md:h-12 md:w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-blue-200">
                   {visibleSummary.studentAvatar ? (
                     <img src={visibleSummary.studentAvatar} alt="Ảnh đại diện" className="h-full w-full object-cover" />
                   ) : (
-                    <UserRound size={26} className="text-blue-600" />
+                    <UserRound size={22} className="text-blue-600" />
                   )}
                 </div>
                 <div className="min-w-0 text-left">
-                  <div className="text-xs md:text-sm font-bold text-blue-500">Tên bé</div>
-                  <div className="truncate text-lg md:text-2xl font-black text-blue-800">{visibleSummary.studentName}</div>
+                  <div className="text-[10px] md:text-sm font-bold text-blue-500">Tên bé</div>
+                  <div className="truncate text-base md:text-2xl font-black text-blue-800">{visibleSummary.studentName}</div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 md:gap-4 text-left bg-blue-50 p-3 md:p-5 rounded-xl md:rounded-2xl border-2 border-blue-200">
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <CheckCircle size={16} className="md:w-5 md:h-5 text-green-500"/> Câu đúng:
+              <div className="grid grid-cols-2 gap-1.5 md:gap-3 text-left">
+                <div className="rounded-xl border-2 border-green-100 bg-green-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                    <CheckCircle size={15} className="md:w-5 md:h-5 text-green-500"/> Câu đúng
+                  </div>
+                  <div className="text-right text-xl md:text-3xl font-black text-green-600 leading-none">{visibleSummary.correctTotal}</div>
                 </div>
-                <div className="font-black text-lg md:text-2xl text-green-600 text-right">{visibleSummary.correctTotal}</div>
 
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <XCircle size={16} className="md:w-5 md:h-5 text-red-500"/> Câu sai:
+                <div className="rounded-xl border-2 border-red-100 bg-red-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                    <XCircle size={15} className="md:w-5 md:h-5 text-red-500"/> Câu sai
+                  </div>
+                  <div className="text-right text-xl md:text-3xl font-black text-red-600 leading-none">{visibleSummary.wrongTotal}</div>
                 </div>
-                <div className="font-black text-lg md:text-2xl text-red-600 text-right">{visibleSummary.wrongTotal}</div>
 
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <Clock size={16} className="md:w-5 md:h-5 text-orange-500"/> Hết giờ:
+                <div className="rounded-xl border-2 border-orange-100 bg-orange-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                    <Clock size={15} className="md:w-5 md:h-5 text-orange-500"/> Hết giờ
+                  </div>
+                  <div className="text-right text-xl md:text-3xl font-black text-orange-600 leading-none">{visibleSummary.timeoutTotal}</div>
                 </div>
-                <div className="font-black text-lg md:text-2xl text-orange-600 text-right">{visibleSummary.timeoutTotal}</div>
 
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <BookOpen size={16} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn:
+                <div className="rounded-xl border-2 border-amber-100 bg-amber-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                    <BookOpen size={15} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn
+                  </div>
+                  <div className="text-right text-xl md:text-3xl font-black text-amber-600 leading-none">{visibleSummary.reviewCount}</div>
                 </div>
-                <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{visibleSummary.reviewCount}</div>
 
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem điện thoại:
+                <div className="rounded-xl border-2 border-purple-100 bg-purple-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                    <Smartphone size={15} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem điện thoại
+                  </div>
+                  <div className="text-right text-sm md:text-xl font-black text-purple-600 leading-tight">{formatTime(visibleSummary.screenTime)}</div>
                 </div>
-                <div className="font-black text-base md:text-xl text-purple-600 text-right">{formatTime(visibleSummary.screenTime)}</div>
 
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <Clock size={16} className="md:w-5 md:h-5 text-sky-500"/> Thời gian hoàn thành:
+                <div className="rounded-xl border-2 border-sky-100 bg-sky-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                    <Clock size={15} className="md:w-5 md:h-5 text-sky-500"/> Hoàn thành
+                  </div>
+                  <div className="text-right text-sm md:text-xl font-black text-sky-600 leading-tight">{formatDuration(visibleSummary.durationSec)}</div>
                 </div>
-                <div className="font-black text-sm md:text-lg text-sky-600 text-right">{formatDuration(visibleSummary.durationSec)}</div>
 
-                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                  <StopCircle size={16} className="md:w-5 md:h-5 text-rose-500"/> Kết thúc lúc:
+                <div className="col-span-2 rounded-xl border-2 border-rose-100 bg-rose-50 px-2 py-1.5 md:p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex shrink-0 items-center gap-1 text-[11px] md:text-base font-extrabold text-gray-700">
+                      <StopCircle size={15} className="md:w-5 md:h-5 text-rose-500"/> Kết thúc lúc
+                    </div>
+                    <div className="min-w-0 text-right text-[11px] md:text-base font-black text-rose-600 leading-tight">{formatDateTime(visibleSummary.endedAt)}</div>
+                  </div>
                 </div>
-                <div className="font-black text-xs md:text-base text-rose-600 text-right leading-tight">{formatDateTime(visibleSummary.endedAt)}</div>
               </div>
             </div>
 
-            <div className="mt-4 md:mt-6 grid gap-2 md:gap-3">
+            <div className="mt-2 md:mt-4 grid gap-2 md:gap-3">
               <button
                 type="button"
                 onClick={handleContinueLearning}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-green-500 px-6 py-3 text-lg md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none transition-all"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-green-500 px-5 py-2.5 md:px-6 md:py-3 text-base md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none transition-all"
               >
                 <Play fill="white" size={22} className="md:w-6 md:h-6" />
                 Tiếp tục học
@@ -1419,7 +1447,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleRestartLearning}
-                className="bg-blue-500 hover:bg-blue-600 active:transform active:scale-95 text-white text-xl md:text-2xl font-bold py-3 px-8 md:py-4 md:px-10 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_6px_0_rgb(29,78,216)] transition-all mx-auto w-full"
+                className="bg-blue-500 hover:bg-blue-600 active:transform active:scale-95 text-white text-base md:text-2xl font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_6px_0_rgb(29,78,216)] transition-all mx-auto w-full"
               >
                 Học lại từ đầu
               </button>
@@ -1536,6 +1564,7 @@ export default function App() {
       </div>
       
       {/* NÚT RESET ẨN BÊN DƯỚI DÀNH CHO PHỤ HUYNH */}
+      {!isSummary && (
       <div className="mt-2 md:mt-6">
          {!showParentConfirm ? (
            <button 
@@ -1556,6 +1585,7 @@ export default function App() {
            </div>
          )}
       </div>
+      )}
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes bounce-in {
