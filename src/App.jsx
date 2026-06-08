@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, Download } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -85,6 +86,22 @@ const clampNumber = (value, fallback, min, max) => {
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(Math.max(Math.round(parsed), min), max);
 };
+
+const padTwo = (value) => String(value).padStart(2, '0');
+
+const formatDateTime = (timestamp) => {
+  if (!timestamp) return 'Chưa có dữ liệu';
+
+  const date = new Date(timestamp);
+  return `${padTwo(date.getHours())}:${padTwo(date.getMinutes())}:${padTwo(date.getSeconds())} ngày ${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}/${date.getFullYear()}`;
+};
+
+const makeSafeFileName = (value) => String(value || 'be')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-zA-Z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '')
+  .toLowerCase() || 'be';
 
 const normalizeSelectedTables = (tables) => {
   if (!Array.isArray(tables)) return ALL_ADDITION_TABLES;
@@ -368,10 +385,14 @@ export default function App() {
   const [selectedAns, setSelectedAns] = useState(null);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
   const [summaryStats, setSummaryStats] = useState(null);
+  const [isSavingSummary, setIsSavingSummary] = useState(false);
+  const [summarySaveError, setSummarySaveError] = useState('');
   
   const timerRef = useRef(null);
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
+  const sessionStartedAtRef = useRef(null);
+  const summaryCaptureRef = useRef(null);
   const displayName = userName.trim() || 'bé';
   const activePool = useMemo(() => generateInitialPool(settings), [settings]);
   const activeReviewList = useMemo(
@@ -524,6 +545,7 @@ export default function App() {
     if (lessonChanged) {
       clearInterval(timerRef.current);
       clearPendingTransitions();
+      sessionStartedAtRef.current = null;
       setReviewList([]);
       setUnseenList(generateInitialPool(nextSettings));
       setCorrectTotal(0);
@@ -531,6 +553,7 @@ export default function App() {
       setCurrentQ(null);
       setSelectedAns(null);
       setSummaryStats(null);
+      setSummarySaveError('');
       setGameState('idle');
       setTimer(nextSettings.timeLimit);
     } else {
@@ -572,6 +595,11 @@ export default function App() {
       setGameState('idle');
       return;
     }
+
+    if (!sessionStartedAtRef.current) {
+      sessionStartedAtRef.current = Date.now();
+    }
+    setSummarySaveError('');
     
     if (!canPullReview && !canPullUnseen) {
       // Chế độ chơi tự do (khi bé đã thuộc hết các câu trong bài được chọn)
@@ -744,6 +772,7 @@ export default function App() {
   };
 
   const resetSessionData = () => {
+    sessionStartedAtRef.current = null;
     setScreenTime(0);
     setReviewList([]);
     setUnseenList(generateInitialPool(settings));
@@ -751,20 +780,66 @@ export default function App() {
     setWrongTotal(0);
     setCurrentQ(null);
     setSelectedAns(null);
+    setSummarySaveError('');
     setTimer(settings.timeLimit);
   };
 
   const handleEndSession = () => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    const endedAt = Date.now();
+    const startedAt = sessionStartedAtRef.current || endedAt;
     setSummaryStats({
       correctTotal,
       wrongTotal,
       reviewCount: activeReviewList.length,
       screenTime,
+      durationSec: Math.max(0, Math.round((endedAt - startedAt) / 1000)),
+      endedAt,
+      studentName: displayName,
+      studentAvatar: userAvatar,
     });
     resetSessionData();
     setGameState('summary');
+  };
+
+  const handleSaveSummaryImage = async () => {
+    if (!summaryCaptureRef.current || isSavingSummary) return;
+
+    setIsSavingSummary(true);
+    setSummarySaveError('');
+
+    try {
+      const canvas = await html2canvas(summaryCaptureRef.current, {
+        backgroundColor: '#ffffff',
+        scale: Math.min(window.devicePixelRatio || 2, 3),
+        useCORS: true,
+        logging: false,
+      });
+
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(resolve, 'image/png');
+      });
+
+      if (!blob) throw new Error('Cannot create summary image');
+
+      const imageUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const endedAtLabel = visibleSummary.endedAt
+        ? new Date(visibleSummary.endedAt).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10);
+
+      link.href = imageUrl;
+      link.download = `ket-qua-${makeSafeFileName(visibleSummary.studentName)}-${endedAtLabel}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+    } catch {
+      setSummarySaveError('Chưa lưu được ảnh, vui lòng thử lại lần nữa');
+    } finally {
+      setIsSavingSummary(false);
+    }
   };
 
   const resetAllData = () => {
@@ -787,15 +862,32 @@ export default function App() {
     if (s > 0) str += `${s} giây`;
     return str.trim();
   };
+  const formatDuration = (seconds = 0) => {
+    const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const parts = [];
+
+    if (h > 0) parts.push(`${h} giờ`);
+    if (m > 0) parts.push(`${m} phút`);
+    if (s > 0 || parts.length === 0) parts.push(`${s} giây`);
+
+    return parts.join(' ');
+  };
   const visibleSummary = summaryStats || {
     correctTotal,
     wrongTotal,
     reviewCount: activeReviewList.length,
     screenTime,
+    durationSec: 0,
+    endedAt: null,
+    studentName: displayName,
+    studentAvatar: userAvatar,
   };
   const isFeedbackPaused = gameState === 'wrong_paused' || gameState === 'timeout_paused';
   const isCelebrating = gameState === 'celebrating';
-  const canScrollPage = showUserNameForm || showAdminLogin || isAdmin || showParentConfirm;
+  const canScrollPage = showUserNameForm || showAdminLogin || isAdmin || showParentConfirm || gameState === 'summary';
 
   // --- RENDER COMPONENT ---
   return (
@@ -1282,37 +1374,77 @@ export default function App() {
           </div>
         ) : gameState === 'summary' ? (
           <div className="text-center animate-bounce-in">
-            <BarChart className="w-12 h-12 md:w-16 md:h-16 text-blue-500 mx-auto mb-3 md:mb-4" />
-            <h2 className="text-2xl md:text-3xl font-black text-blue-700 mb-4 md:mb-6 uppercase">Tổng Kết Buổi Học</h2>
-            
-            <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8 text-left bg-blue-50 p-4 md:p-6 rounded-xl md:rounded-2xl border-2 border-blue-200">
-              <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                <CheckCircle size={16} className="md:w-5 md:h-5 text-green-500"/> Câu đúng:
+            <div ref={summaryCaptureRef} className="rounded-2xl bg-white p-3 md:p-5">
+              <BarChart className="w-11 h-11 md:w-16 md:h-16 text-blue-500 mx-auto mb-2 md:mb-4" />
+              <h2 className="text-2xl md:text-3xl font-black text-blue-700 mb-3 md:mb-5 uppercase">Tổng Kết Kết Quả</h2>
+
+              <div className="mb-3 md:mb-5 flex items-center justify-center gap-3 rounded-xl border-2 border-blue-100 bg-blue-50 px-3 py-2.5 md:px-4 md:py-3">
+                <div className="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-blue-200">
+                  {visibleSummary.studentAvatar ? (
+                    <img src={visibleSummary.studentAvatar} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserRound size={26} className="text-blue-600" />
+                  )}
+                </div>
+                <div className="min-w-0 text-left">
+                  <div className="text-xs md:text-sm font-bold text-blue-500">Tên bé</div>
+                  <div className="truncate text-lg md:text-2xl font-black text-blue-800">{visibleSummary.studentName}</div>
+                </div>
               </div>
-              <div className="font-black text-lg md:text-2xl text-green-600 text-right">{visibleSummary.correctTotal}</div>
-              
-              <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                <XCircle size={16} className="md:w-5 md:h-5 text-red-500"/> Câu sai:
+
+              <div className="grid grid-cols-2 gap-2.5 md:gap-4 text-left bg-blue-50 p-3 md:p-5 rounded-xl md:rounded-2xl border-2 border-blue-200">
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <CheckCircle size={16} className="md:w-5 md:h-5 text-green-500"/> Câu đúng:
+                </div>
+                <div className="font-black text-lg md:text-2xl text-green-600 text-right">{visibleSummary.correctTotal}</div>
+
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <XCircle size={16} className="md:w-5 md:h-5 text-red-500"/> Câu sai:
+                </div>
+                <div className="font-black text-lg md:text-2xl text-red-600 text-right">{visibleSummary.wrongTotal}</div>
+
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <BookOpen size={16} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn:
+                </div>
+                <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{visibleSummary.reviewCount}</div>
+
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem điện thoại:
+                </div>
+                <div className="font-black text-base md:text-xl text-purple-600 text-right">{formatTime(visibleSummary.screenTime)}</div>
+
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <Clock size={16} className="md:w-5 md:h-5 text-sky-500"/> Thời gian hoàn thành:
+                </div>
+                <div className="font-black text-sm md:text-lg text-sky-600 text-right">{formatDuration(visibleSummary.durationSec)}</div>
+
+                <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
+                  <StopCircle size={16} className="md:w-5 md:h-5 text-rose-500"/> Kết thúc lúc:
+                </div>
+                <div className="font-black text-xs md:text-base text-rose-600 text-right leading-tight">{formatDateTime(visibleSummary.endedAt)}</div>
               </div>
-              <div className="font-black text-lg md:text-2xl text-red-600 text-right">{visibleSummary.wrongTotal}</div>
-              
-              <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                <BookOpen size={16} className="md:w-5 md:h-5 text-amber-500"/> Cần ôn:
-              </div>
-              <div className="font-black text-lg md:text-2xl text-amber-600 text-right">{visibleSummary.reviewCount}</div>
-              
-              <div className="font-bold text-gray-700 text-xs sm:text-sm md:text-lg flex items-center gap-1 md:gap-2">
-                <Smartphone size={16} className="md:w-5 md:h-5 text-purple-500"/> Giờ xem điện thoại:
-              </div>
-              <div className="font-black text-base md:text-xl text-purple-600 text-right">{formatTime(visibleSummary.screenTime)}</div>
             </div>
 
-            <button 
-              onClick={generateQuestion}
-              className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-2xl font-bold py-3 px-8 md:py-4 md:px-10 rounded-full shadow-[0_4px_0_rgb(21,128,61)] md:shadow-[0_6px_0_rgb(21,128,61)] transition-all mx-auto w-full"
-            >
-              Làm lại (Học tiếp)
-            </button>
+            <div className="mt-4 md:mt-6 grid gap-2 md:gap-3">
+              <button
+                type="button"
+                onClick={handleSaveSummaryImage}
+                disabled={isSavingSummary}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-lg md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none disabled:opacity-70 transition-all"
+              >
+                <Download size={22} className="md:w-6 md:h-6" />
+                {isSavingSummary ? 'Đang lưu ảnh...' : 'Lưu ảnh kết quả'}
+              </button>
+              {summarySaveError && (
+                <div className="text-sm md:text-base font-bold text-red-500">{summarySaveError}</div>
+              )}
+              <button
+                onClick={generateQuestion}
+                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-2xl font-bold py-3 px-8 md:py-4 md:px-10 rounded-full shadow-[0_4px_0_rgb(21,128,61)] md:shadow-[0_6px_0_rgb(21,128,61)] transition-all mx-auto w-full"
+              >
+                Làm lại (Học tiếp)
+              </button>
+            </div>
           </div>
         ) : (
           <>
