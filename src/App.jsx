@@ -78,6 +78,7 @@ const DEFAULT_SETTINGS = {
   penaltySec: 60,
   soundVolumePercent: DEFAULT_SOUND_VOLUME_PERCENT,
   lessonType: DEFAULT_LESSON_TYPE,
+  lessonTypes: [DEFAULT_LESSON_TYPE],
   customQuestionsText: '',
   selectedTables: ALL_ADDITION_TABLES,
 };
@@ -112,7 +113,7 @@ const normalizeSessionHistory = (history) => {
       screenTime: clampNumber(entry.screenTime, 0, MIN_TIME, MAX_TIME),
       durationSec: clampNumber(entry.durationSec, 0, 0, 24 * 60 * 60),
       studentName: String(entry.studentName || 'bé').slice(0, 28),
-      lessonLabel: String(entry.lessonLabel || '').slice(0, 30),
+      lessonLabel: String(entry.lessonLabel || '').slice(0, 60),
     }))
     .filter((entry) => Number.isFinite(entry.id) && Number.isFinite(entry.endedAt))
     .sort((a, b) => b.endedAt - a.endedAt)
@@ -143,23 +144,44 @@ const normalizeLessonType = (lessonType) => (
   LESSON_TYPE_IDS.has(lessonType) ? lessonType : DEFAULT_LESSON_TYPE
 );
 
+const getValidLessonTypes = (lessonTypes) => {
+  const rawLessonTypes = Array.isArray(lessonTypes) ? lessonTypes : [lessonTypes];
+  const selectedIds = new Set(rawLessonTypes.filter(type => LESSON_TYPE_IDS.has(type)));
+  return LESSON_TYPES
+    .map(type => type.id)
+    .filter(id => selectedIds.has(id));
+};
+
+const normalizeLessonTypes = (settings = {}) => {
+  const validLessonTypes = getValidLessonTypes(
+    Array.isArray(settings.lessonTypes) ? settings.lessonTypes : [settings.lessonType]
+  );
+
+  return validLessonTypes.length > 0 ? validLessonTypes : [DEFAULT_LESSON_TYPE];
+};
+
 const normalizeCustomQuestionsText = (text) => String(text || '').slice(0, 3000);
 
-const normalizeSettings = (settings = {}) => ({
-  timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
-  rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
-  penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
-  soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
-  lessonType: normalizeLessonType(settings.lessonType),
-  customQuestionsText: normalizeCustomQuestionsText(settings.customQuestionsText),
-  selectedTables: normalizeSelectedTables(settings.selectedTables),
-});
+const normalizeSettings = (settings = {}) => {
+  const lessonTypes = normalizeLessonTypes(settings);
+
+  return {
+    timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
+    rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
+    penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
+    soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
+    lessonType: lessonTypes[0],
+    lessonTypes,
+    customQuestionsText: normalizeCustomQuestionsText(settings.customQuestionsText),
+    selectedTables: normalizeSelectedTables(settings.selectedTables),
+  };
+};
 
 const getLessonConfigKey = (settings = {}) => {
   const normalizedSettings = normalizeSettings(settings);
 
   return JSON.stringify({
-    lessonType: normalizedSettings.lessonType,
+    lessonTypes: normalizedSettings.lessonTypes,
     customQuestionsText: normalizedSettings.customQuestionsText,
     selectedTables: normalizedSettings.selectedTables,
   });
@@ -214,6 +236,14 @@ const getLessonType = (lessonType) => (
   LESSON_TYPES.find(type => type.id === normalizeLessonType(lessonType)) || LESSON_TYPES[0]
 );
 
+const getLessonTypes = (settings = {}) => (
+  normalizeLessonTypes(settings).map(type => getLessonType(type))
+);
+
+const getLessonLabel = (settings = {}) => (
+  getLessonTypes(settings).map(type => type.label).join(' + ')
+);
+
 const makeQuestion = ({ lessonType, table, b, questionText, answerText, ans }) => {
   const normalizedLessonType = normalizeLessonType(lessonType);
 
@@ -259,60 +289,59 @@ const parseCustomQuestions = (text) => normalizeCustomQuestionsText(text)
 
 const generateInitialPool = (settings = DEFAULT_SETTINGS) => {
   const normalizedSettings = normalizeSettings(settings);
-  if (normalizedSettings.lessonType === 'custom') {
-    return parseCustomQuestions(normalizedSettings.customQuestionsText);
+  const pool = [];
+
+  if (normalizedSettings.lessonTypes.includes('custom')) {
+    pool.push(...parseCustomQuestions(normalizedSettings.customQuestionsText));
   }
 
-  const pool = [];
-  normalizedSettings.selectedTables.forEach((table) => {
-    if (normalizedSettings.lessonType === 'subtract') {
+  const generatedLessonTypes = normalizedSettings.lessonTypes.filter(type => type !== 'custom');
+  generatedLessonTypes.forEach((lessonType) => {
+    normalizedSettings.selectedTables.forEach((table) => {
       for (let b = 0; b <= 9; b++) {
-        const minuend = table + b;
-        pool.push(makeQuestion({
-          lessonType: 'subtract',
-          table,
-          b,
-          ans: b,
-          questionText: `${minuend} - ${table} = ?`,
-          answerText: `${minuend} - ${table} = ${b}`,
-        }));
+        if (lessonType === 'subtract') {
+          const minuend = table + b;
+          pool.push(makeQuestion({
+            lessonType: 'subtract',
+            table,
+            b,
+            ans: b,
+            questionText: `${minuend} - ${table} = ?`,
+            answerText: `${minuend} - ${table} = ${b}`,
+          }));
+        } else if (lessonType === 'multiply') {
+          const ans = table * b;
+          pool.push(makeQuestion({
+            lessonType: 'multiply',
+            table,
+            b,
+            ans,
+            questionText: `${table} × ${b} = ?`,
+            answerText: `${table} × ${b} = ${ans}`,
+          }));
+        } else if (lessonType === 'divide') {
+          const dividend = table * b;
+          pool.push(makeQuestion({
+            lessonType: 'divide',
+            table,
+            b,
+            ans: b,
+            questionText: `${dividend} ÷ ${table} = ?`,
+            answerText: `${dividend} ÷ ${table} = ${b}`,
+          }));
+        } else {
+          const ans = table + b;
+          pool.push(makeQuestion({
+            lessonType: 'add',
+            table,
+            b,
+            ans,
+            questionText: `${table} + ${b} = ?`,
+            answerText: `${table} + ${b} = ${ans}`,
+          }));
+        }
       }
-      return;
-    }
-
-    for (let b = 0; b <= 9; b++) {
-      if (normalizedSettings.lessonType === 'multiply') {
-        const ans = table * b;
-        pool.push(makeQuestion({
-          lessonType: 'multiply',
-          table,
-          b,
-          ans,
-          questionText: `${table} × ${b} = ?`,
-          answerText: `${table} × ${b} = ${ans}`,
-        }));
-      } else if (normalizedSettings.lessonType === 'divide') {
-        const dividend = table * b;
-        pool.push(makeQuestion({
-          lessonType: 'divide',
-          table,
-          b,
-          ans: b,
-          questionText: `${dividend} ÷ ${table} = ?`,
-          answerText: `${dividend} ÷ ${table} = ${b}`,
-        }));
-      } else {
-        const ans = table + b;
-        pool.push(makeQuestion({
-          lessonType: 'add',
-          table,
-          b,
-          ans,
-          questionText: `${table} + ${b} = ?`,
-          answerText: `${table} + ${b} = ${ans}`,
-        }));
-      }
-    }
+    });
   });
 
   return pool;
@@ -443,8 +472,16 @@ export default function App() {
     },
     [activePool, unseenList]
   );
-  const currentLessonType = getLessonType(settings.lessonType);
-  const draftLessonType = getLessonType(draftSettings.lessonType);
+  const currentLessonLabel = getLessonLabel(settings);
+  const draftLessonTypes = getValidLessonTypes(
+    Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
+  );
+  const draftGeneratedLessonTypes = draftLessonTypes
+    .filter(type => type !== 'custom')
+    .map(type => getLessonType(type));
+  const draftTableLabel = draftGeneratedLessonTypes.length === 1
+    ? draftGeneratedLessonTypes[0].tableLabel
+    : 'Bảng luyện tập';
   const draftCustomQuestions = useMemo(
     () => parseCustomQuestions(draftSettings.customQuestionsText),
     [draftSettings.customQuestionsText]
@@ -530,6 +567,29 @@ export default function App() {
     setSettingsSaved(false);
   };
 
+  const toggleDraftLessonType = (lessonType) => {
+    if (!LESSON_TYPE_IDS.has(lessonType)) return;
+
+    setDraftSettings(prev => {
+      const currentLessonTypes = getValidLessonTypes(
+        Array.isArray(prev.lessonTypes) ? prev.lessonTypes : [prev.lessonType]
+      );
+      const nextLessonTypes = currentLessonTypes.includes(lessonType)
+        ? currentLessonTypes.filter(type => type !== lessonType)
+        : LESSON_TYPES
+          .map(type => type.id)
+          .filter(type => type === lessonType || currentLessonTypes.includes(type));
+
+      return {
+        ...prev,
+        lessonType: nextLessonTypes[0] || '',
+        lessonTypes: nextLessonTypes,
+      };
+    });
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
   const toggleDraftTable = (table) => {
     setDraftSettings(prev => {
       const selectedTables = prev.selectedTables?.includes(table)
@@ -553,21 +613,35 @@ export default function App() {
 
   const saveAdminSettings = (event) => {
     event.preventDefault();
-    const nextLessonType = normalizeLessonType(draftSettings.lessonType);
+    const nextLessonTypes = getValidLessonTypes(
+      Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
+    );
+    const hasCustomLesson = nextLessonTypes.includes('custom');
+    const hasGeneratedLessons = nextLessonTypes.some(type => type !== 'custom');
 
-    if (nextLessonType === 'custom' && draftCustomQuestions.length === 0) {
+    if (nextLessonTypes.length === 0) {
+      setSettingsError('Vui lòng chọn ít nhất một loại bài học');
+      setSettingsSaved(false);
+      return;
+    }
+
+    if (hasCustomLesson && draftCustomQuestions.length === 0) {
       setSettingsError('Vui lòng nhập ít nhất một câu hỏi hợp lệ');
       setSettingsSaved(false);
       return;
     }
 
-    if (nextLessonType !== 'custom' && (!draftSettings.selectedTables || draftSettings.selectedTables.length === 0)) {
+    if (hasGeneratedLessons && (!draftSettings.selectedTables || draftSettings.selectedTables.length === 0)) {
       setSettingsError('Vui lòng chọn ít nhất một bảng luyện tập');
       setSettingsSaved(false);
       return;
     }
 
-    const nextSettings = normalizeSettings(draftSettings);
+    const nextSettings = normalizeSettings({
+      ...draftSettings,
+      lessonType: nextLessonTypes[0],
+      lessonTypes: nextLessonTypes,
+    });
     const lessonChanged = getLessonConfigKey(settings) !== getLessonConfigKey(nextSettings);
     setSettings(nextSettings);
     setDraftSettings(nextSettings);
@@ -842,7 +916,7 @@ export default function App() {
         ...nextSummary,
         id: startedAt,
         startedAt,
-        lessonLabel: currentLessonType.label,
+        lessonLabel: currentLessonLabel,
       },
       ...prev.filter(entry => entry.id !== startedAt),
     ]));
@@ -851,7 +925,7 @@ export default function App() {
     activeReviewList.length,
     clearPendingTransitions,
     correctTotal,
-    currentLessonType.label,
+    currentLessonLabel,
     displayName,
     screenTime,
     timeoutTotal,
@@ -1259,7 +1333,7 @@ export default function App() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {LESSON_TYPES.map((type) => {
-                  const isSelected = normalizeLessonType(draftSettings.lessonType) === type.id;
+                  const isSelected = draftLessonTypes.includes(type.id);
 
                   return (
                     <label
@@ -1271,11 +1345,11 @@ export default function App() {
                       }`}
                     >
                       <input
-                        type="radio"
-                        name="lessonType"
+                        type="checkbox"
+                        name="lessonTypes"
                         value={type.id}
                         checked={isSelected}
-                        onChange={() => updateDraftSetting('lessonType', type.id)}
+                        onChange={() => toggleDraftLessonType(type.id)}
                         className="sr-only"
                       />
                       {type.label}
@@ -1284,7 +1358,7 @@ export default function App() {
                 })}
               </div>
 
-              {normalizeLessonType(draftSettings.lessonType) === 'custom' && (
+              {draftLessonTypes.includes('custom') && (
                 <div className="mt-3">
                   <label className="block text-xs md:text-sm font-bold text-indigo-700 mb-2">
                     Nhập mỗi câu trên một dòng, ví dụ: 2 + 3 = 5
@@ -1305,11 +1379,11 @@ export default function App() {
               )}
             </div>
 
-            {normalizeLessonType(draftSettings.lessonType) !== 'custom' && (
+            {draftGeneratedLessonTypes.length > 0 && (
               <div className="rounded-xl border-2 border-amber-100 bg-amber-50 p-3">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
                   <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-amber-800">
-                    <BookOpen size={18} className="text-amber-500" /> {draftLessonType.tableLabel}
+                    <BookOpen size={18} className="text-amber-500" /> {draftTableLabel}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -1341,13 +1415,13 @@ export default function App() {
                         onChange={() => toggleDraftTable(table)}
                         className="h-4 w-4 accent-amber-500"
                       />
-                      {draftLessonType.tableLabel} {table}
+                      {draftGeneratedLessonTypes.length === 1 ? `${draftTableLabel} ${table}` : `Bảng ${table}`}
                     </label>
                   ))}
                 </div>
 
                 <div className="mt-2 text-xs md:text-sm font-bold text-amber-700">
-                  Đang chọn: {(draftSettings.selectedTables || []).length}/10 bảng
+                  Đang chọn: {(draftSettings.selectedTables || []).length}/10 bảng cho {draftGeneratedLessonTypes.map(type => type.label).join(', ')}
                 </div>
               </div>
             )}
@@ -1477,7 +1551,7 @@ export default function App() {
               Chúc mừng bé!
             </h2>
             <p className="text-base md:text-xl font-bold text-gray-600 mb-6 md:mb-8">
-              Bé đã hoàn thành bài {currentLessonType.label.toLowerCase()} và không còn câu nào cần ôn nữa! Tuyệt vời quá!
+              Bé đã hoàn thành bài {currentLessonLabel.toLowerCase()} và không còn câu nào cần ôn nữa! Tuyệt vời quá!
             </p>
             <button 
               onClick={generateQuestion}
