@@ -1769,7 +1769,7 @@ export default function App() {
                         <div className="mt-0.5 text-[11px] font-bold text-gray-500 md:text-xs">{formatDateTime(entry.endedAt)}</div>
                       </div>
                       <div className="shrink-0 rounded-full bg-white px-2 py-1 text-right text-xs font-black text-purple-600 md:text-sm">
-                        {formatTime(entry.screenTime)}
+                        {formatTime(entry.screenTime)} xem
                       </div>
                     </div>
 
@@ -1778,7 +1778,7 @@ export default function App() {
                       <div className="rounded-lg bg-red-50 px-1.5 py-1.5 text-red-700">Sai {entry.wrongTotal}</div>
                       <div className="rounded-lg bg-orange-50 px-1.5 py-1.5 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
                       <div className="rounded-lg bg-amber-50 px-1.5 py-1.5 text-amber-700">Cần ôn {entry.reviewCount}</div>
-                      <div className="col-span-2 rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700 md:col-span-1">{formatDuration(entry.durationSec)}</div>
+                      <div className="col-span-2 rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700 md:col-span-1">Hoàn thành {formatDuration(entry.durationSec)}</div>
                     </div>
                   </div>
                 ))}
