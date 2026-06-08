@@ -1773,11 +1773,12 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="mt-2 grid grid-cols-2 gap-1.5 text-center text-[11px] font-extrabold md:grid-cols-4 md:text-xs">
+                    <div className="mt-2 grid grid-cols-2 gap-1.5 text-center text-[11px] font-extrabold md:grid-cols-5 md:text-xs">
                       <div className="rounded-lg bg-green-50 px-1.5 py-1.5 text-green-700">Đúng {entry.correctTotal}</div>
                       <div className="rounded-lg bg-red-50 px-1.5 py-1.5 text-red-700">Sai {entry.wrongTotal}</div>
                       <div className="rounded-lg bg-orange-50 px-1.5 py-1.5 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
-                      <div className="rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700">{formatDuration(entry.durationSec)}</div>
+                      <div className="rounded-lg bg-amber-50 px-1.5 py-1.5 text-amber-700">Cần ôn {entry.reviewCount}</div>
+                      <div className="col-span-2 rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700 md:col-span-1">{formatDuration(entry.durationSec)}</div>
                     </div>
                   </div>
                 ))}
