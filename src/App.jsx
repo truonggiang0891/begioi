@@ -72,11 +72,18 @@ const LESSON_TYPES = [
 ];
 const LESSON_TYPE_IDS = new Set(LESSON_TYPES.map(type => type.id));
 const DEFAULT_LESSON_TYPE = 'add';
+const LEARNING_MODES = [
+  { id: 'quiz', label: 'Học trắc nghiệm' },
+  { id: 'flashcard', label: 'Học bằng Flashcard' },
+];
+const LEARNING_MODE_IDS = new Set(LEARNING_MODES.map(mode => mode.id));
+const DEFAULT_LEARNING_MODE = 'quiz';
 const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
   penaltySec: 60,
   soundVolumePercent: DEFAULT_SOUND_VOLUME_PERCENT,
+  learningMode: DEFAULT_LEARNING_MODE,
   lessonType: DEFAULT_LESSON_TYPE,
   lessonTypes: [DEFAULT_LESSON_TYPE],
   customQuestionsText: '',
@@ -160,6 +167,10 @@ const normalizeLessonTypes = (settings = {}) => {
   return validLessonTypes.length > 0 ? validLessonTypes : [DEFAULT_LESSON_TYPE];
 };
 
+const normalizeLearningMode = (learningMode) => (
+  LEARNING_MODE_IDS.has(learningMode) ? learningMode : DEFAULT_LEARNING_MODE
+);
+
 const normalizeCustomQuestionsText = (text) => String(text || '').slice(0, 3000);
 
 const normalizeSettings = (settings = {}) => {
@@ -170,6 +181,7 @@ const normalizeSettings = (settings = {}) => {
     rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
     penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
     soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
+    learningMode: normalizeLearningMode(settings.learningMode),
     lessonType: lessonTypes[0],
     lessonTypes,
     customQuestionsText: normalizeCustomQuestionsText(settings.customQuestionsText),
@@ -444,6 +456,7 @@ export default function App() {
   const [gameState, setGameState] = useState('idle'); // idle, playing, wrong_paused, timeout_paused, celebrating, congrats, summary
   const [practiceMode, setPracticeMode] = useState('normal'); // normal, review
   const [selectedAns, setSelectedAns] = useState(null);
+  const [showFlashcardAnswer, setShowFlashcardAnswer] = useState(false);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
   const [summaryStats, setSummaryStats] = useState(null);
   
@@ -473,6 +486,7 @@ export default function App() {
     [activePool, unseenList]
   );
   const currentLessonLabel = getLessonLabel(settings);
+  const isFlashcardMode = settings.learningMode === 'flashcard';
   const draftLessonTypes = getValidLessonTypes(
     Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
   );
@@ -643,6 +657,7 @@ export default function App() {
       lessonTypes: nextLessonTypes,
     });
     const lessonChanged = getLessonConfigKey(settings) !== getLessonConfigKey(nextSettings);
+    const learningModeChanged = settings.learningMode !== nextSettings.learningMode;
     setSettings(nextSettings);
     setDraftSettings(nextSettings);
 
@@ -657,12 +672,22 @@ export default function App() {
       setTimeoutTotal(0);
       setCurrentQ(null);
       setSelectedAns(null);
+      setShowFlashcardAnswer(false);
       setSummaryStats(null);
       setPracticeMode('normal');
       setGameState('idle');
       setTimer(nextSettings.timeLimit);
     } else {
       setTimer(prev => Math.min(prev, nextSettings.timeLimit));
+      if (learningModeChanged) {
+        clearInterval(timerRef.current);
+        clearPendingTransitions();
+        setCurrentQ(null);
+        setSelectedAns(null);
+        setShowFlashcardAnswer(false);
+        setSummaryStats(null);
+        setGameState('idle');
+      }
     }
 
     setSettingsError('');
@@ -740,6 +765,7 @@ export default function App() {
     setCurrentQ(buildPlayableQuestion(selectedQuestion, { isReview, isUnseen }));
     setTimer(settings.timeLimit);
     setSelectedAns(null);
+    setShowFlashcardAnswer(false);
     setGameState('playing');
   }, [activePool, activeReviewList, activeUnseenList, practiceMode, settings.timeLimit]);
 
@@ -804,7 +830,7 @@ export default function App() {
 
   // --- TIMER ---
   useEffect(() => {
-    if (gameState === 'playing') {
+    if (gameState === 'playing' && !isFlashcardMode) {
       timerRef.current = setInterval(() => {
         setTimer((prev) => {
           if (prev <= 1) {
@@ -817,7 +843,7 @@ export default function App() {
       }, 1000);
     }
     return () => clearInterval(timerRef.current);
-  }, [gameState, currentQ]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gameState, currentQ, isFlashcardMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAnswerClick = (option) => {
     if (gameState !== 'playing') return;
@@ -868,6 +894,54 @@ export default function App() {
     }
   };
 
+  const goToNextFlashcard = () => {
+    clearTimeout(nextQuestionTimeoutRef.current);
+    nextQuestionTimeoutRef.current = setTimeout(() => {
+      generateQuestion();
+      nextQuestionTimeoutRef.current = null;
+    }, 260);
+  };
+
+  const handleFlashcardRemembered = () => {
+    if (!isFlashcardMode || gameState !== 'playing' || !currentQ || !showFlashcardAnswer) return;
+
+    const currentKey = getQuestionKey(currentQ);
+    playSound('correct', settings.soundVolumePercent);
+    setCorrectTotal(prev => prev + 1);
+    updateScreenTime(settings.rewardSec);
+    setShowFlashcardAnswer(false);
+
+    if (currentQ.isUnseen) {
+      setUnseenList(prev => {
+        const newList = prev.filter(q => getQuestionKey(q) !== currentKey);
+        const remainingKeys = new Set(newList.map(getQuestionKey));
+        const remainingSelectedUnseen = activePool.filter(question => remainingKeys.has(question.id));
+        if (remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
+          queueCongrats();
+        }
+        return newList;
+      });
+    } else if (currentQ.isReview) {
+      handleReviewSuccess(currentQ);
+    }
+
+    goToNextFlashcard();
+  };
+
+  const handleFlashcardNeedsReview = () => {
+    if (!isFlashcardMode || gameState !== 'playing' || !currentQ || !showFlashcardAnswer) return;
+
+    const currentKey = getQuestionKey(currentQ);
+    setWrongTotal(prev => prev + 1);
+    setShowFlashcardAnswer(false);
+
+    if (currentQ.isUnseen) {
+      setUnseenList(prev => prev.filter(q => getQuestionKey(q) !== currentKey));
+    }
+    addToReview(currentQ);
+    goToNextFlashcard();
+  };
+
   const handleReviewSuccess = (question) => {
     if (!question?.isReview) return;
     const questionKey = getQuestionKey(question);
@@ -896,6 +970,7 @@ export default function App() {
     clearPendingTransitions();
     setShowParentConfirm(false);
     setShowHistoryPanel(false);
+    setShowFlashcardAnswer(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
     const nextSummary = {
@@ -938,6 +1013,7 @@ export default function App() {
     clearPendingTransitions();
     setPracticeMode('normal');
     setSummaryStats(null);
+    setShowFlashcardAnswer(false);
     generateQuestion({ practiceMode: 'normal' });
   };
 
@@ -948,6 +1024,7 @@ export default function App() {
     clearPendingTransitions();
     setPracticeMode('review');
     setSummaryStats(null);
+    setShowFlashcardAnswer(false);
     generateQuestion({
       activePool,
       activeReviewList,
@@ -970,6 +1047,7 @@ export default function App() {
     setTimeoutTotal(0);
     setCurrentQ(null);
     setSelectedAns(null);
+    setShowFlashcardAnswer(false);
     setSummaryStats(null);
     setPracticeMode('normal');
     setTimer(settings.timeLimit);
@@ -1326,6 +1404,39 @@ export default function App() {
               )}
             </div>
 
+            <div className="rounded-xl border-2 border-cyan-100 bg-cyan-50 p-3">
+              <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-cyan-800 mb-3">
+                <BookOpen size={18} className="text-cyan-500" /> Chế độ học
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {LEARNING_MODES.map((mode) => {
+                  const isSelected = normalizeLearningMode(draftSettings.learningMode) === mode.id;
+
+                  return (
+                    <label
+                      key={mode.id}
+                      className={`flex min-h-11 items-center justify-center rounded-lg border-2 px-2 py-2 text-center text-sm md:text-base font-extrabold transition-colors ${
+                        isSelected
+                          ? 'border-cyan-500 bg-cyan-500 text-white shadow-[0_3px_0_rgb(14,116,144)]'
+                          : 'border-cyan-100 bg-white text-cyan-700 hover:border-cyan-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="learningMode"
+                        value={mode.id}
+                        checked={isSelected}
+                        onChange={() => updateDraftSetting('learningMode', mode.id)}
+                        className="sr-only"
+                      />
+                      {mode.label}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="rounded-xl border-2 border-indigo-100 bg-indigo-50 p-3">
               <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-indigo-800 mb-3">
                 <PencilLine size={18} className="text-indigo-500" /> Quản lý bài học
@@ -1662,6 +1773,76 @@ export default function App() {
                   Học lại từ đầu
                 </button>
               </div>
+            </div>
+          </div>
+        ) : isFlashcardMode && gameState === 'playing' ? (
+          <div className="flex min-h-[270px] flex-col justify-center text-center md:min-h-[390px]">
+            <div className="mb-2 flex justify-center md:mb-4">
+              <div className="inline-flex items-center gap-2 rounded-full border-2 border-cyan-100 bg-cyan-50 px-3 py-1 text-xs font-black text-cyan-700 md:text-base">
+                <BookOpen size={16} className="md:h-5 md:w-5" />
+                Flashcard
+              </div>
+            </div>
+
+            <div className="rounded-2xl border-2 border-blue-100 bg-blue-50 px-3 py-5 shadow-inner md:px-6 md:py-8">
+              <div className={`font-black text-blue-900 drop-shadow-sm leading-tight ${
+                currentQ?.lessonType === 'custom'
+                  ? 'text-3xl sm:text-4xl md:text-6xl'
+                  : 'text-5xl sm:text-6xl md:text-8xl'
+              }`}>
+                {currentQ?.questionText}
+              </div>
+            </div>
+
+            <div className="mt-3 flex min-h-[120px] flex-col justify-center md:mt-5 md:min-h-[150px]">
+              {showFlashcardAnswer ? (
+                <div className="grid gap-2 md:gap-3">
+                  <div className="rounded-2xl border-2 border-green-100 bg-green-50 px-3 py-3 md:px-6 md:py-5">
+                    <div className="text-xs font-extrabold text-green-600 md:text-base">Đáp án</div>
+                    <div className="text-3xl font-black leading-tight text-green-600 md:text-5xl">
+                      {currentQ?.answerText}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 md:gap-3">
+                    <button
+                      type="button"
+                      onClick={handleFlashcardRemembered}
+                      className="flex items-center justify-center gap-1.5 rounded-2xl bg-green-500 px-3 py-3 text-base font-extrabold text-white shadow-[0_4px_0_rgb(21,128,61)] transition-all active:translate-y-1 active:shadow-none md:text-2xl"
+                    >
+                      <CheckCircle size={20} className="md:h-6 md:w-6" />
+                      Đã nhớ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleFlashcardNeedsReview}
+                      className="flex items-center justify-center gap-1.5 rounded-2xl bg-amber-500 px-3 py-3 text-base font-extrabold text-white shadow-[0_4px_0_rgb(180,83,9)] transition-all active:translate-y-1 active:shadow-none md:text-2xl"
+                    >
+                      <BookOpen size={20} className="md:h-6 md:w-6" />
+                      Cần ôn
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowFlashcardAnswer(true)}
+                  className="mx-auto flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-xl font-extrabold text-white shadow-[0_5px_0_rgb(29,78,216)] transition-all active:translate-y-1 active:shadow-none md:py-5 md:text-3xl"
+                >
+                  <Star size={24} className="fill-yellow-300 text-yellow-300 md:h-8 md:w-8" />
+                  Xem đáp án
+                </button>
+              )}
+            </div>
+
+            <div className="mt-3 border-t-2 border-gray-100 pt-2.5 md:mt-5 md:pt-5">
+              <button
+                type="button"
+                onClick={handleEndSession}
+                className="mx-auto flex items-center gap-2 text-white bg-rose-500 hover:bg-rose-600 shadow-[0_3px_0_rgb(190,18,60)] md:shadow-[0_5px_0_rgb(190,18,60)] active:translate-y-1 active:shadow-none font-extrabold text-sm md:text-lg transition-all py-2 px-4 md:py-3 md:px-8 rounded-full"
+              >
+                <StopCircle size={22} className="md:w-6 md:h-6" /> Kết thúc phiên học
+              </button>
             </div>
           </div>
         ) : (
