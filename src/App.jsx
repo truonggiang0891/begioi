@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import html2canvas from 'html2canvas';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, Download } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, Download, Share2, ExternalLink, X } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -387,12 +387,14 @@ export default function App() {
   const [summaryStats, setSummaryStats] = useState(null);
   const [isSavingSummary, setIsSavingSummary] = useState(false);
   const [summarySaveError, setSummarySaveError] = useState('');
+  const [summaryImage, setSummaryImage] = useState(null);
   
   const timerRef = useRef(null);
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
   const sessionStartedAtRef = useRef(null);
   const summaryCaptureRef = useRef(null);
+  const summaryImageUrlRef = useRef('');
   const displayName = userName.trim() || 'bé';
   const activePool = useMemo(() => generateInitialPool(settings), [settings]);
   const activeReviewList = useMemo(
@@ -420,6 +422,21 @@ export default function App() {
     () => parseCustomQuestions(draftSettings.customQuestionsText),
     [draftSettings.customQuestionsText]
   );
+
+  const setPreparedSummaryImage = useCallback((nextImage) => {
+    if (summaryImageUrlRef.current) {
+      URL.revokeObjectURL(summaryImageUrlRef.current);
+    }
+
+    summaryImageUrlRef.current = nextImage?.url || '';
+    setSummaryImage(nextImage);
+  }, []);
+
+  useEffect(() => () => {
+    if (summaryImageUrlRef.current) {
+      URL.revokeObjectURL(summaryImageUrlRef.current);
+    }
+  }, []);
 
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
@@ -554,6 +571,7 @@ export default function App() {
       setSelectedAns(null);
       setSummaryStats(null);
       setSummarySaveError('');
+      setPreparedSummaryImage(null);
       setGameState('idle');
       setTimer(nextSettings.timeLimit);
     } else {
@@ -781,6 +799,7 @@ export default function App() {
     setCurrentQ(null);
     setSelectedAns(null);
     setSummarySaveError('');
+    setPreparedSummaryImage(null);
     setTimer(settings.timeLimit);
   };
 
@@ -803,6 +822,32 @@ export default function App() {
     setGameState('summary');
   };
 
+  const createSummaryImage = async () => {
+    const canvas = await html2canvas(summaryCaptureRef.current, {
+      backgroundColor: '#ffffff',
+      scale: Math.min(window.devicePixelRatio || 2, 3),
+      useCORS: true,
+      logging: false,
+    });
+
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, 'image/png');
+    });
+
+    if (!blob) throw new Error('Cannot create summary image');
+
+    const endedAtLabel = visibleSummary.endedAt
+      ? new Date(visibleSummary.endedAt).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+    const fileName = `ket-qua-${makeSafeFileName(visibleSummary.studentName)}-${endedAtLabel}.png`;
+
+    return {
+      file: new File([blob], fileName, { type: 'image/png' }),
+      fileName,
+      url: URL.createObjectURL(blob),
+    };
+  };
+
   const handleSaveSummaryImage = async () => {
     if (!summaryCaptureRef.current || isSavingSummary) return;
 
@@ -810,53 +855,57 @@ export default function App() {
     setSummarySaveError('');
 
     try {
-      const canvas = await html2canvas(summaryCaptureRef.current, {
-        backgroundColor: '#ffffff',
-        scale: Math.min(window.devicePixelRatio || 2, 3),
-        useCORS: true,
-        logging: false,
-      });
-
-      const blob = await new Promise((resolve) => {
-        canvas.toBlob(resolve, 'image/png');
-      });
-
-      if (!blob) throw new Error('Cannot create summary image');
-
-      const endedAtLabel = visibleSummary.endedAt
-        ? new Date(visibleSummary.endedAt).toISOString().slice(0, 10)
-        : new Date().toISOString().slice(0, 10);
-      const fileName = `ket-qua-${makeSafeFileName(visibleSummary.studentName)}-${endedAtLabel}.png`;
-      const imageFile = new File([blob], fileName, { type: 'image/png' });
-      const shareData = {
-        files: [imageFile],
-        title: 'Kết quả học tập',
-        text: `Kết quả học tập của ${visibleSummary.studentName}`,
-      };
-
-      if (navigator.canShare?.({ files: [imageFile] }) && navigator.share) {
-        try {
-          await navigator.share(shareData);
-          return;
-        } catch (shareError) {
-          if (shareError?.name === 'AbortError') return;
-        }
-      }
-
-      const imageUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-
-      link.href = imageUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+      const nextImage = await createSummaryImage();
+      setPreparedSummaryImage(nextImage);
     } catch {
-      setSummarySaveError('Chưa lưu được ảnh, vui lòng thử lại lần nữa');
+      setSummarySaveError('Chưa chụp được ảnh, vui lòng thử lại lần nữa');
     } finally {
       setIsSavingSummary(false);
     }
+  };
+
+  const handleShareSummaryImage = async () => {
+    if (!summaryImage?.file) return;
+
+    const shareData = {
+      files: [summaryImage.file],
+      title: 'Kết quả học tập',
+      text: `Kết quả học tập của ${visibleSummary.studentName}`,
+    };
+
+    if (!navigator.share || !navigator.canShare?.({ files: [summaryImage.file] })) {
+      setSummarySaveError('Trên iPhone, bạn có thể bấm giữ vào ảnh xem trước rồi chọn Lưu vào Ảnh.');
+      return;
+    }
+
+    try {
+      setSummarySaveError('');
+      await navigator.share(shareData);
+    } catch (shareError) {
+      if (shareError?.name !== 'AbortError') {
+        setSummarySaveError('Chưa mở được bảng lưu ảnh. Hãy bấm giữ vào ảnh xem trước để lưu.');
+      }
+    }
+  };
+
+  const handleOpenSummaryImage = () => {
+    if (!summaryImage?.url) return;
+
+    const openedWindow = window.open(summaryImage.url, '_blank', 'noopener,noreferrer');
+    if (!openedWindow) {
+      setSummarySaveError('Trình duyệt đang chặn mở ảnh. Hãy bấm giữ vào ảnh xem trước để lưu.');
+    }
+  };
+
+  const handleDownloadSummaryImage = () => {
+    if (!summaryImage?.url) return;
+
+    const link = document.createElement('a');
+    link.href = summaryImage.url;
+    link.download = summaryImage.fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const resetAllData = () => {
@@ -1450,7 +1499,7 @@ export default function App() {
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-lg md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none disabled:opacity-70 transition-all"
               >
                 <Download size={22} className="md:w-6 md:h-6" />
-                {isSavingSummary ? 'Đang lưu ảnh...' : 'Lưu ảnh kết quả'}
+                {isSavingSummary ? 'Đang chụp ảnh...' : 'Chụp ảnh kết quả'}
               </button>
               {summarySaveError && (
                 <div className="text-sm md:text-base font-bold text-red-500">{summarySaveError}</div>
@@ -1462,6 +1511,73 @@ export default function App() {
                 Làm lại (Học tiếp)
               </button>
             </div>
+
+            {summaryImage && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-3 md:p-6">
+                <div className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-3 md:p-5 text-left shadow-2xl">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-lg md:text-xl font-black text-blue-700">Ảnh kết quả đã sẵn sàng</div>
+                      <div className="mt-1 text-xs md:text-sm font-semibold text-gray-500">
+                        Trên iPhone, bấm Lưu vào Ảnh iPhone hoặc bấm giữ ảnh bên dưới để lưu.
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreparedSummaryImage(null);
+                        setSummarySaveError('');
+                      }}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 active:scale-95"
+                      aria-label="Đóng ảnh kết quả"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border-2 border-blue-100 bg-blue-50 p-2">
+                    <img
+                      src={summaryImage.url}
+                      alt="Ảnh tổng kết kết quả"
+                      className="w-full rounded-lg bg-white shadow-sm"
+                    />
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={handleShareSummaryImage}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-3 text-base md:text-lg font-extrabold text-white shadow-[0_4px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none transition-all"
+                    >
+                      <Share2 size={20} />
+                      Lưu vào Ảnh iPhone
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOpenSummaryImage}
+                      className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-blue-100 bg-white px-4 py-2.5 text-sm md:text-base font-extrabold text-blue-600 active:scale-[0.99] transition-all"
+                    >
+                      <ExternalLink size={18} />
+                      Mở ảnh riêng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadSummaryImage}
+                      className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-gray-100 bg-gray-50 px-4 py-2.5 text-sm md:text-base font-extrabold text-gray-600 active:scale-[0.99] transition-all"
+                    >
+                      <Download size={18} />
+                      Tải file ảnh
+                    </button>
+                  </div>
+
+                  {summarySaveError && (
+                    <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-center text-xs md:text-sm font-bold text-amber-700">
+                      {summarySaveError}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <>
