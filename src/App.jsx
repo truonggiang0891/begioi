@@ -59,7 +59,7 @@ const SETTINGS_KEY = 'math_settings';
 const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
-const MAX_SESSION_HISTORY = 10;
+const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const ALL_ADDITION_TABLES = Array.from({ length: 10 }, (_, index) => index + 1);
@@ -408,6 +408,7 @@ export default function App() {
   const [settingsError, setSettingsError] = useState('');
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [showAdminSettingsPanel, setShowAdminSettingsPanel] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
@@ -463,6 +464,7 @@ export default function App() {
       setSettingsError('');
       setSettingsSaved(false);
       setShowAdminSettingsPanel(false);
+      setShowHistoryPanel(false);
     }
   };
 
@@ -819,6 +821,7 @@ export default function App() {
     clearInterval(timerRef.current);
     clearPendingTransitions();
     setShowParentConfirm(false);
+    setShowHistoryPanel(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
     const nextSummary = {
@@ -963,17 +966,17 @@ export default function App() {
       {/* ROLE LOGIN */}
       {!isSummary && (
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 md:gap-2">
           <button
             type="button"
             onClick={toggleUserNameForm}
-            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-2 px-2 font-extrabold text-sm md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1.5 md:px-2 font-extrabold text-xs sm:text-sm md:text-base transition-all ${
               showUserNameForm
                 ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
                 : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
             }`}
           >
-            <UserRound size={18} className="md:w-5 md:h-5" /> Người dùng
+            <UserRound size={18} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Người dùng</span>
           </button>
 
           <button
@@ -985,14 +988,34 @@ export default function App() {
               setShowAdminLogin(prev => !prev);
               setAdminError('');
               setSettingsSaved(false);
+              setShowHistoryPanel(false);
             }}
-            className={`flex items-center justify-center gap-2 rounded-xl md:rounded-2xl py-2 px-2 font-extrabold text-sm md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1.5 md:px-2 font-extrabold text-xs sm:text-sm md:text-base transition-all ${
               isAdmin
                 ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
                 : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
             }`}
           >
-            <ShieldCheck size={18} className="md:w-5 md:h-5" /> Admin
+            <ShieldCheck size={18} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Admin</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowHistoryPanel(prev => !prev);
+              setShowUserNameForm(false);
+              setShowAdminLogin(false);
+              setAdminError('');
+              setAvatarError('');
+              setShowParentConfirm(false);
+            }}
+            className={`flex min-w-0 items-center justify-center gap-1.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1.5 md:px-2 font-extrabold text-xs sm:text-sm md:text-base transition-all ${
+              showHistoryPanel
+                ? 'bg-sky-500 text-white shadow-[0_4px_0_rgb(2,132,199)]'
+                : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-2 border-sky-100'
+            }`}
+          >
+            <BarChart size={18} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
           </button>
         </div>
 
@@ -1087,46 +1110,6 @@ export default function App() {
         <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white mb-2 md:mb-4 p-3 md:p-5">
           <div className="flex items-center gap-2 text-purple-700 font-black text-lg md:text-xl mb-3">
             <Settings size={22} className="md:w-6 md:h-6" /> Cài đặt Admin
-          </div>
-
-          <div className="mb-4 rounded-xl border-2 border-blue-100 bg-blue-50 p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm md:text-base font-extrabold text-blue-800">
-                <BarChart size={18} className="text-blue-500" /> Lịch sử buổi học
-              </div>
-              <div className="rounded-full bg-white px-2 py-1 text-xs font-black text-blue-600">
-                {sessionHistory.length}/{MAX_SESSION_HISTORY}
-              </div>
-            </div>
-
-            {sessionHistory.length === 0 ? (
-              <div className="rounded-lg bg-white px-3 py-2 text-center text-xs md:text-sm font-bold text-gray-500">
-                Chưa có buổi học nào được lưu.
-              </div>
-            ) : (
-              <div className="grid gap-2">
-                {sessionHistory.map((entry) => (
-                  <div key={entry.id} className="rounded-lg border-2 border-blue-100 bg-white p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm md:text-base font-black text-blue-800">
-                          {entry.studentName}
-                          {entry.lessonLabel ? <span className="text-xs md:text-sm text-blue-500"> - {entry.lessonLabel}</span> : null}
-                        </div>
-                        <div className="text-[11px] md:text-xs font-bold text-gray-500">{formatDateTime(entry.endedAt)}</div>
-                      </div>
-                      <div className="shrink-0 text-right text-xs md:text-sm font-black text-purple-600">{formatTime(entry.screenTime)}</div>
-                    </div>
-                    <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[11px] md:text-xs font-extrabold">
-                      <div className="rounded-md bg-green-50 px-1.5 py-1 text-green-700">Đúng {entry.correctTotal}</div>
-                      <div className="rounded-md bg-red-50 px-1.5 py-1 text-red-700">Sai {entry.wrongTotal}</div>
-                      <div className="rounded-md bg-orange-50 px-1.5 py-1 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
-                      <div className="rounded-md bg-sky-50 px-1.5 py-1 text-sky-700">{formatDuration(entry.durationSec)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <form onSubmit={saveAdminSettings} className="space-y-4 md:space-y-5">
@@ -1739,6 +1722,69 @@ export default function App() {
            </div>
          )}
       </div>
+      )}
+
+      {!isSummary && showHistoryPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-3">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Lịch sử buổi học"
+            className="flex max-h-[86dvh] w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-lg font-black text-blue-800 md:text-xl">
+                  <BarChart size={22} className="shrink-0 text-blue-500" />
+                  <span className="truncate">Lịch sử buổi học</span>
+                </div>
+                <div className="mt-0.5 text-xs font-bold text-gray-500 md:text-sm">
+                  Lưu {sessionHistory.length}/{MAX_SESSION_HISTORY} phiên gần nhất
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHistoryPanel(false)}
+                aria-label="Đóng lịch sử"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+              >
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            {sessionHistory.length === 0 ? (
+              <div className="rounded-xl border-2 border-blue-100 bg-blue-50 px-4 py-8 text-center text-sm font-extrabold text-gray-500 md:text-base">
+                Chưa có buổi học nào được lưu.
+              </div>
+            ) : (
+              <div className="grid max-h-[68dvh] gap-2 overflow-y-auto pr-1">
+                {sessionHistory.map((entry, index) => (
+                  <div key={entry.id} className="rounded-xl border-2 border-blue-100 bg-blue-50 p-2.5 md:p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-black text-blue-800 md:text-base">
+                          Phiên {index + 1}: {entry.studentName}
+                          {entry.lessonLabel ? <span className="text-xs text-blue-500 md:text-sm"> - {entry.lessonLabel}</span> : null}
+                        </div>
+                        <div className="mt-0.5 text-[11px] font-bold text-gray-500 md:text-xs">{formatDateTime(entry.endedAt)}</div>
+                      </div>
+                      <div className="shrink-0 rounded-full bg-white px-2 py-1 text-right text-xs font-black text-purple-600 md:text-sm">
+                        {formatTime(entry.screenTime)}
+                      </div>
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-2 gap-1.5 text-center text-[11px] font-extrabold md:grid-cols-4 md:text-xs">
+                      <div className="rounded-lg bg-green-50 px-1.5 py-1.5 text-green-700">Đúng {entry.correctTotal}</div>
+                      <div className="rounded-lg bg-red-50 px-1.5 py-1.5 text-red-700">Sai {entry.wrongTotal}</div>
+                      <div className="rounded-lg bg-orange-50 px-1.5 py-1.5 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
+                      <div className="rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700">{formatDuration(entry.durationSec)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <style dangerouslySetInnerHTML={{__html: `
