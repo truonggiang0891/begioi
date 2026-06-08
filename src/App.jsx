@@ -5,6 +5,7 @@ import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCc
 const SOUND_BASE_VOLUME = 0.23;
 const DEFAULT_SOUND_VOLUME_PERCENT = 100;
 const MAX_SOUND_VOLUME_PERCENT = 250;
+const CORRECT_NEXT_DELAY_MS = 650;
 
 const getSoundGain = (volumePercent = DEFAULT_SOUND_VOLUME_PERCENT) => {
   const parsedPercent = Number(volumePercent);
@@ -698,12 +699,12 @@ export default function App() {
         handleReviewSuccess(currentQ);
       }
       
-      // Chuyển câu sau 1.5s
+      // Chuyển nhanh sang câu tiếp theo sau khi bé thấy phản hồi đúng.
       clearTimeout(nextQuestionTimeoutRef.current);
       nextQuestionTimeoutRef.current = setTimeout(() => {
         generateQuestion();
         nextQuestionTimeoutRef.current = null;
-      }, 1500);
+      }, CORRECT_NEXT_DELAY_MS);
       
     } else {
       // SAI
@@ -1357,15 +1358,13 @@ export default function App() {
                 } else if (isCelebrating) {
                   if (opt === currentQ.ans) {
                     btnColor = "bg-green-400 shadow-[0_6px_0_rgb(22,163,74)] md:shadow-[0_8px_0_rgb(22,163,74)] transform scale-105";
-                  } else {
-                    btnColor = "bg-gray-200 shadow-[0_6px_0_rgb(209,213,219)] md:shadow-[0_8px_0_rgb(209,213,219)] opacity-30 text-gray-400";
                   }
                 }
 
                 return (
                   <button
                     key={idx}
-                    disabled={gameState !== 'playing'}
+                    disabled={isFeedbackPaused}
                     onClick={() => handleAnswerClick(opt)}
                     className={`${btnColor} ${textColor} text-3xl md:text-5xl font-black py-3.5 md:py-8 rounded-2xl md:rounded-3xl transition-all active:translate-y-2 active:shadow-[0_0px_0_rgb(2,132,199)] flex justify-center items-center`}
                   >
