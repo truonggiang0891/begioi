@@ -683,6 +683,7 @@ export default function App() {
   const [showReadingPanel, setShowReadingPanel] = useState(false);
   const [selectedReadingId, setSelectedReadingId] = useState(null);
   const [readingProgress, setReadingProgress] = useState(() => loadReadingProgress());
+  const [readingSummary, setReadingSummary] = useState(null);
   
   const [currentQ, setCurrentQ] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
@@ -699,6 +700,7 @@ export default function App() {
   const sessionStartedAtRef = useRef(null);
   const readingContentRef = useRef(null);
   const readingSaveTimeoutRef = useRef(null);
+  const readingSessionStartedAtRef = useRef(null);
   const displayName = userName.trim() || 'bé';
   const activePool = useMemo(() => generateInitialPool(settings), [settings]);
   const activeReviewList = useMemo(
@@ -825,6 +827,52 @@ export default function App() {
     }
   }, [nextReading, selectedReadingId]);
 
+  const buildReadingSummary = useCallback((progressSnapshot = readingProgress) => {
+    const endedAt = Date.now();
+    const startedAt = readingSessionStartedAtRef.current || endedAt;
+    const completedReadings = READING_LESSONS.filter(reading => progressSnapshot[reading.id]?.completed);
+    const selectedIsCompleted = selectedReadingId
+      ? !!progressSnapshot[selectedReadingId]?.completed
+      : false;
+    const inProgressReading = selectedReadingId && !selectedIsCompleted
+      ? READING_LESSONS.find(reading => reading.id === selectedReadingId)
+      : READING_LESSONS.find(reading => {
+        const progress = progressSnapshot[reading.id];
+        return progress?.scrollTop > 0 && !progress.completed;
+      });
+    const formatReadingLabel = (title) => title.replace(/\s+-\s+/g, ' ');
+
+    return {
+      studentName: displayName,
+      studentAvatar: userAvatar,
+      completedCount: completedReadings.length,
+      totalCount: READING_LESSONS.length,
+      completedTitles: completedReadings.map(reading => formatReadingLabel(reading.title)),
+      inProgressTitle: inProgressReading ? formatReadingLabel(inProgressReading.title) : 'Không có',
+      durationSec: Math.max(0, Math.round((endedAt - startedAt) / 1000)),
+      endedAt,
+    };
+  }, [displayName, readingProgress, selectedReadingId, userAvatar]);
+
+  const handleEndReadingSession = useCallback(() => {
+    rememberCurrentReadingPosition();
+    setReadingSummary(buildReadingSummary());
+  }, [buildReadingSummary, rememberCurrentReadingPosition]);
+
+  const continueReadingAfterSummary = () => {
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = Date.now();
+  };
+
+  const restartReadingFromStart = () => {
+    const firstReading = READING_LESSONS[0];
+
+    setReadingProgress({});
+    setReadingSummary(null);
+    setSelectedReadingId(firstReading?.id || null);
+    readingSessionStartedAtRef.current = Date.now();
+  };
+
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
     setShowUserNameForm(shouldOpen);
@@ -840,6 +888,8 @@ export default function App() {
       setSettingsSaved(false);
       setShowAdminSettingsPanel(false);
       rememberCurrentReadingPosition();
+      setReadingSummary(null);
+      readingSessionStartedAtRef.current = null;
       setShowHistoryPanel(false);
       setShowReadingPanel(false);
       setSelectedReadingId(null);
@@ -885,6 +935,10 @@ export default function App() {
   const toggleReadingPanel = () => {
     if (showReadingPanel) {
       rememberCurrentReadingPosition();
+      setReadingSummary(null);
+      readingSessionStartedAtRef.current = null;
+    } else {
+      readingSessionStartedAtRef.current = Date.now();
     }
 
     setShowReadingPanel(prev => {
@@ -1346,6 +1400,8 @@ export default function App() {
     rememberCurrentReadingPosition();
     setShowParentConfirm(false);
     setShowHistoryPanel(false);
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
     setShowReadingPanel(false);
     setSelectedReadingId(null);
     setShowFlashcardAnswer(false);
@@ -1522,6 +1578,8 @@ export default function App() {
               setSettingsSaved(false);
               setShowHistoryPanel(false);
               rememberCurrentReadingPosition();
+              setReadingSummary(null);
+              readingSessionStartedAtRef.current = null;
               setShowReadingPanel(false);
               setSelectedReadingId(null);
             }}
@@ -1556,6 +1614,8 @@ export default function App() {
               setAvatarError('');
               setShowParentConfirm(false);
               rememberCurrentReadingPosition();
+              setReadingSummary(null);
+              readingSessionStartedAtRef.current = null;
               setShowReadingPanel(false);
               setSelectedReadingId(null);
             }}
@@ -2388,10 +2448,10 @@ export default function App() {
             <div className="flex shrink-0 items-center justify-between gap-1.5 border-b border-emerald-100 bg-white px-2.5 py-0.5 md:px-6 md:py-1.5">
               <div className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-emerald-800 md:text-3xl">
                 <BookOpen size={20} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
-                <span className="truncate">{selectedReading ? selectedReading.title : 'Tập đọc'}</span>
+                <span className="truncate">{readingSummary ? 'Tổng kết tập đọc' : selectedReading ? selectedReading.title : 'Tập đọc'}</span>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
-                {selectedReading && (
+                {selectedReading && !readingSummary && (
                   <button
                     type="button"
                     onClick={() => {
@@ -2407,6 +2467,8 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     rememberCurrentReadingPosition();
+                    setReadingSummary(null);
+                    readingSessionStartedAtRef.current = null;
                     setShowReadingPanel(false);
                     setSelectedReadingId(null);
                   }}
@@ -2418,7 +2480,92 @@ export default function App() {
               </div>
             </div>
 
-            {selectedReading ? (
+            {readingSummary ? (
+              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/70 px-3 py-2 md:px-8 md:py-3">
+                <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border-[3px] border-emerald-100/80 bg-white p-3 md:p-5">
+                  <div className="text-center">
+                    <BarChart size={30} className="mx-auto text-blue-500 md:h-10 md:w-10" />
+                    <h2 className="mt-1 text-xl font-black text-blue-700 md:text-3xl">TỔNG KẾT KẾT QUẢ</h2>
+                    <div className="text-sm font-extrabold text-emerald-700 md:text-base">Tổng kết tập đọc</div>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-center gap-3 rounded-xl border-2 border-blue-100 bg-blue-50 px-3 py-2">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-blue-100">
+                      {readingSummary.studentAvatar ? (
+                        <img src={readingSummary.studentAvatar} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+                      ) : (
+                        <UserRound size={23} className="text-blue-500" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-black text-blue-500">Tên bé</div>
+                      <div className="truncate text-lg font-black text-blue-800 md:text-2xl">{readingSummary.studentName}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border-2 border-emerald-100 bg-emerald-50 px-3 py-2">
+                      <div className="flex items-center gap-1 text-sm font-black text-emerald-700">
+                        <CheckCircle size={17} /> Đã đọc
+                      </div>
+                      <div className="text-right text-2xl font-black text-emerald-600">{readingSummary.completedCount} tập</div>
+                    </div>
+                    <div className="rounded-xl border-2 border-sky-100 bg-sky-50 px-3 py-2">
+                      <div className="flex items-center gap-1 text-sm font-black text-sky-700">
+                        <Clock size={17} /> Thời gian
+                      </div>
+                      <div className="text-right text-lg font-black text-sky-600">{formatDuration(readingSummary.durationSec)}</div>
+                    </div>
+                    <div className="col-span-2 rounded-xl border-2 border-purple-100 bg-purple-50 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1 text-sm font-black text-purple-700">
+                          <BookOpen size={17} /> Tiến độ
+                        </div>
+                        <div className="text-lg font-black text-purple-600">
+                          {readingSummary.completedCount}/{readingSummary.totalCount} bài đọc
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 space-y-2 text-sm md:text-base">
+                    <div className="rounded-xl bg-emerald-50 px-3 py-2">
+                      <div className="font-black text-emerald-700">Hoàn thành:</div>
+                      <div className="max-h-16 overflow-y-auto font-semibold text-slate-700">
+                        {readingSummary.completedTitles.length > 0
+                          ? readingSummary.completedTitles.join(', ')
+                          : 'Chưa có tập nào'}
+                      </div>
+                    </div>
+                    <div className="rounded-xl bg-amber-50 px-3 py-2">
+                      <div className="font-black text-amber-700">Đang đọc dở:</div>
+                      <div className="font-semibold text-slate-700">{readingSummary.inProgressTitle}</div>
+                    </div>
+                    <div className="rounded-xl bg-rose-50 px-3 py-2">
+                      <div className="font-black text-rose-700">Kết thúc lúc:</div>
+                      <div className="font-semibold text-slate-700">{formatDateTime(readingSummary.endedAt)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-1.5 grid shrink-0 grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={continueReadingAfterSummary}
+                    className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-green-500 px-3 text-sm font-black text-white shadow-[0_3px_0_rgb(22,101,52)] active:translate-y-1 active:shadow-none"
+                  >
+                    <Play size={18} /> Tiếp tục học
+                  </button>
+                  <button
+                    type="button"
+                    onClick={restartReadingFromStart}
+                    className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 text-sm font-black text-white shadow-[0_3px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none"
+                  >
+                    <RotateCcw size={18} /> Học lại từ đầu
+                  </button>
+                </div>
+              </div>
+            ) : selectedReading ? (
               <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/70 px-3 py-1.5 md:px-8 md:py-3">
                 <div
                   ref={readingContentRef}
@@ -2437,34 +2584,34 @@ export default function App() {
                   </div>
                 </div>
                 <div className="mt-1 shrink-0 rounded-xl bg-white/95 px-1.5 py-1 shadow-sm md:mt-3 md:px-4">
-                  <div className="grid grid-cols-[0.82fr_auto_0.82fr_0.98fr] items-center gap-1.5">
+                  <div className="grid grid-cols-[2rem_auto_2rem_minmax(0,1fr)_minmax(0,0.86fr)] items-center gap-1.5">
                     <button
                       type="button"
+                      aria-label="Tập trước"
                       onClick={() => goToReading(previousReading?.id)}
                       disabled={!previousReading}
-                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-1.5 text-[11px] font-bold transition-colors md:text-base ${
+                      className={`flex h-8 items-center justify-center rounded-lg text-[11px] font-bold transition-colors md:text-base ${
                         previousReading
                           ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                           : 'bg-gray-50 text-gray-300'
                       }`}
                     >
                       <ChevronLeft size={18} className="shrink-0" />
-                      <span className="truncate">Tập trước</span>
                     </button>
                     <div className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 md:text-sm">
                       {selectedReadingIndex + 1}/{READING_LESSONS.length}
                     </div>
                     <button
                       type="button"
+                      aria-label="Tập sau"
                       onClick={() => goToReading(nextReading?.id)}
                       disabled={!nextReading}
-                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-1.5 text-[11px] font-bold transition-colors md:text-base ${
+                      className={`flex h-8 items-center justify-center rounded-lg text-[11px] font-bold transition-colors md:text-base ${
                         nextReading
                           ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                           : 'bg-gray-50 text-gray-300'
                       }`}
                     >
-                      <span className="truncate">Tập sau</span>
                       <ChevronRight size={18} className="shrink-0" />
                     </button>
                     <button
@@ -2478,6 +2625,14 @@ export default function App() {
                     >
                       <CheckCircle size={16} className="shrink-0" />
                       <span className="truncate">Hoàn thành</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleEndReadingSession}
+                      className="flex min-h-8 items-center justify-center gap-1 rounded-lg bg-rose-500 px-1.5 text-[11px] font-bold text-white transition-colors hover:bg-rose-600 md:text-base"
+                    >
+                      <StopCircle size={16} className="shrink-0" />
+                      <span className="truncate">Kết thúc</span>
                     </button>
                   </div>
                 </div>
