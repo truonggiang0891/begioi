@@ -59,6 +59,7 @@ const SETTINGS_KEY = 'math_settings';
 const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
+const READING_PROGRESS_KEY = 'reading_progress';
 const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
@@ -90,6 +91,142 @@ const DEFAULT_SETTINGS = {
   selectedTables: ALL_ADDITION_TABLES,
 };
 const READING_LESSONS = [
+  {
+    id: 'dino-sam-tap-1',
+    title: 'Dino Sấm - Tập 1',
+    subtitle: 'Chiếc La Bàn Lấp Lánh',
+    lines: [
+      'Tập 1: Chiếc La Bàn Lấp Lánh',
+      'Dino Sấm là một chú khủng long nhỏ nhưng rất dũng cảm.',
+      'Bạn thân của Dino là Mít Mắt Tròn và bé Na Nắng.',
+      'Một sáng nọ, Dino tìm thấy một chiếc la bàn phát sáng bên Suối Kẹo Ngọt.',
+      'Mít reo lên: “Đây là la bàn của Cụ Rùa Sao!”',
+      'Cụ Rùa Sao nhìn la bàn rồi nói: “Rừng Cầu Vồng đang gặp nguy hiểm.”',
+      'Bốn viên Sao Dũng Cảm đã bị Hắc Nanh lấy mất.',
+      'Hắc Nanh có đôi mắt đỏ và chiếc áo choàng đen như đêm.',
+      'Dino Sấm nắm chặt tay và nói: “Cháu sẽ tìm lại các viên sao!”',
+      'Chiếc la bàn sáng lên.',
+      'Chuyến phiêu lưu đầu tiên bắt đầu.',
+    ],
+  },
+  {
+    id: 'dino-sam-tap-2',
+    title: 'Dino Sấm - Tập 2',
+    subtitle: 'Khu Rừng Thì Thầm',
+    lines: [
+      'Tập 2: Khu Rừng Thì Thầm',
+      'Dino Sấm, Mít Mắt Tròn và bé Na Nắng đi vào Khu Rừng Thì Thầm.',
+      'Ở đây, cây cối biết nói, nhưng hôm nay khu rừng im lặng lạ thường.',
+      'Bỗng một tiếng gầm vang lên sau thân cây lớn.',
+      'Mù Gai xuất hiện với chiếc áo choàng đen và đôi tay đầy gai nhọn.',
+      'Mù Gai quát: “Không ai được lấy Sao Lá Xanh!”',
+      'Hắn tung gai về phía bé Na.',
+      'Dino Sấm lao tới che chắn cho bạn.',
+      'Chiếc la bàn sáng màu xanh.',
+      'Dino Sấm biến thành dạng Lá Xanh.',
+      'Trên lưng cậu mọc ra những chiếc lá lớn như tấm khiên.',
+      'Dino xoay người và chắn hết gai nhọn.',
+      'Cậu nói: “Sức mạnh là để bảo vệ bạn bè.”',
+      'Mù Gai lùi lại.',
+      'Viên Sao Lá Xanh bay ra khỏi bụi gai và trở về với Dino.',
+    ],
+  },
+  {
+    id: 'dino-sam-tap-3',
+    title: 'Dino Sấm - Tập 3',
+    subtitle: 'Núi Lửa Ù Ù',
+    lines: [
+      'Tập 3: Núi Lửa Ù Ù',
+      'Cả nhóm đi đến Núi Lửa Ù Ù.',
+      'Mặt đất nóng ran và khói bay lên từng đợt.',
+      'Trên đỉnh núi, Quỷ Khói Than đang giữ viên Sao Lửa Đỏ.',
+      'Hắn cười khàn khàn: “Muốn lấy sao thì phải vượt qua khói của ta!”',
+      'Quỷ Khói Than phun ra những vòng khói đen.',
+      'Khói làm mọi người không nhìn thấy đường.',
+      'Dino Sấm hít một hơi thật sâu.',
+      'Chiếc la bàn sáng đỏ rực.',
+      'Dino biến thành dạng Lửa Đỏ.',
+      'Đôi chân cậu mạnh hơn và trái tim cậu sáng như ngọn đuốc.',
+      'Dino nhảy qua khe núi.',
+      'Cậu đập mạnh chân xuống đất.',
+      'Luồng sáng đỏ thổi tan khói đen.',
+      'Quỷ Khói Than hoảng sợ bỏ chạy.',
+      'Viên Sao Lửa Đỏ rơi xuống tay Dino Sấm.',
+    ],
+  },
+  {
+    id: 'dino-sam-tap-4',
+    title: 'Dino Sấm - Tập 4',
+    subtitle: 'Hồ Nước Không Đáy',
+    lines: [
+      'Tập 4: Hồ Nước Không Đáy',
+      'Sau núi lửa, cả nhóm đến Hồ Nước Không Đáy.',
+      'Mặt hồ yên lặng như một chiếc gương lớn.',
+      'Bỗng dưới nước vang lên tiếng cười lạnh.',
+      'Thủy Quái Răng Lạnh trồi lên.',
+      'Hắn có hàm răng sắc và chiếc đuôi dài như roi.',
+      'Thủy Quái gầm lên: “Sao Sóng Bạc là của ta!”',
+      'Hắn tạo ra những cơn sóng lớn.',
+      'Bé Na suýt bị cuốn đi.',
+      'Dino Sấm nhảy xuống nước.',
+      'Chiếc la bàn sáng màu bạc.',
+      'Dino biến thành dạng Sóng Bạc.',
+      'Thân cậu nhẹ và nhanh như dòng nước.',
+      'Dino lướt qua từng con sóng.',
+      'Cậu xoay tròn tạo thành vòng nước sáng.',
+      'Vòng nước cuốn Thủy Quái ra xa bờ.',
+      'Viên Sao Sóng Bạc nổi lên lấp lánh dưới ánh mặt trời.',
+    ],
+  },
+  {
+    id: 'dino-sam-tap-5',
+    title: 'Dino Sấm - Tập 5',
+    subtitle: 'Thung Lũng Sấm Chớp',
+    lines: [
+      'Tập 5: Thung Lũng Sấm Chớp',
+      'Ba viên sao đã trở về.',
+      'Chỉ còn viên cuối cùng ở Thung Lũng Sấm Chớp.',
+      'Nơi đó luôn có tiếng ù ù trên bầu trời.',
+      'Kẻ canh giữ là Lôi Dực Hắc Ám.',
+      'Hắn có đôi cánh đen và tiếng hét làm đá nứt ra.',
+      'Lôi Dực hét lớn: “Không ai thắng được tốc độ của ta!”',
+      'Hắn lao xuống nhanh như bóng tối.',
+      'Dino Sấm không kịp tránh.',
+      'Chiếc la bàn bỗng sáng vàng rực.',
+      'Dino biến thành dạng Sấm Vàng.',
+      'Đôi mắt cậu sáng lên.',
+      'Bước chân cậu nhanh như tia chớp.',
+      'Dino chạy quanh Lôi Dực và tạo thành vòng sáng.',
+      'Ánh sáng làm đôi cánh đen yếu dần.',
+      'Lôi Dực bỏ chạy vào mây xám.',
+      'Viên Sao Sấm Vàng trở về.',
+    ],
+  },
+  {
+    id: 'dino-sam-tap-6',
+    title: 'Dino Sấm - Tập 6',
+    subtitle: 'Đối Đầu Hắc Nanh',
+    lines: [
+      'Tập 6: Đối Đầu Hắc Nanh',
+      'Bốn viên Sao Dũng Cảm đã đủ.',
+      'Nhưng Hắc Nanh xuất hiện giữa Rừng Cầu Vồng.',
+      'Hắn cao lớn, có đôi mắt đỏ và chiếc áo choàng đen như đêm.',
+      'Hắc Nanh gầm lên: “Ta sẽ lấy hết ánh sáng!”',
+      'Bóng tối phủ xuống khu rừng.',
+      'Dino Sấm đứng trước bạn bè và không run sợ.',
+      'Cậu dùng Lá Xanh để bảo vệ mọi người.',
+      'Cậu dùng Lửa Đỏ để tiến lên.',
+      'Cậu dùng Sóng Bạc để né bóng tối.',
+      'Cậu dùng Sấm Vàng để thắp sáng bầu trời.',
+      'Bốn viên sao bay quanh Dino Sấm.',
+      'Ánh sáng cầu vồng bừng lên rực rỡ.',
+      'Hắc Nanh hét lớn rồi tan thành làn khói đen.',
+      'Rừng Cầu Vồng sáng trở lại.',
+      'Bé Na cười thật tươi: “Dino Sấm giỏi quá!”',
+      'Dino lắc đầu và nói: “Chúng ta cùng dũng cảm.”',
+      'Từ đó, Dino Sấm trở thành người bạn nhỏ của cả Rừng Cầu Vồng.',
+    ],
+  },
   {
     id: 'be-di-hoc',
     title: 'Bé Đi Học',
@@ -156,6 +293,34 @@ const clampNumber = (value, fallback, min, max) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(Math.max(Math.round(parsed), min), max);
+};
+
+const normalizeReadingProgress = (progress) => {
+  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return {};
+
+  return Object.entries(progress).reduce((items, [readingId, value]) => {
+    const scrollTop = clampNumber(
+      typeof value === 'number' ? value : value?.scrollTop,
+      0,
+      0,
+      300000
+    );
+
+    if (typeof readingId === 'string' && readingId.trim()) {
+      items[readingId] = { scrollTop };
+    }
+
+    return items;
+  }, {});
+};
+
+const loadReadingProgress = () => {
+  try {
+    const savedProgress = localStorage.getItem(READING_PROGRESS_KEY);
+    return savedProgress ? normalizeReadingProgress(JSON.parse(savedProgress)) : {};
+  } catch {
+    return {};
+  }
 };
 
 const padTwo = (value) => String(value).padStart(2, '0');
@@ -514,6 +679,7 @@ export default function App() {
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [showReadingPanel, setShowReadingPanel] = useState(false);
   const [selectedReadingId, setSelectedReadingId] = useState(null);
+  const [readingProgress, setReadingProgress] = useState(() => loadReadingProgress());
   
   const [currentQ, setCurrentQ] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
@@ -528,6 +694,8 @@ export default function App() {
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
   const sessionStartedAtRef = useRef(null);
+  const readingContentRef = useRef(null);
+  const readingSaveTimeoutRef = useRef(null);
   const displayName = userName.trim() || 'bé';
   const activePool = useMemo(() => generateInitialPool(settings), [settings]);
   const activeReviewList = useMemo(
@@ -552,6 +720,9 @@ export default function App() {
   const currentLessonLabel = getLessonLabel(settings);
   const isFlashcardMode = settings.learningMode === 'flashcard';
   const selectedReading = READING_LESSONS.find(reading => reading.id === selectedReadingId) || null;
+  const selectedReadingScrollTop = selectedReadingId
+    ? readingProgress[selectedReadingId]?.scrollTop || 0
+    : 0;
   const draftLessonTypes = getValidLessonTypes(
     Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
   );
@@ -565,6 +736,47 @@ export default function App() {
     () => parseCustomQuestions(draftSettings.customQuestionsText),
     [draftSettings.customQuestionsText]
   );
+
+  const saveReadingPosition = useCallback((readingId, scrollTop) => {
+    if (!readingId) return;
+
+    const nextScrollTop = clampNumber(scrollTop, 0, 0, 300000);
+    setReadingProgress(prev => {
+      const currentScrollTop = prev[readingId]?.scrollTop || 0;
+      if (Math.abs(currentScrollTop - nextScrollTop) < 2) return prev;
+
+      return {
+        ...prev,
+        [readingId]: { scrollTop: nextScrollTop },
+      };
+    });
+  }, []);
+
+  const rememberCurrentReadingPosition = useCallback(() => {
+    if (!selectedReadingId || !readingContentRef.current) return;
+
+    if (readingSaveTimeoutRef.current) {
+      clearTimeout(readingSaveTimeoutRef.current);
+      readingSaveTimeoutRef.current = null;
+    }
+
+    saveReadingPosition(selectedReadingId, readingContentRef.current.scrollTop);
+  }, [saveReadingPosition, selectedReadingId]);
+
+  const handleReadingScroll = useCallback((event) => {
+    if (!selectedReadingId) return;
+
+    const readingId = selectedReadingId;
+    const scrollTop = event.currentTarget.scrollTop;
+
+    if (readingSaveTimeoutRef.current) {
+      clearTimeout(readingSaveTimeoutRef.current);
+    }
+
+    readingSaveTimeoutRef.current = setTimeout(() => {
+      saveReadingPosition(readingId, scrollTop);
+    }, 120);
+  }, [saveReadingPosition, selectedReadingId]);
 
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
@@ -580,6 +792,7 @@ export default function App() {
       setSettingsError('');
       setSettingsSaved(false);
       setShowAdminSettingsPanel(false);
+      rememberCurrentReadingPosition();
       setShowHistoryPanel(false);
       setShowReadingPanel(false);
       setSelectedReadingId(null);
@@ -623,6 +836,10 @@ export default function App() {
   };
 
   const toggleReadingPanel = () => {
+    if (showReadingPanel) {
+      rememberCurrentReadingPosition();
+    }
+
     setShowReadingPanel(prev => {
       const shouldOpen = !prev;
       if (!shouldOpen) {
@@ -794,6 +1011,34 @@ export default function App() {
       console.log("Cannot save data");
     }
   }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, timeoutTotal, sessionHistory, settings, userName, userAvatar]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(READING_PROGRESS_KEY, JSON.stringify(readingProgress));
+    } catch {
+      console.log("Cannot save reading progress");
+    }
+  }, [readingProgress]);
+
+  useEffect(() => {
+    if (!selectedReadingId || !readingContentRef.current) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const container = readingContentRef.current;
+      if (!container) return;
+
+      const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      container.scrollTop = Math.min(selectedReadingScrollTop, maxScrollTop);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [selectedReadingId, selectedReadingScrollTop]);
+
+  useEffect(() => () => {
+    if (readingSaveTimeoutRef.current) {
+      clearTimeout(readingSaveTimeoutRef.current);
+    }
+  }, []);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback((options = {}) => {
@@ -1051,6 +1296,7 @@ export default function App() {
   const handleEndSession = useCallback(() => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    rememberCurrentReadingPosition();
     setShowParentConfirm(false);
     setShowHistoryPanel(false);
     setShowReadingPanel(false);
@@ -1087,6 +1333,7 @@ export default function App() {
     correctTotal,
     currentLessonLabel,
     displayName,
+    rememberCurrentReadingPosition,
     screenTime,
     timeoutTotal,
     userAvatar,
@@ -1153,6 +1400,7 @@ export default function App() {
     localStorage.removeItem('math_wrongTotal');
     localStorage.removeItem('math_timeoutTotal');
     localStorage.removeItem(SESSION_HISTORY_KEY);
+    localStorage.removeItem(READING_PROGRESS_KEY);
     window.location.reload();
   };
 
@@ -1226,6 +1474,7 @@ export default function App() {
               setAdminError('');
               setSettingsSaved(false);
               setShowHistoryPanel(false);
+              rememberCurrentReadingPosition();
               setShowReadingPanel(false);
               setSelectedReadingId(null);
             }}
@@ -1259,6 +1508,7 @@ export default function App() {
               setAdminError('');
               setAvatarError('');
               setShowParentConfirm(false);
+              rememberCurrentReadingPosition();
               setShowReadingPanel(false);
               setSelectedReadingId(null);
             }}
@@ -2097,7 +2347,10 @@ export default function App() {
                 {selectedReading && (
                   <button
                     type="button"
-                    onClick={() => setSelectedReadingId(null)}
+                    onClick={() => {
+                      rememberCurrentReadingPosition();
+                      setSelectedReadingId(null);
+                    }}
                     className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-extrabold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
                   >
                     Trở lại
@@ -2106,6 +2359,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => {
+                    rememberCurrentReadingPosition();
                     setShowReadingPanel(false);
                     setSelectedReadingId(null);
                   }}
@@ -2119,7 +2373,11 @@ export default function App() {
 
             {selectedReading ? (
               <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/60 px-2 py-2 md:px-8 md:py-4">
-                <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white px-2 py-2 md:px-5 md:py-5">
+                <div
+                  ref={readingContentRef}
+                  onScroll={handleReadingScroll}
+                  className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white px-2 py-2 md:px-5 md:py-5"
+                >
                   <div className="space-y-1.5 text-left text-xl font-extrabold leading-snug text-slate-800 md:space-y-2 md:text-3xl md:leading-snug">
                     {selectedReading.lines.map((line) => (
                       <p key={line}>
@@ -2143,9 +2401,14 @@ export default function App() {
                         <div className="truncate text-base font-black text-emerald-800 md:text-lg">
                           Bài {index + 1}: {reading.title}
                         </div>
+                        {readingProgress[reading.id]?.scrollTop > 0 && (
+                          <div className="mt-0.5 text-xs font-extrabold text-emerald-500 md:text-sm">
+                            Đang đọc dở
+                          </div>
+                        )}
                       </div>
                       <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-600 md:text-sm">
-                        Đọc
+                        {readingProgress[reading.id]?.scrollTop > 0 ? 'Đọc tiếp' : 'Đọc'}
                       </div>
                     </div>
                   </button>
