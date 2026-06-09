@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -720,9 +720,16 @@ export default function App() {
   const currentLessonLabel = getLessonLabel(settings);
   const isFlashcardMode = settings.learningMode === 'flashcard';
   const selectedReading = READING_LESSONS.find(reading => reading.id === selectedReadingId) || null;
+  const selectedReadingIndex = selectedReadingId
+    ? READING_LESSONS.findIndex(reading => reading.id === selectedReadingId)
+    : -1;
   const selectedReadingScrollTop = selectedReadingId
     ? readingProgress[selectedReadingId]?.scrollTop || 0
     : 0;
+  const previousReading = selectedReadingIndex > 0 ? READING_LESSONS[selectedReadingIndex - 1] : null;
+  const nextReading = selectedReadingIndex >= 0 && selectedReadingIndex < READING_LESSONS.length - 1
+    ? READING_LESSONS[selectedReadingIndex + 1]
+    : null;
   const draftLessonTypes = getValidLessonTypes(
     Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
   );
@@ -777,6 +784,13 @@ export default function App() {
       saveReadingPosition(readingId, scrollTop);
     }, 120);
   }, [saveReadingPosition, selectedReadingId]);
+
+  const goToReading = useCallback((readingId) => {
+    if (!readingId) return;
+
+    rememberCurrentReadingPosition();
+    setSelectedReadingId(readingId);
+  }, [rememberCurrentReadingPosition]);
 
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
@@ -2372,18 +2386,51 @@ export default function App() {
             </div>
 
             {selectedReading ? (
-              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/60 px-2 py-2 md:px-8 md:py-4">
+              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/70 px-3 py-3 md:px-8 md:py-4">
                 <div
                   ref={readingContentRef}
                   onScroll={handleReadingScroll}
-                  className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white px-2 py-2 md:px-5 md:py-5"
+                  className="min-h-0 flex-1 overflow-y-auto rounded-2xl border-[3px] border-emerald-100/80 bg-white px-2 py-2 md:px-5 md:py-5"
                 >
-                  <div className="space-y-1.5 text-left text-xl font-extrabold leading-snug text-slate-800 md:space-y-2 md:text-3xl md:leading-snug">
+                  <div className="space-y-1.5 text-left text-xl font-bold leading-snug text-slate-800 md:space-y-2 md:text-3xl md:leading-snug">
                     {selectedReading.lines.map((line) => (
                       <p key={line}>
                         {line}
                       </p>
                     ))}
+                  </div>
+                </div>
+                <div className="mt-2 shrink-0 rounded-2xl bg-white/95 px-2 py-2 shadow-sm md:mt-3 md:px-4">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => goToReading(previousReading?.id)}
+                      disabled={!previousReading}
+                      className={`flex min-h-11 items-center justify-center gap-1 rounded-xl px-2 text-sm font-extrabold transition-colors md:text-base ${
+                        previousReading
+                          ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          : 'bg-gray-50 text-gray-300'
+                      }`}
+                    >
+                      <ChevronLeft size={22} className="shrink-0" />
+                      <span className="truncate">Tập trước</span>
+                    </button>
+                    <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 md:text-sm">
+                      {selectedReadingIndex + 1}/{READING_LESSONS.length}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => goToReading(nextReading?.id)}
+                      disabled={!nextReading}
+                      className={`flex min-h-11 items-center justify-center gap-1 rounded-xl px-2 text-sm font-extrabold transition-colors md:text-base ${
+                        nextReading
+                          ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                          : 'bg-gray-50 text-gray-300'
+                      }`}
+                    >
+                      <span className="truncate">Tập sau</span>
+                      <ChevronRight size={22} className="shrink-0" />
+                    </button>
                   </div>
                 </div>
               </div>
