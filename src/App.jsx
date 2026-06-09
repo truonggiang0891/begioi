@@ -2081,21 +2081,21 @@ export default function App() {
       )}
 
       {!isSummary && showReadingPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-3">
+        <div className="fixed inset-0 z-50 bg-white">
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Tập đọc"
-            className="flex max-h-[86dvh] w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4"
+            className="flex h-full w-full flex-col bg-white"
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-emerald-100 bg-white px-4 py-3 md:px-6">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-lg font-black text-emerald-800 md:text-xl">
-                  <BookOpen size={22} className="shrink-0 text-emerald-500" />
+                <div className="flex items-center gap-2 text-xl font-black text-emerald-800 md:text-3xl">
+                  <BookOpen size={24} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
                   <span className="truncate">{selectedReading ? selectedReading.title : 'Tập đọc'}</span>
                 </div>
                 <div className="mt-0.5 text-xs font-bold text-gray-500 md:text-sm">
-                  {selectedReading ? selectedReading.subtitle : 'Chọn một bài để luyện đọc'}
+                  {selectedReading ? 'Luyện đọc rõ từng câu' : 'Chọn một bài để luyện đọc'}
                 </div>
               </div>
               <button
@@ -2105,28 +2105,28 @@ export default function App() {
                   setSelectedReadingId(null);
                 }}
                 aria-label="Đóng tập đọc"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:h-12 md:w-12"
               >
-                <XCircle size={22} />
+                <XCircle size={23} />
               </button>
             </div>
 
             {selectedReading ? (
-              <div className="min-h-0">
-                <div className="mb-3">
+              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/60 px-3 py-3 md:px-8 md:py-5">
+                <div className="mb-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setSelectedReadingId(null)}
-                    className="rounded-full border-2 border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-extrabold text-emerald-700 transition-colors hover:border-emerald-300"
+                    className="rounded-full bg-white px-4 py-2 text-sm font-extrabold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-100 md:text-base"
                   >
                     Trở lại danh sách
                   </button>
                 </div>
 
-                <div className="max-h-[62dvh] overflow-y-auto rounded-2xl border-2 border-emerald-100 bg-emerald-50 px-4 py-4 md:px-6 md:py-5">
-                  <div className="space-y-3 text-left text-2xl font-extrabold leading-relaxed text-slate-800 md:text-3xl md:leading-relaxed">
+                <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white px-3 py-3 md:px-8 md:py-6">
+                  <div className="space-y-2 text-left text-xl font-extrabold leading-relaxed text-slate-800 md:space-y-3 md:text-3xl md:leading-relaxed">
                     {selectedReading.lines.map((line) => (
-                      <p key={line} className="rounded-xl bg-white/80 px-3 py-2 shadow-sm">
+                      <p key={line} className="rounded-xl bg-emerald-50/70 px-3 py-2 md:px-4">
                         {line}
                       </p>
                     ))}
@@ -2134,21 +2134,18 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div className="grid max-h-[68dvh] gap-2 overflow-y-auto pr-1">
+              <div className="grid min-h-0 flex-1 gap-2 overflow-y-auto bg-emerald-50/60 px-3 py-3 md:px-8 md:py-5">
                 {READING_LESSONS.map((reading, index) => (
                   <button
                     key={reading.id}
                     type="button"
                     onClick={() => setSelectedReadingId(reading.id)}
-                    className="rounded-xl border-2 border-emerald-100 bg-emerald-50 p-3 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+                    className="rounded-xl bg-white p-3 text-left shadow-sm transition-colors hover:bg-emerald-100 md:p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="truncate text-base font-black text-emerald-800 md:text-lg">
                           Bài {index + 1}: {reading.title}
-                        </div>
-                        <div className="mt-1 text-xs font-bold text-gray-500 md:text-sm">
-                          {reading.subtitle}
                         </div>
                       </div>
                       <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-600 md:text-sm">
