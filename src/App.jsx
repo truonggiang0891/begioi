@@ -2088,45 +2088,41 @@ export default function App() {
             aria-label="Tập đọc"
             className="flex h-full w-full flex-col bg-white"
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-emerald-100 bg-white px-4 py-3 md:px-6">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-xl font-black text-emerald-800 md:text-3xl">
-                  <BookOpen size={24} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
-                  <span className="truncate">{selectedReading ? selectedReading.title : 'Tập đọc'}</span>
-                </div>
-                <div className="mt-0.5 text-xs font-bold text-gray-500 md:text-sm">
-                  {selectedReading ? 'Luyện đọc rõ từng câu' : 'Chọn một bài để luyện đọc'}
-                </div>
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-emerald-100 bg-white px-3 py-2 md:px-6 md:py-3">
+              <div className="flex min-w-0 items-center gap-2 text-xl font-black text-emerald-800 md:text-3xl">
+                <BookOpen size={24} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
+                <span className="truncate">{selectedReading ? selectedReading.title : 'Tập đọc'}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowReadingPanel(false);
-                  setSelectedReadingId(null);
-                }}
-                aria-label="Đóng tập đọc"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:h-12 md:w-12"
-              >
-                <XCircle size={23} />
-              </button>
-            </div>
-
-            {selectedReading ? (
-              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/60 px-3 py-3 md:px-8 md:py-5">
-                <div className="mb-2 shrink-0">
+              <div className="flex shrink-0 items-center gap-2">
+                {selectedReading && (
                   <button
                     type="button"
                     onClick={() => setSelectedReadingId(null)}
-                    className="rounded-full bg-white px-4 py-2 text-sm font-extrabold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-100 md:text-base"
+                    className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-extrabold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
                   >
-                    Trở lại danh sách
+                    Trở lại
                   </button>
-                </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReadingPanel(false);
+                    setSelectedReadingId(null);
+                  }}
+                  aria-label="Đóng tập đọc"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:h-12 md:w-12"
+                >
+                  <XCircle size={23} />
+                </button>
+              </div>
+            </div>
 
-                <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white px-3 py-3 md:px-8 md:py-6">
-                  <div className="space-y-2 text-left text-xl font-extrabold leading-relaxed text-slate-800 md:space-y-3 md:text-3xl md:leading-relaxed">
+            {selectedReading ? (
+              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/60 px-2 py-2 md:px-8 md:py-4">
+                <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white px-2 py-2 md:px-5 md:py-5">
+                  <div className="space-y-1.5 text-left text-xl font-extrabold leading-snug text-slate-800 md:space-y-2 md:text-3xl md:leading-snug">
                     {selectedReading.lines.map((line) => (
-                      <p key={line} className="rounded-xl bg-emerald-50/70 px-3 py-2 md:px-4">
+                      <p key={line}>
                         {line}
                       </p>
                     ))}
