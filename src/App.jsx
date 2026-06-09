@@ -60,6 +60,7 @@ const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
 const READING_PROGRESS_KEY = 'reading_progress';
+const READING_HISTORY_KEY = 'reading_history';
 const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
@@ -289,6 +290,36 @@ const READING_LESSONS = [
   },
 ];
 
+const READING_SERIES = [
+  {
+    id: 'dino-sam',
+    title: 'Dino Sấm',
+    description: 'Bộ truyện phiêu lưu',
+    lessonIds: [
+      'dino-sam-tap-1',
+      'dino-sam-tap-2',
+      'dino-sam-tap-3',
+      'dino-sam-tap-4',
+      'dino-sam-tap-5',
+      'dino-sam-tap-6',
+    ],
+  },
+];
+
+const READING_SERIES_BY_READING_ID = READING_SERIES.reduce((items, series) => {
+  series.lessonIds.forEach((readingId, index) => {
+    items[readingId] = {
+      seriesId: series.id,
+      seriesTitle: series.title,
+      episodeNumber: index + 1,
+    };
+  });
+
+  return items;
+}, {});
+
+const formatReadingLabel = (title = '') => String(title).replace(/\s+-\s+/g, ' ');
+
 const clampNumber = (value, fallback, min, max) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -323,6 +354,44 @@ const loadReadingProgress = () => {
     return savedProgress ? normalizeReadingProgress(JSON.parse(savedProgress)) : {};
   } catch {
     return {};
+  }
+};
+
+const normalizeReadingHistory = (history) => {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .map((entry) => {
+      const completedTitles = Array.isArray(entry.completedTitles)
+        ? entry.completedTitles
+          .map(title => String(title || '').slice(0, 90))
+          .filter(Boolean)
+          .slice(0, READING_LESSONS.length)
+        : [];
+
+      return {
+        id: Number(entry.id || entry.startedAt || entry.endedAt),
+        startedAt: Number(entry.startedAt || entry.id || entry.endedAt),
+        endedAt: Number(entry.endedAt),
+        studentName: String(entry.studentName || 'bé').slice(0, 28),
+        completedCount: clampNumber(entry.completedCount, 0, 0, READING_LESSONS.length),
+        totalCount: clampNumber(entry.totalCount, READING_LESSONS.length, 1, READING_LESSONS.length),
+        completedTitles,
+        inProgressTitle: String(entry.inProgressTitle || 'Không có').slice(0, 90),
+        durationSec: clampNumber(entry.durationSec, 0, 0, 24 * 60 * 60),
+      };
+    })
+    .filter((entry) => Number.isFinite(entry.id) && Number.isFinite(entry.endedAt))
+    .sort((a, b) => b.endedAt - a.endedAt)
+    .slice(0, MAX_SESSION_HISTORY);
+};
+
+const loadReadingHistory = () => {
+  try {
+    const savedHistory = localStorage.getItem(READING_HISTORY_KEY);
+    return savedHistory ? normalizeReadingHistory(JSON.parse(savedHistory)) : [];
+  } catch {
+    return [];
   }
 };
 
@@ -681,8 +750,10 @@ export default function App() {
   const [showAdminSettingsPanel, setShowAdminSettingsPanel] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [showReadingPanel, setShowReadingPanel] = useState(false);
+  const [expandedReadingSeriesId, setExpandedReadingSeriesId] = useState(null);
   const [selectedReadingId, setSelectedReadingId] = useState(null);
   const [readingProgress, setReadingProgress] = useState(() => loadReadingProgress());
+  const [readingHistory, setReadingHistory] = useState(() => loadReadingHistory());
   const [readingSummary, setReadingSummary] = useState(null);
   
   const [currentQ, setCurrentQ] = useState(null);
@@ -725,6 +796,42 @@ export default function App() {
   const currentLessonLabel = getLessonLabel(settings);
   const isFlashcardMode = settings.learningMode === 'flashcard';
   const selectedReading = READING_LESSONS.find(reading => reading.id === selectedReadingId) || null;
+  const selectedReadingSeriesMeta = selectedReadingId
+    ? READING_SERIES_BY_READING_ID[selectedReadingId] || null
+    : null;
+  const readingCatalogItems = useMemo(() => {
+    const addedSeries = new Set();
+
+    return READING_LESSONS.reduce((items, reading) => {
+      const seriesMeta = READING_SERIES_BY_READING_ID[reading.id];
+
+      if (seriesMeta) {
+        if (!addedSeries.has(seriesMeta.seriesId)) {
+          const series = READING_SERIES.find(item => item.id === seriesMeta.seriesId);
+          const lessons = series?.lessonIds
+            .map(readingId => READING_LESSONS.find(item => item.id === readingId))
+            .filter(Boolean) || [];
+
+          items.push({
+            type: 'series',
+            id: seriesMeta.seriesId,
+            title: series?.title || seriesMeta.seriesTitle,
+            description: series?.description || 'Bộ truyện',
+            lessons,
+          });
+          addedSeries.add(seriesMeta.seriesId);
+        }
+
+        return items;
+      }
+
+      items.push({ type: 'lesson', reading });
+      return items;
+    }, []);
+  }, []);
+  const expandedReadingSeries = expandedReadingSeriesId
+    ? readingCatalogItems.find(item => item.type === 'series' && item.id === expandedReadingSeriesId) || null
+    : null;
   const selectedReadingIndex = selectedReadingId
     ? READING_LESSONS.findIndex(reading => reading.id === selectedReadingId)
     : -1;
@@ -840,9 +947,9 @@ export default function App() {
         const progress = progressSnapshot[reading.id];
         return progress?.scrollTop > 0 && !progress.completed;
       });
-    const formatReadingLabel = (title) => title.replace(/\s+-\s+/g, ' ');
-
     return {
+      id: endedAt,
+      startedAt,
       studentName: displayName,
       studentAvatar: userAvatar,
       completedCount: completedReadings.length,
@@ -856,7 +963,9 @@ export default function App() {
 
   const handleEndReadingSession = useCallback(() => {
     rememberCurrentReadingPosition();
-    setReadingSummary(buildReadingSummary());
+    const nextSummary = buildReadingSummary();
+    setReadingSummary(nextSummary);
+    setReadingHistory(prev => normalizeReadingHistory([nextSummary, ...prev]));
   }, [buildReadingSummary, rememberCurrentReadingPosition]);
 
   const continueReadingAfterSummary = () => {
@@ -870,6 +979,7 @@ export default function App() {
     setReadingProgress({});
     setReadingSummary(null);
     setSelectedReadingId(firstReading?.id || null);
+    setExpandedReadingSeriesId(null);
     readingSessionStartedAtRef.current = Date.now();
   };
 
@@ -893,6 +1003,7 @@ export default function App() {
       setShowHistoryPanel(false);
       setShowReadingPanel(false);
       setSelectedReadingId(null);
+      setExpandedReadingSeriesId(null);
     }
   };
 
@@ -939,12 +1050,14 @@ export default function App() {
       readingSessionStartedAtRef.current = null;
     } else {
       readingSessionStartedAtRef.current = Date.now();
+      setExpandedReadingSeriesId(null);
     }
 
     setShowReadingPanel(prev => {
       const shouldOpen = !prev;
       if (!shouldOpen) {
         setSelectedReadingId(null);
+        setExpandedReadingSeriesId(null);
       }
       return shouldOpen;
     });
@@ -1120,6 +1233,14 @@ export default function App() {
       console.log("Cannot save reading progress");
     }
   }, [readingProgress]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(READING_HISTORY_KEY, JSON.stringify(readingHistory));
+    } catch {
+      console.log("Cannot save reading history");
+    }
+  }, [readingHistory]);
 
   useEffect(() => {
     if (!selectedReadingId || !readingContentRef.current) return undefined;
@@ -1404,6 +1525,7 @@ export default function App() {
     readingSessionStartedAtRef.current = null;
     setShowReadingPanel(false);
     setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
     setShowFlashcardAnswer(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
@@ -1504,6 +1626,7 @@ export default function App() {
     localStorage.removeItem('math_timeoutTotal');
     localStorage.removeItem(SESSION_HISTORY_KEY);
     localStorage.removeItem(READING_PROGRESS_KEY);
+    localStorage.removeItem(READING_HISTORY_KEY);
     window.location.reload();
   };
 
@@ -1582,6 +1705,7 @@ export default function App() {
               readingSessionStartedAtRef.current = null;
               setShowReadingPanel(false);
               setSelectedReadingId(null);
+              setExpandedReadingSeriesId(null);
             }}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               isAdmin
@@ -1618,6 +1742,7 @@ export default function App() {
               readingSessionStartedAtRef.current = null;
               setShowReadingPanel(false);
               setSelectedReadingId(null);
+              setExpandedReadingSeriesId(null);
             }}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               showHistoryPanel
@@ -2445,20 +2570,46 @@ export default function App() {
             aria-label="Tập đọc"
             className="flex h-full w-full flex-col bg-white"
           >
-            <div className="flex shrink-0 items-center justify-between gap-1.5 border-b border-emerald-100 bg-white px-2.5 py-0.5 md:px-6 md:py-1.5">
-              <div className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-emerald-800 md:text-3xl">
-                <BookOpen size={20} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
-                <span className="truncate">{readingSummary ? 'Tổng kết tập đọc' : selectedReading ? selectedReading.title : 'Tập đọc'}</span>
+            <div className={`flex shrink-0 items-center justify-between gap-1.5 border-b px-2.5 py-0.5 md:px-6 md:py-1.5 ${
+              selectedReading && selectedReadingCompleted && !readingSummary
+                ? 'border-emerald-800 bg-emerald-900 text-white'
+                : 'border-emerald-100 bg-white'
+            }`}>
+              <div className={`flex min-w-0 items-center gap-1.5 text-lg font-semibold md:text-3xl ${
+                selectedReading && selectedReadingCompleted && !readingSummary ? 'text-white' : 'text-emerald-800'
+              }`}>
+                <BookOpen size={20} className={`shrink-0 md:h-8 md:w-8 ${
+                  selectedReading && selectedReadingCompleted && !readingSummary ? 'text-emerald-100' : 'text-emerald-500'
+                }`} />
+                <span className="truncate">
+                  {readingSummary
+                    ? 'Tổng kết tập đọc'
+                    : selectedReading
+                      ? selectedReading.title
+                      : expandedReadingSeries
+                        ? expandedReadingSeries.title
+                        : 'Tập đọc'}
+                </span>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
-                {selectedReading && !readingSummary && (
+                {(selectedReading || expandedReadingSeries) && !readingSummary && (
                   <button
                     type="button"
                     onClick={() => {
-                      rememberCurrentReadingPosition();
-                      setSelectedReadingId(null);
+                      if (selectedReading) {
+                        rememberCurrentReadingPosition();
+                        setSelectedReadingId(null);
+                        setExpandedReadingSeriesId(selectedReadingSeriesMeta?.seriesId || null);
+                        return;
+                      }
+
+                      setExpandedReadingSeriesId(null);
                     }}
-                    className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors md:px-4 md:text-base ${
+                      selectedReading && selectedReadingCompleted
+                        ? 'bg-white/15 text-white hover:bg-white/25'
+                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    }`}
                   >
                     Trở lại
                   </button>
@@ -2471,9 +2622,14 @@ export default function App() {
                     readingSessionStartedAtRef.current = null;
                     setShowReadingPanel(false);
                     setSelectedReadingId(null);
+                    setExpandedReadingSeriesId(null);
                   }}
                   aria-label="Đóng tập đọc"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:h-10 md:w-10"
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors md:h-10 md:w-10 ${
+                    selectedReading && selectedReadingCompleted
+                      ? 'bg-white/15 text-white hover:bg-white/25'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                  }`}
                 >
                   <XCircle size={18} />
                 </button>
@@ -2576,7 +2732,11 @@ export default function App() {
                     {selectedReading.lines.map((line, index) => (
                       <p
                         key={`${selectedReading.id}-${index}`}
-                        className={index === 0 ? 'rounded-lg border-l-4 border-emerald-400 bg-emerald-50/80 py-1 pl-2 pr-1 font-semibold text-emerald-800' : undefined}
+                        className={index === 0 ? `rounded-lg border-l-4 py-1 pl-2 pr-1 font-semibold ${
+                          selectedReadingCompleted
+                            ? 'border-emerald-950 bg-emerald-800 text-white'
+                            : 'border-emerald-400 bg-emerald-50/80 text-emerald-800'
+                        }` : undefined}
                       >
                         {line}
                       </p>
@@ -2637,40 +2797,162 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : expandedReadingSeries ? (
               <div className="grid min-h-0 flex-1 gap-2 overflow-y-auto bg-emerald-50/60 px-3 py-3 md:px-8 md:py-5">
-                {READING_LESSONS.map((reading, index) => (
-                  <button
-                    key={reading.id}
-                    type="button"
-                    onClick={() => setSelectedReadingId(reading.id)}
-                    className="rounded-xl bg-white p-3 text-left shadow-sm transition-colors hover:bg-emerald-100 md:p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-base font-black text-emerald-800 md:text-lg">
-                          Bài {index + 1}: {reading.title}
-                        </div>
-                        {readingProgress[reading.id]?.completed ? (
-                          <div className="mt-0.5 text-xs font-extrabold text-green-600 md:text-sm">
-                            Đã đọc
-                          </div>
-                        ) : readingProgress[reading.id]?.scrollTop > 0 && (
-                          <div className="mt-0.5 text-xs font-extrabold text-emerald-500 md:text-sm">
-                            Đang đọc dở
-                          </div>
-                        )}
+                <div className="rounded-xl border-2 border-emerald-100 bg-white p-3 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-black text-emerald-800 md:text-lg">
+                        Bộ truyện: {expandedReadingSeries.title}
                       </div>
-                      <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-600 md:text-sm">
-                        {readingProgress[reading.id]?.completed
-                          ? 'Đọc lại'
-                          : readingProgress[reading.id]?.scrollTop > 0
-                            ? 'Đọc tiếp'
-                            : 'Đọc'}
+                      <div className="text-xs font-extrabold text-emerald-500 md:text-sm">
+                        {expandedReadingSeries.lessons.filter(reading => readingProgress[reading.id]?.completed).length}/{expandedReadingSeries.lessons.length} tập đã đọc
                       </div>
                     </div>
-                  </button>
-                ))}
+                    <div className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 md:text-sm">
+                      Danh sách tập
+                    </div>
+                  </div>
+                </div>
+
+                {expandedReadingSeries.lessons.map((reading, index) => {
+                  const isCompleted = !!readingProgress[reading.id]?.completed;
+                  const isInProgress = readingProgress[reading.id]?.scrollTop > 0 && !isCompleted;
+
+                  return (
+                    <button
+                      key={reading.id}
+                      type="button"
+                      onClick={() => setSelectedReadingId(reading.id)}
+                      className={`rounded-xl border-2 p-3 text-left shadow-sm transition-colors md:p-4 ${
+                        isCompleted
+                          ? 'border-emerald-900 bg-emerald-800 text-white hover:bg-emerald-900'
+                          : 'border-white bg-white hover:bg-emerald-100'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className={`truncate text-base font-black md:text-lg ${
+                            isCompleted ? 'text-white' : 'text-emerald-800'
+                          }`}>
+                            Tập {index + 1}: {reading.subtitle || reading.title}
+                          </div>
+                          {isCompleted ? (
+                            <div className="mt-0.5 text-xs font-extrabold text-emerald-100 md:text-sm">
+                              Đã đọc xong
+                            </div>
+                          ) : isInProgress && (
+                            <div className="mt-0.5 text-xs font-extrabold text-emerald-500 md:text-sm">
+                              Đang đọc dở
+                            </div>
+                          )}
+                        </div>
+                        <div className={`shrink-0 rounded-full px-3 py-1 text-xs font-black md:text-sm ${
+                          isCompleted
+                            ? 'bg-white text-emerald-800'
+                            : 'bg-white text-emerald-600'
+                        }`}>
+                          {isCompleted ? 'Đọc lại' : isInProgress ? 'Đọc tiếp' : 'Đọc'}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid min-h-0 flex-1 gap-2 overflow-y-auto bg-emerald-50/60 px-3 py-3 md:px-8 md:py-5">
+                {readingCatalogItems.map((item) => {
+                  if (item.type === 'series') {
+                    const completedCount = item.lessons.filter(reading => readingProgress[reading.id]?.completed).length;
+                    const hasProgress = item.lessons.some(reading => readingProgress[reading.id]?.scrollTop > 0);
+                    const isCompleted = completedCount === item.lessons.length && item.lessons.length > 0;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedReadingId(null);
+                          setExpandedReadingSeriesId(item.id);
+                        }}
+                        className={`rounded-xl border-2 p-3 text-left shadow-sm transition-colors md:p-4 ${
+                          isCompleted
+                            ? 'border-emerald-900 bg-emerald-800 text-white hover:bg-emerald-900'
+                            : 'border-white bg-white hover:bg-emerald-100'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className={`truncate text-base font-black md:text-lg ${
+                              isCompleted ? 'text-white' : 'text-emerald-800'
+                            }`}>
+                              Bộ truyện: {item.title}
+                            </div>
+                            <div className={`mt-0.5 text-xs font-extrabold md:text-sm ${
+                              isCompleted ? 'text-emerald-100' : 'text-emerald-500'
+                            }`}>
+                              {completedCount}/{item.lessons.length} tập đã đọc{hasProgress && !isCompleted ? ' • có tập đang đọc dở' : ''}
+                            </div>
+                          </div>
+                          <div className={`shrink-0 rounded-full px-3 py-1 text-xs font-black md:text-sm ${
+                            isCompleted
+                              ? 'bg-white text-emerald-800'
+                              : 'bg-white text-emerald-600'
+                          }`}>
+                            Xem tập
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  const reading = item.reading;
+                  const readingNumber = READING_LESSONS.findIndex(lesson => lesson.id === reading.id) + 1;
+                  const isCompleted = !!readingProgress[reading.id]?.completed;
+                  const isInProgress = readingProgress[reading.id]?.scrollTop > 0 && !isCompleted;
+
+                  return (
+                    <button
+                      key={reading.id}
+                      type="button"
+                      onClick={() => {
+                        setExpandedReadingSeriesId(null);
+                        setSelectedReadingId(reading.id);
+                      }}
+                      className={`rounded-xl border-2 p-3 text-left shadow-sm transition-colors md:p-4 ${
+                        isCompleted
+                          ? 'border-emerald-900 bg-emerald-800 text-white hover:bg-emerald-900'
+                          : 'border-white bg-white hover:bg-emerald-100'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className={`truncate text-base font-black md:text-lg ${
+                            isCompleted ? 'text-white' : 'text-emerald-800'
+                          }`}>
+                            Bài {readingNumber}: {reading.title}
+                          </div>
+                          {isCompleted ? (
+                            <div className="mt-0.5 text-xs font-extrabold text-emerald-100 md:text-sm">
+                              Đã đọc xong
+                            </div>
+                          ) : isInProgress && (
+                            <div className="mt-0.5 text-xs font-extrabold text-emerald-500 md:text-sm">
+                              Đang đọc dở
+                            </div>
+                          )}
+                        </div>
+                        <div className={`shrink-0 rounded-full px-3 py-1 text-xs font-black md:text-sm ${
+                          isCompleted
+                            ? 'bg-white text-emerald-800'
+                            : 'bg-white text-emerald-600'
+                        }`}>
+                          {isCompleted ? 'Đọc lại' : isInProgress ? 'Đọc tiếp' : 'Đọc'}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2692,7 +2974,7 @@ export default function App() {
                   <span className="truncate">Lịch sử buổi học</span>
                 </div>
                 <div className="mt-0.5 text-xs font-bold text-gray-500 md:text-sm">
-                  Lưu {sessionHistory.length}/{MAX_SESSION_HISTORY} phiên gần nhất
+                  Toán {sessionHistory.length}/{MAX_SESSION_HISTORY} • Tập đọc {readingHistory.length}/{MAX_SESSION_HISTORY}
                 </div>
               </div>
               <button
@@ -2705,36 +2987,79 @@ export default function App() {
               </button>
             </div>
 
-            {sessionHistory.length === 0 ? (
+            {sessionHistory.length === 0 && readingHistory.length === 0 ? (
               <div className="rounded-xl border-2 border-blue-100 bg-blue-50 px-4 py-8 text-center text-sm font-extrabold text-gray-500 md:text-base">
-                Chưa có buổi học nào được lưu.
+                Chưa có lịch sử học nào được lưu.
               </div>
             ) : (
-              <div className="grid max-h-[68dvh] gap-2 overflow-y-auto pr-1">
-                {sessionHistory.map((entry, index) => (
-                  <div key={entry.id} className="rounded-xl border-2 border-blue-100 bg-blue-50 p-2.5 md:p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-black text-blue-800 md:text-base">
-                          Phiên {index + 1}: {entry.studentName}
-                          {entry.lessonLabel ? <span className="text-xs text-blue-500 md:text-sm"> - {entry.lessonLabel}</span> : null}
+              <div className="max-h-[68dvh] space-y-4 overflow-y-auto pr-1">
+                {sessionHistory.length > 0 && (
+                  <section className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-black text-blue-800 md:text-base">
+                      <BarChart size={18} className="text-blue-500" />
+                      Lịch sử học toán
+                    </div>
+                    {sessionHistory.map((entry, index) => (
+                      <div key={`math-${entry.id}`} className="rounded-xl border-2 border-blue-100 bg-blue-50 p-2.5 md:p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-black text-blue-800 md:text-base">
+                              Phiên {index + 1}: {entry.studentName}
+                              {entry.lessonLabel ? <span className="text-xs text-blue-500 md:text-sm"> - {entry.lessonLabel}</span> : null}
+                            </div>
+                            <div className="mt-0.5 text-[11px] font-bold text-gray-500 md:text-xs">{formatDateTime(entry.endedAt)}</div>
+                          </div>
+                          <div className="shrink-0 rounded-full bg-white px-2 py-1 text-right text-xs font-black text-purple-600 md:text-sm">
+                            {formatTime(entry.screenTime)} xem
+                          </div>
                         </div>
-                        <div className="mt-0.5 text-[11px] font-bold text-gray-500 md:text-xs">{formatDateTime(entry.endedAt)}</div>
-                      </div>
-                      <div className="shrink-0 rounded-full bg-white px-2 py-1 text-right text-xs font-black text-purple-600 md:text-sm">
-                        {formatTime(entry.screenTime)} xem
-                      </div>
-                    </div>
 
-                    <div className="mt-2 grid grid-cols-2 gap-1.5 text-center text-[11px] font-extrabold md:grid-cols-5 md:text-xs">
-                      <div className="rounded-lg bg-green-50 px-1.5 py-1.5 text-green-700">Đúng {entry.correctTotal}</div>
-                      <div className="rounded-lg bg-red-50 px-1.5 py-1.5 text-red-700">Sai {entry.wrongTotal}</div>
-                      <div className="rounded-lg bg-orange-50 px-1.5 py-1.5 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
-                      <div className="rounded-lg bg-amber-50 px-1.5 py-1.5 text-amber-700">Cần ôn {entry.reviewCount}</div>
-                      <div className="col-span-2 rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700 md:col-span-1">Hoàn thành {formatDuration(entry.durationSec)}</div>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 text-center text-[11px] font-extrabold md:grid-cols-5 md:text-xs">
+                          <div className="rounded-lg bg-green-50 px-1.5 py-1.5 text-green-700">Đúng {entry.correctTotal}</div>
+                          <div className="rounded-lg bg-red-50 px-1.5 py-1.5 text-red-700">Sai {entry.wrongTotal}</div>
+                          <div className="rounded-lg bg-orange-50 px-1.5 py-1.5 text-orange-700">Hết giờ {entry.timeoutTotal}</div>
+                          <div className="rounded-lg bg-amber-50 px-1.5 py-1.5 text-amber-700">Cần ôn {entry.reviewCount}</div>
+                          <div className="col-span-2 rounded-lg bg-sky-50 px-1.5 py-1.5 text-sky-700 md:col-span-1">Hoàn thành {formatDuration(entry.durationSec)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </section>
+                )}
+
+                {readingHistory.length > 0 && (
+                  <section className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-black text-emerald-800 md:text-base">
+                      <BookOpen size={18} className="text-emerald-500" />
+                      Lịch sử tập đọc
                     </div>
-                  </div>
-                ))}
+                    {readingHistory.map((entry, index) => (
+                      <div key={`reading-${entry.id}`} className="rounded-xl border-2 border-emerald-100 bg-emerald-50 p-2.5 md:p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-black text-emerald-800 md:text-base">
+                              Phiên đọc {index + 1}: {entry.studentName}
+                            </div>
+                            <div className="mt-0.5 text-[11px] font-bold text-gray-500 md:text-xs">{formatDateTime(entry.endedAt)}</div>
+                          </div>
+                          <div className="shrink-0 rounded-full bg-white px-2 py-1 text-right text-xs font-black text-emerald-700 md:text-sm">
+                            {entry.completedCount}/{entry.totalCount} bài
+                          </div>
+                        </div>
+
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] font-extrabold md:text-xs">
+                          <div className="rounded-lg bg-green-50 px-1.5 py-1.5 text-center text-green-700">Đã đọc {entry.completedCount}</div>
+                          <div className="rounded-lg bg-sky-50 px-1.5 py-1.5 text-center text-sky-700">Hoàn thành {formatDuration(entry.durationSec)}</div>
+                          <div className="col-span-2 rounded-lg bg-amber-50 px-2 py-1.5 text-amber-700">
+                            Đang đọc dở: {entry.inProgressTitle}
+                          </div>
+                          <div className="col-span-2 rounded-lg bg-white/80 px-2 py-1.5 text-emerald-800">
+                            Hoàn thành: {entry.completedTitles.length > 0 ? entry.completedTitles.join(', ') : 'Chưa có tập nào'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </section>
+                )}
               </div>
             )}
           </div>
