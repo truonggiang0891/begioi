@@ -305,9 +305,12 @@ const normalizeReadingProgress = (progress) => {
       0,
       300000
     );
+    const completed = typeof value === 'object' && !Array.isArray(value)
+      ? !!value.completed
+      : false;
 
     if (typeof readingId === 'string' && readingId.trim()) {
-      items[readingId] = { scrollTop };
+      items[readingId] = { scrollTop, completed };
     }
 
     return items;
@@ -726,6 +729,9 @@ export default function App() {
   const selectedReadingScrollTop = selectedReadingId
     ? readingProgress[selectedReadingId]?.scrollTop || 0
     : 0;
+  const selectedReadingCompleted = selectedReadingId
+    ? !!readingProgress[selectedReadingId]?.completed
+    : false;
   const previousReading = selectedReadingIndex > 0 ? READING_LESSONS[selectedReadingIndex - 1] : null;
   const nextReading = selectedReadingIndex >= 0 && selectedReadingIndex < READING_LESSONS.length - 1
     ? READING_LESSONS[selectedReadingIndex + 1]
@@ -754,7 +760,10 @@ export default function App() {
 
       return {
         ...prev,
-        [readingId]: { scrollTop: nextScrollTop },
+        [readingId]: {
+          ...prev[readingId],
+          scrollTop: nextScrollTop,
+        },
       };
     });
   }, []);
@@ -791,6 +800,30 @@ export default function App() {
     rememberCurrentReadingPosition();
     setSelectedReadingId(readingId);
   }, [rememberCurrentReadingPosition]);
+
+  const completeCurrentReading = useCallback(() => {
+    if (!selectedReadingId) return;
+
+    if (readingSaveTimeoutRef.current) {
+      clearTimeout(readingSaveTimeoutRef.current);
+      readingSaveTimeoutRef.current = null;
+    }
+
+    setReadingProgress(prev => ({
+      ...prev,
+      [selectedReadingId]: {
+        ...prev[selectedReadingId],
+        scrollTop: 0,
+        completed: true,
+      },
+    }));
+
+    if (nextReading) {
+      setSelectedReadingId(nextReading.id);
+    } else {
+      setSelectedReadingId(null);
+    }
+  }, [nextReading, selectedReadingId]);
 
   const toggleUserNameForm = () => {
     const shouldOpen = !showUserNameForm;
@@ -2365,7 +2398,7 @@ export default function App() {
                       rememberCurrentReadingPosition();
                       setSelectedReadingId(null);
                     }}
-                    className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
+                    className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
                   >
                     Trở lại
                   </button>
@@ -2404,12 +2437,12 @@ export default function App() {
                   </div>
                 </div>
                 <div className="mt-1 shrink-0 rounded-xl bg-white/95 px-1.5 py-1 shadow-sm md:mt-3 md:px-4">
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[0.82fr_auto_0.82fr_0.98fr] items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => goToReading(previousReading?.id)}
                       disabled={!previousReading}
-                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors md:text-base ${
+                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-1.5 text-[11px] font-bold transition-colors md:text-base ${
                         previousReading
                           ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                           : 'bg-gray-50 text-gray-300'
@@ -2418,14 +2451,14 @@ export default function App() {
                       <ChevronLeft size={18} className="shrink-0" />
                       <span className="truncate">Tập trước</span>
                     </button>
-                    <div className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 md:text-sm">
+                    <div className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 md:text-sm">
                       {selectedReadingIndex + 1}/{READING_LESSONS.length}
                     </div>
                     <button
                       type="button"
                       onClick={() => goToReading(nextReading?.id)}
                       disabled={!nextReading}
-                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors md:text-base ${
+                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-1.5 text-[11px] font-bold transition-colors md:text-base ${
                         nextReading
                           ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                           : 'bg-gray-50 text-gray-300'
@@ -2433,6 +2466,18 @@ export default function App() {
                     >
                       <span className="truncate">Tập sau</span>
                       <ChevronRight size={18} className="shrink-0" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={completeCurrentReading}
+                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-1.5 text-[11px] font-bold text-white transition-colors md:text-base ${
+                        selectedReadingCompleted
+                          ? 'bg-emerald-600 hover:bg-emerald-700'
+                          : 'bg-green-500 hover:bg-green-600'
+                      }`}
+                    >
+                      <CheckCircle size={16} className="shrink-0" />
+                      <span className="truncate">Hoàn thành</span>
                     </button>
                   </div>
                 </div>
@@ -2451,14 +2496,22 @@ export default function App() {
                         <div className="truncate text-base font-black text-emerald-800 md:text-lg">
                           Bài {index + 1}: {reading.title}
                         </div>
-                        {readingProgress[reading.id]?.scrollTop > 0 && (
+                        {readingProgress[reading.id]?.completed ? (
+                          <div className="mt-0.5 text-xs font-extrabold text-green-600 md:text-sm">
+                            Đã đọc
+                          </div>
+                        ) : readingProgress[reading.id]?.scrollTop > 0 && (
                           <div className="mt-0.5 text-xs font-extrabold text-emerald-500 md:text-sm">
                             Đang đọc dở
                           </div>
                         )}
                       </div>
                       <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-600 md:text-sm">
-                        {readingProgress[reading.id]?.scrollTop > 0 ? 'Đọc tiếp' : 'Đọc'}
+                        {readingProgress[reading.id]?.completed
+                          ? 'Đọc lại'
+                          : readingProgress[reading.id]?.scrollTop > 0
+                            ? 'Đọc tiếp'
+                            : 'Đọc'}
                       </div>
                     </div>
                   </button>
