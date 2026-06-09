@@ -89,6 +89,68 @@ const DEFAULT_SETTINGS = {
   customQuestionsText: '',
   selectedTables: ALL_ADDITION_TABLES,
 };
+const READING_LESSONS = [
+  {
+    id: 'be-di-hoc',
+    title: 'Bé Đi Học',
+    subtitle: 'Câu ngắn, dễ đọc',
+    lines: [
+      'Sáng nay bé dậy sớm.',
+      'Bé rửa mặt thật sạch.',
+      'Bé mặc áo mới và đeo cặp.',
+      'Bé chào ông bà, chào ba mẹ.',
+      'Bé vui vẻ đi học.',
+    ],
+  },
+  {
+    id: 'buoi-sang',
+    title: 'Buổi Sáng Của Em',
+    subtitle: 'Luyện đọc từng câu',
+    lines: [
+      'Mặt trời lên cao.',
+      'Ánh nắng vàng trên sân.',
+      'Em mở cửa sổ.',
+      'Em hít thở thật sâu.',
+      'Một ngày mới bắt đầu.',
+    ],
+  },
+  {
+    id: 'gia-dinh-em',
+    title: 'Gia Đình Em',
+    subtitle: 'Đọc chậm và rõ',
+    lines: [
+      'Gia đình em rất vui.',
+      'Ông kể chuyện cho em nghe.',
+      'Bà dạy em nói lời hay.',
+      'Ba mẹ luôn yêu thương em.',
+      'Em yêu gia đình của em.',
+    ],
+  },
+  {
+    id: 'chiec-cap-moi',
+    title: 'Chiếc Cặp Mới',
+    subtitle: 'Luyện đọc rõ tiếng',
+    lines: [
+      'Em có một chiếc cặp mới.',
+      'Cặp màu xanh rất đẹp.',
+      'Trong cặp có sách và vở.',
+      'Em giữ cặp luôn sạch sẽ.',
+      'Em mang cặp đến lớp mỗi ngày.',
+    ],
+  },
+  {
+    id: 'cay-but-chi',
+    title: 'Cây Bút Chì',
+    subtitle: 'Câu dài hơn một chút',
+    lines: [
+      'Cây bút chì nằm trên bàn.',
+      'Em dùng bút để viết chữ.',
+      'Em viết từng nét thật ngay ngắn.',
+      'Khi viết sai, em sửa lại từ từ.',
+      'Mỗi ngày em viết đẹp hơn.',
+    ],
+  },
+];
 
 const clampNumber = (value, fallback, min, max) => {
   const parsed = Number(value);
@@ -450,6 +512,8 @@ export default function App() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [showAdminSettingsPanel, setShowAdminSettingsPanel] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [showReadingPanel, setShowReadingPanel] = useState(false);
+  const [selectedReadingId, setSelectedReadingId] = useState(null);
   
   const [currentQ, setCurrentQ] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
@@ -487,6 +551,7 @@ export default function App() {
   );
   const currentLessonLabel = getLessonLabel(settings);
   const isFlashcardMode = settings.learningMode === 'flashcard';
+  const selectedReading = READING_LESSONS.find(reading => reading.id === selectedReadingId) || null;
   const draftLessonTypes = getValidLessonTypes(
     Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
   );
@@ -516,6 +581,8 @@ export default function App() {
       setSettingsSaved(false);
       setShowAdminSettingsPanel(false);
       setShowHistoryPanel(false);
+      setShowReadingPanel(false);
+      setSelectedReadingId(null);
     }
   };
 
@@ -553,6 +620,22 @@ export default function App() {
     setSettingsError('');
     setSettingsSaved(false);
     setShowAdminSettingsPanel(false);
+  };
+
+  const toggleReadingPanel = () => {
+    setShowReadingPanel(prev => {
+      const shouldOpen = !prev;
+      if (!shouldOpen) {
+        setSelectedReadingId(null);
+      }
+      return shouldOpen;
+    });
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    setShowHistoryPanel(false);
+    setShowParentConfirm(false);
   };
 
   const handleAdminLogin = (event) => {
@@ -970,6 +1053,8 @@ export default function App() {
     clearPendingTransitions();
     setShowParentConfirm(false);
     setShowHistoryPanel(false);
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
     setShowFlashcardAnswer(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
@@ -1118,17 +1203,17 @@ export default function App() {
       {/* ROLE LOGIN */}
       {!isSummary && (
       <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
-        <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+        <div className="grid grid-cols-4 gap-1.5 md:gap-2">
           <button
             type="button"
             onClick={toggleUserNameForm}
-            className={`flex min-w-0 items-center justify-center gap-1.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1.5 md:px-2 font-extrabold text-xs sm:text-sm md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               showUserNameForm
                 ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
                 : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
             }`}
           >
-            <UserRound size={18} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Người dùng</span>
+            <UserRound size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Người dùng</span>
           </button>
 
           <button
@@ -1141,14 +1226,28 @@ export default function App() {
               setAdminError('');
               setSettingsSaved(false);
               setShowHistoryPanel(false);
+              setShowReadingPanel(false);
+              setSelectedReadingId(null);
             }}
-            className={`flex min-w-0 items-center justify-center gap-1.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1.5 md:px-2 font-extrabold text-xs sm:text-sm md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               isAdmin
                 ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
                 : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
             }`}
           >
-            <ShieldCheck size={18} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Admin</span>
+            <ShieldCheck size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Admin</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleReadingPanel}
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+              showReadingPanel
+                ? 'bg-emerald-500 text-white shadow-[0_4px_0_rgb(5,150,105)]'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-100'
+            }`}
+          >
+            <BookOpen size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Tập đọc</span>
           </button>
 
           <button
@@ -1160,14 +1259,16 @@ export default function App() {
               setAdminError('');
               setAvatarError('');
               setShowParentConfirm(false);
+              setShowReadingPanel(false);
+              setSelectedReadingId(null);
             }}
-            className={`flex min-w-0 items-center justify-center gap-1.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1.5 md:px-2 font-extrabold text-xs sm:text-sm md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               showHistoryPanel
                 ? 'bg-sky-500 text-white shadow-[0_4px_0_rgb(2,132,199)]'
                 : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-2 border-sky-100'
             }`}
           >
-            <BarChart size={18} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
+            <BarChart size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
           </button>
         </div>
 
@@ -1977,6 +2078,89 @@ export default function App() {
            </div>
          )}
       </div>
+      )}
+
+      {!isSummary && showReadingPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-3">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Tập đọc"
+            className="flex max-h-[86dvh] w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-lg font-black text-emerald-800 md:text-xl">
+                  <BookOpen size={22} className="shrink-0 text-emerald-500" />
+                  <span className="truncate">{selectedReading ? selectedReading.title : 'Tập đọc'}</span>
+                </div>
+                <div className="mt-0.5 text-xs font-bold text-gray-500 md:text-sm">
+                  {selectedReading ? selectedReading.subtitle : 'Chọn một bài để luyện đọc'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReadingPanel(false);
+                  setSelectedReadingId(null);
+                }}
+                aria-label="Đóng tập đọc"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+              >
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            {selectedReading ? (
+              <div className="min-h-0">
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedReadingId(null)}
+                    className="rounded-full border-2 border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-extrabold text-emerald-700 transition-colors hover:border-emerald-300"
+                  >
+                    Trở lại danh sách
+                  </button>
+                </div>
+
+                <div className="max-h-[62dvh] overflow-y-auto rounded-2xl border-2 border-emerald-100 bg-emerald-50 px-4 py-4 md:px-6 md:py-5">
+                  <div className="space-y-3 text-left text-2xl font-extrabold leading-relaxed text-slate-800 md:text-3xl md:leading-relaxed">
+                    {selectedReading.lines.map((line) => (
+                      <p key={line} className="rounded-xl bg-white/80 px-3 py-2 shadow-sm">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid max-h-[68dvh] gap-2 overflow-y-auto pr-1">
+                {READING_LESSONS.map((reading, index) => (
+                  <button
+                    key={reading.id}
+                    type="button"
+                    onClick={() => setSelectedReadingId(reading.id)}
+                    className="rounded-xl border-2 border-emerald-100 bg-emerald-50 p-3 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-base font-black text-emerald-800 md:text-lg">
+                          Bài {index + 1}: {reading.title}
+                        </div>
+                        <div className="mt-1 text-xs font-bold text-gray-500 md:text-sm">
+                          {reading.subtitle}
+                        </div>
+                      </div>
+                      <div className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-600 md:text-sm">
+                        Đọc
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {!isSummary && showHistoryPanel && (
