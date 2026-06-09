@@ -2352,9 +2352,9 @@ export default function App() {
             aria-label="Tập đọc"
             className="flex h-full w-full flex-col bg-white"
           >
-            <div className="flex shrink-0 items-center justify-between gap-1.5 border-b border-emerald-100 bg-white px-3 py-1 md:px-6 md:py-2">
-              <div className="flex min-w-0 items-center gap-1.5 text-xl font-semibold text-emerald-800 md:text-3xl">
-                <BookOpen size={22} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
+            <div className="flex shrink-0 items-center justify-between gap-1.5 border-b border-emerald-100 bg-white px-2.5 py-0.5 md:px-6 md:py-1.5">
+              <div className="flex min-w-0 items-center gap-1.5 text-lg font-semibold text-emerald-800 md:text-3xl">
+                <BookOpen size={20} className="shrink-0 text-emerald-500 md:h-8 md:w-8" />
                 <span className="truncate">{selectedReading ? selectedReading.title : 'Tập đọc'}</span>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
@@ -2365,7 +2365,7 @@ export default function App() {
                       rememberCurrentReadingPosition();
                       setSelectedReadingId(null);
                     }}
-                    className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
+                    className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 md:px-4 md:text-base"
                   >
                     Trở lại
                   </button>
@@ -2378,58 +2378,61 @@ export default function App() {
                     setSelectedReadingId(null);
                   }}
                   aria-label="Đóng tập đọc"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:h-10 md:w-10"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:h-10 md:w-10"
                 >
-                  <XCircle size={20} />
+                  <XCircle size={18} />
                 </button>
               </div>
             </div>
 
             {selectedReading ? (
-              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/70 px-3 py-2 md:px-8 md:py-3">
+              <div className="flex min-h-0 flex-1 flex-col bg-emerald-50/70 px-3 py-1.5 md:px-8 md:py-3">
                 <div
                   ref={readingContentRef}
                   onScroll={handleReadingScroll}
                   className="min-h-0 flex-1 overflow-y-auto rounded-2xl border-[3px] border-emerald-100/80 bg-white px-2 py-2 md:px-5 md:py-5"
                 >
-                  <div className="space-y-1.5 text-left text-xl font-medium leading-snug text-slate-800 md:space-y-2 md:text-3xl md:leading-snug">
-                    {selectedReading.lines.map((line) => (
-                      <p key={line}>
+                  <div className="space-y-2 text-left text-xl font-normal leading-snug text-slate-800 md:space-y-2.5 md:text-3xl md:leading-snug">
+                    {selectedReading.lines.map((line, index) => (
+                      <p
+                        key={`${selectedReading.id}-${index}`}
+                        className={index === 0 ? 'rounded-lg border-l-4 border-emerald-400 bg-emerald-50/80 py-1 pl-2 pr-1 font-semibold text-emerald-800' : undefined}
+                      >
                         {line}
                       </p>
                     ))}
                   </div>
                 </div>
-                <div className="mt-1.5 shrink-0 rounded-2xl bg-white/95 px-2 py-1.5 shadow-sm md:mt-3 md:px-4">
+                <div className="mt-1 shrink-0 rounded-xl bg-white/95 px-1.5 py-1 shadow-sm md:mt-3 md:px-4">
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                     <button
                       type="button"
                       onClick={() => goToReading(previousReading?.id)}
                       disabled={!previousReading}
-                      className={`flex min-h-9 items-center justify-center gap-1 rounded-xl px-2 text-sm font-semibold transition-colors md:text-base ${
+                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors md:text-base ${
                         previousReading
                           ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                           : 'bg-gray-50 text-gray-300'
                       }`}
                     >
-                      <ChevronLeft size={20} className="shrink-0" />
+                      <ChevronLeft size={18} className="shrink-0" />
                       <span className="truncate">Tập trước</span>
                     </button>
-                    <div className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 md:text-sm">
+                    <div className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 md:text-sm">
                       {selectedReadingIndex + 1}/{READING_LESSONS.length}
                     </div>
                     <button
                       type="button"
                       onClick={() => goToReading(nextReading?.id)}
                       disabled={!nextReading}
-                      className={`flex min-h-9 items-center justify-center gap-1 rounded-xl px-2 text-sm font-semibold transition-colors md:text-base ${
+                      className={`flex min-h-8 items-center justify-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors md:text-base ${
                         nextReading
                           ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                           : 'bg-gray-50 text-gray-300'
                       }`}
                     >
                       <span className="truncate">Tập sau</span>
-                      <ChevronRight size={20} className="shrink-0" />
+                      <ChevronRight size={18} className="shrink-0" />
                     </button>
                   </div>
                 </div>
