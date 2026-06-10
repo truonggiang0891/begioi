@@ -58,6 +58,8 @@ const ADMIN_PIN = 'Truonggiang1@';
 const SETTINGS_KEY = 'math_settings';
 const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
+const STAGED_LEARNING_KEY = 'math_stagedLearningEnabled';
+const STAGED_PROGRESS_KEY = 'math_stagedProgress';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
 const READING_PROGRESS_KEY = 'reading_progress';
 const READING_HISTORY_KEY = 'reading_history';
@@ -91,6 +93,14 @@ const DEFAULT_SETTINGS = {
   customQuestionsText: '',
   selectedTables: ALL_ADDITION_TABLES,
 };
+const STAGED_LEARNING_STAGES = [
+  { id: 'stage-1', label: 'Chặng 1/3', name: 'Làm quen', min: 0, max: 3, requiredRemembered: 4 },
+  { id: 'stage-2', label: 'Chặng 2/3', name: 'Tăng nhẹ', min: 4, max: 6, requiredRemembered: 3 },
+  { id: 'stage-3', label: 'Chặng 3/3', name: 'Hoàn thành', min: 7, max: 9, requiredRemembered: 3 },
+];
+const STAGED_RANDOM_LABEL = 'Random';
+const STAGED_REMEMBER_TARGET = 8;
+const STAGED_RECENT_LIMIT = 3;
 const READING_LESSONS = [
   {
     id: 'dino-sam-tap-1',
@@ -507,6 +517,77 @@ const loadSettings = () => {
   }
 };
 
+const loadStagedLearningEnabled = () => (
+  localStorage.getItem(STAGED_LEARNING_KEY) === 'true'
+);
+
+const normalizeStagedProgress = (progress) => {
+  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return {};
+
+  return Object.fromEntries(
+    Object.entries(progress)
+      .filter(([questionId]) => typeof questionId === 'string' && questionId.length > 0)
+      .map(([questionId, correctCount]) => [
+        questionId,
+        clampNumber(correctCount, 0, 0, STAGED_REMEMBER_TARGET),
+      ])
+  );
+};
+
+const loadStagedProgress = () => {
+  try {
+    const savedProgress = localStorage.getItem(STAGED_PROGRESS_KEY);
+    return savedProgress ? normalizeStagedProgress(JSON.parse(savedProgress)) : {};
+  } catch {
+    return {};
+  }
+};
+
+const getStagedLearningStatus = (pool, progress) => {
+  const eligiblePool = pool.filter(question => question.lessonType !== 'custom');
+  if (eligiblePool.length === 0) {
+    return {
+      eligiblePool,
+      currentPool: pool,
+      currentStage: null,
+      label: STAGED_RANDOM_LABEL,
+      isRandom: true,
+    };
+  }
+
+  for (const stage of STAGED_LEARNING_STAGES) {
+    const stagePool = eligiblePool.filter(question => question.b >= stage.min && question.b <= stage.max);
+    const rememberedCount = stagePool.filter(
+      question => (progress[question.id] || 0) >= STAGED_REMEMBER_TARGET
+    ).length;
+    const pendingStagePool = stagePool.filter(
+      question => (progress[question.id] || 0) < STAGED_REMEMBER_TARGET
+    );
+
+    if (stagePool.length > 0 && rememberedCount < stagePool.length) {
+      return {
+        eligiblePool,
+        currentPool: pendingStagePool,
+        currentStage: stage,
+        label: stage.label,
+        isRandom: false,
+        rememberedCount,
+        totalCount: stagePool.length,
+      };
+    }
+  }
+
+  return {
+    eligiblePool,
+    currentPool: eligiblePool,
+    currentStage: null,
+    label: STAGED_RANDOM_LABEL,
+    isRandom: true,
+    rememberedCount: eligiblePool.length,
+    totalCount: eligiblePool.length,
+  };
+};
+
 const resizeAvatarFile = (file) => new Promise((resolve, reject) => {
   if (!ACCEPTED_AVATAR_TYPES.has(file.type)) {
     reject(new Error('Unsupported avatar type'));
@@ -737,6 +818,10 @@ export default function App() {
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
   const [draftUserAvatar, setDraftUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
+  const [stagedLearningEnabled, setStagedLearningEnabled] = useState(() => loadStagedLearningEnabled());
+  const [draftStagedLearningEnabled, setDraftStagedLearningEnabled] = useState(() => loadStagedLearningEnabled());
+  const [stagedProgress, setStagedProgress] = useState(() => loadStagedProgress());
+  const [stageNotice, setStageNotice] = useState('');
   const [settings, setSettings] = useState(initialSettings);
   const [draftSettings, setDraftSettings] = useState(initialSettings);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -773,8 +858,23 @@ export default function App() {
   const readingContentRef = useRef(null);
   const readingSaveTimeoutRef = useRef(null);
   const readingSessionStartedAtRef = useRef(null);
+  const stageNoticeTimeoutRef = useRef(null);
+  const stageRecentQuestionKeysRef = useRef([]);
+  const activePoolRef = useRef([]);
+  const activeReviewListRef = useRef([]);
+  const activeUnseenListRef = useRef([]);
   const displayName = userName.trim() || 'bé';
-  const activePool = useMemo(() => generateInitialPool(settings), [settings]);
+  const fullActivePool = useMemo(() => generateInitialPool(settings), [settings]);
+  const stagedLearningStatus = useMemo(
+    () => getStagedLearningStatus(fullActivePool, stagedProgress),
+    [fullActivePool, stagedProgress]
+  );
+  const isStagedLearningActive = stagedLearningEnabled && stagedLearningStatus.eligiblePool.length > 0;
+  const activePool = useMemo(
+    () => (isStagedLearningActive ? stagedLearningStatus.currentPool : fullActivePool),
+    [fullActivePool, isStagedLearningActive, stagedLearningStatus.currentPool]
+  );
+  const stageLabel = isStagedLearningActive ? stagedLearningStatus.label : '';
   const activeReviewList = useMemo(
     () => {
       const reviewByKey = new Map(reviewList.map(question => [getQuestionKey(question), question]));
@@ -1003,6 +1103,7 @@ export default function App() {
     if (shouldOpen) {
       setDraftUserName(userName);
       setDraftUserAvatar(userAvatar);
+      setDraftStagedLearningEnabled(stagedLearningEnabled);
       setIsAdmin(false);
       setShowAdminLogin(false);
       setAdminError('');
@@ -1023,11 +1124,28 @@ export default function App() {
     event.preventDefault();
 
     const nextName = draftUserName.trim().slice(0, 28);
+    const stagedModeChanged = stagedLearningEnabled !== draftStagedLearningEnabled;
     setUserName(nextName);
     setDraftUserName(nextName);
     setUserAvatar(draftUserAvatar);
+    setStagedLearningEnabled(draftStagedLearningEnabled);
     setShowUserNameForm(false);
     setAvatarError('');
+
+    if (stagedModeChanged) {
+      clearInterval(timerRef.current);
+      clearPendingTransitions();
+      stageRecentQuestionKeysRef.current = [];
+      sessionStartedAtRef.current = null;
+      setUnseenList(generateInitialPool(settings));
+      setCurrentQ(null);
+      setSelectedAns(null);
+      setShowFlashcardAnswer(false);
+      setSummaryStats(null);
+      setPracticeMode('normal');
+      setGameState('idle');
+      setTimer(settings.timeLimit);
+    }
   };
 
   const handleAvatarChange = async (event) => {
@@ -1190,6 +1308,7 @@ export default function App() {
     if (lessonChanged) {
       clearInterval(timerRef.current);
       clearPendingTransitions();
+      stageRecentQuestionKeysRef.current = [];
       sessionStartedAtRef.current = null;
       setReviewList([]);
       setUnseenList(generateInitialPool(nextSettings));
@@ -1233,10 +1352,25 @@ export default function App() {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
       localStorage.setItem(USER_NAME_KEY, userName);
       localStorage.setItem(USER_AVATAR_KEY, userAvatar);
+      localStorage.setItem(STAGED_LEARNING_KEY, stagedLearningEnabled.toString());
+      localStorage.setItem(STAGED_PROGRESS_KEY, JSON.stringify(stagedProgress));
     } catch {
       console.log("Cannot save data");
     }
-  }, [screenTime, reviewList, correctTotal, unseenList, wrongTotal, timeoutTotal, sessionHistory, settings, userName, userAvatar]);
+  }, [
+    screenTime,
+    reviewList,
+    correctTotal,
+    unseenList,
+    wrongTotal,
+    timeoutTotal,
+    sessionHistory,
+    settings,
+    userName,
+    userAvatar,
+    stagedLearningEnabled,
+    stagedProgress,
+  ]);
 
   useEffect(() => {
     try {
@@ -1272,7 +1406,46 @@ export default function App() {
     if (readingSaveTimeoutRef.current) {
       clearTimeout(readingSaveTimeoutRef.current);
     }
+    clearTimeout(stageNoticeTimeoutRef.current);
   }, []);
+
+  useEffect(() => {
+    activePoolRef.current = activePool;
+    activeReviewListRef.current = activeReviewList;
+    activeUnseenListRef.current = activeUnseenList;
+  }, [activePool, activeReviewList, activeUnseenList]);
+
+  const markStagedQuestionCorrect = useCallback((question) => {
+    if (!stagedLearningEnabled || !question?.id || question.lessonType === 'custom') return;
+
+    const nextProgress = {
+      ...stagedProgress,
+      [question.id]: Math.min(
+        STAGED_REMEMBER_TARGET,
+        (stagedProgress[question.id] || 0) + 1
+      ),
+    };
+    const previousStatus = getStagedLearningStatus(fullActivePool, stagedProgress);
+    const nextStatus = getStagedLearningStatus(fullActivePool, nextProgress);
+
+    setStagedProgress(nextProgress);
+
+    if (
+      isStagedLearningActive
+      && previousStatus.label
+      && nextStatus.label
+      && previousStatus.label !== nextStatus.label
+    ) {
+      setStageNotice(nextStatus.label === STAGED_RANDOM_LABEL
+        ? 'Đã mở chế độ Random!'
+        : 'Mở chặng mới rồi!');
+      clearTimeout(stageNoticeTimeoutRef.current);
+      stageNoticeTimeoutRef.current = setTimeout(() => {
+        setStageNotice('');
+        stageNoticeTimeoutRef.current = null;
+      }, 2200);
+    }
+  }, [fullActivePool, isStagedLearningActive, stagedLearningEnabled, stagedProgress]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback((options = {}) => {
@@ -1282,14 +1455,25 @@ export default function App() {
 
     const questionOptions = options || {};
     const selectedPracticeMode = questionOptions.practiceMode || practiceMode;
-    const playablePool = questionOptions.activePool || activePool;
-    const reviewQuestions = questionOptions.activeReviewList || activeReviewList;
+    const playablePool = questionOptions.activePool || activePoolRef.current;
+    const reviewQuestions = questionOptions.activeReviewList || activeReviewListRef.current;
     const unseenQuestions = selectedPracticeMode === 'review'
       ? []
-      : questionOptions.activeUnseenList || activeUnseenList;
+      : questionOptions.activeUnseenList || activeUnseenListRef.current;
+    const recentQuestionKeys = new Set(stageRecentQuestionKeysRef.current);
+    const avoidRecentQuestions = (questions) => {
+      if (!isStagedLearningActive || questions.length <= 1) return questions;
+      const filteredQuestions = questions.filter(
+        question => !recentQuestionKeys.has(getQuestionKey(question))
+      );
+      return filteredQuestions.length > 0 ? filteredQuestions : questions;
+    };
+    const selectablePool = avoidRecentQuestions(playablePool);
+    const selectableReviewQuestions = avoidRecentQuestions(reviewQuestions);
+    const selectableUnseenQuestions = avoidRecentQuestions(unseenQuestions);
     
-    const canPullReview = reviewQuestions.length > 0;
-    const canPullUnseen = unseenQuestions.length > 0;
+    const canPullReview = selectableReviewQuestions.length > 0;
+    const canPullUnseen = selectableUnseenQuestions.length > 0;
 
     if (selectedPracticeMode === 'review' && !canPullReview) {
       setCurrentQ(null);
@@ -1310,18 +1494,26 @@ export default function App() {
     
     if (!canPullReview && !canPullUnseen) {
       // Chế độ chơi tự do (khi bé đã thuộc hết các câu trong bài được chọn)
-      const randomIndex = Math.floor(Math.random() * playablePool.length);
-      selectedQuestion = playablePool[randomIndex];
+      const randomIndex = Math.floor(Math.random() * selectablePool.length);
+      selectedQuestion = selectablePool[randomIndex];
     } else if (canPullReview && (!canPullUnseen || Math.random() < 0.6)) {
       // Ưu tiên ôn tập (tỉ lệ 60%)
-      const randomIndex = Math.floor(Math.random() * reviewQuestions.length);
-      selectedQuestion = reviewQuestions[randomIndex];
+      const randomIndex = Math.floor(Math.random() * selectableReviewQuestions.length);
+      selectedQuestion = selectableReviewQuestions[randomIndex];
       isReview = true;
     } else {
       // Bốc ngẫu nhiên 1 câu chưa làm
-      const randomIndex = Math.floor(Math.random() * unseenQuestions.length);
-      selectedQuestion = unseenQuestions[randomIndex];
+      const randomIndex = Math.floor(Math.random() * selectableUnseenQuestions.length);
+      selectedQuestion = selectableUnseenQuestions[randomIndex];
       isUnseen = true;
+    }
+
+    const selectedQuestionKey = getQuestionKey(selectedQuestion);
+    if (selectedQuestionKey) {
+      stageRecentQuestionKeysRef.current = [
+        selectedQuestionKey,
+        ...stageRecentQuestionKeysRef.current.filter(key => key !== selectedQuestionKey),
+      ].slice(0, STAGED_RECENT_LIMIT);
     }
 
     setCurrentQ(buildPlayableQuestion(selectedQuestion, { isReview, isUnseen }));
@@ -1329,7 +1521,7 @@ export default function App() {
     setSelectedAns(null);
     setShowFlashcardAnswer(false);
     setGameState('playing');
-  }, [activePool, activeReviewList, activeUnseenList, practiceMode, settings.timeLimit]);
+  }, [isStagedLearningActive, practiceMode, settings.timeLimit]);
 
   // --- XỬ LÝ TRẢ LỜI ---
   function updateScreenTime(amount) {
@@ -1418,6 +1610,7 @@ export default function App() {
       playSound('correct', settings.soundVolumePercent);
       setGameState('celebrating');
       setCorrectTotal(prev => prev + 1);
+      markStagedQuestionCorrect(currentQ);
       updateScreenTime(settings.rewardSec);
       
       if (currentQ.isUnseen) {
@@ -1426,7 +1619,7 @@ export default function App() {
           // Kiểm tra điều kiện thắng
           const remainingKeys = new Set(newList.map(getQuestionKey));
           const remainingSelectedUnseen = activePool.filter(question => remainingKeys.has(question.id));
-          if (remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
+          if (!isStagedLearningActive && remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
             queueCongrats();
           }
           return newList;
@@ -1470,6 +1663,7 @@ export default function App() {
     const currentKey = getQuestionKey(currentQ);
     playSound('correct', settings.soundVolumePercent);
     setCorrectTotal(prev => prev + 1);
+    markStagedQuestionCorrect(currentQ);
     updateScreenTime(settings.rewardSec);
     setShowFlashcardAnswer(false);
 
@@ -1478,7 +1672,7 @@ export default function App() {
         const newList = prev.filter(q => getQuestionKey(q) !== currentKey);
         const remainingKeys = new Set(newList.map(getQuestionKey));
         const remainingSelectedUnseen = activePool.filter(question => remainingKeys.has(question.id));
-        if (remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
+        if (!isStagedLearningActive && remainingSelectedUnseen.length === 0 && activeReviewList.length === 0) {
           queueCongrats();
         }
         return newList;
@@ -1519,7 +1713,11 @@ export default function App() {
       // Kiểm tra nếu cả hai danh sách đều đã rỗng
       const remainingKeys = new Set(newList.map(getQuestionKey));
       const remainingSelectedReview = activePool.filter(item => remainingKeys.has(item.id));
-      if (remainingSelectedReview.length === 0 && (practiceMode === 'review' || activeUnseenList.length === 0)) {
+      if (
+        !isStagedLearningActive
+        && remainingSelectedReview.length === 0
+        && (practiceMode === 'review' || activeUnseenList.length === 0)
+      ) {
         queueCongrats();
       }
       
@@ -1607,6 +1805,7 @@ export default function App() {
 
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    stageRecentQuestionKeysRef.current = [];
     sessionStartedAtRef.current = null;
     setScreenTime(0);
     setReviewList([]);
@@ -1636,6 +1835,7 @@ export default function App() {
     localStorage.removeItem('math_unseenList');
     localStorage.removeItem('math_wrongTotal');
     localStorage.removeItem('math_timeoutTotal');
+    localStorage.removeItem(STAGED_PROGRESS_KEY);
     localStorage.removeItem(SESSION_HISTORY_KEY);
     localStorage.removeItem(READING_PROGRESS_KEY);
     localStorage.removeItem(READING_HISTORY_KEY);
@@ -1819,6 +2019,28 @@ export default function App() {
                 <div className="text-xs font-bold text-red-500">{avatarError}</div>
               )}
             </div>
+
+            <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl border-2 border-blue-100 bg-white px-3 py-2">
+              <span className="min-w-0">
+                <span className="block text-sm font-extrabold text-blue-800">Học theo chặng</span>
+                <span className="block text-[11px] font-bold text-blue-500">
+                  3 chặng, đúng 8 lần mỗi phép tính
+                </span>
+              </span>
+              <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                draftStagedLearningEnabled ? 'bg-blue-500' : 'bg-gray-300'
+              }`}>
+                <input
+                  type="checkbox"
+                  checked={draftStagedLearningEnabled}
+                  onChange={(event) => setDraftStagedLearningEnabled(event.target.checked)}
+                  className="sr-only"
+                />
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                  draftStagedLearningEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </span>
+            </label>
           </form>
         )}
 
@@ -2224,6 +2446,17 @@ export default function App() {
           ? 'p-2 md:p-4'
           : `${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] p-2.5 md:p-6`
       }`}>
+        {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
+          <div className="absolute left-3 top-2 z-10 rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-extrabold text-blue-600 md:left-4 md:top-3 md:text-sm">
+            {stageLabel}
+          </div>
+        )}
+
+        {stageNotice && (
+          <div className="absolute left-1/2 top-10 z-30 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-green-200 bg-white px-4 py-1.5 text-sm font-black text-green-600 shadow-lg animate-bounce-in md:top-14 md:text-lg">
+            {stageNotice}
+          </div>
+        )}
         
         {gameState === 'idle' ? (
           <div className="text-center">
