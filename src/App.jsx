@@ -2788,7 +2788,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div className="grid min-h-0 flex-1 gap-2 overflow-y-auto bg-emerald-50/60 px-3 py-3 md:px-8 md:py-5">
+              <div className="reading-catalog-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-scroll overscroll-contain bg-emerald-50/60 px-3 py-2 pr-1.5 md:px-8 md:py-4">
                 {readingCatalogItems.map((item) => {
                   if (item.type === 'series') {
                     const completedCount = item.lessons.filter(reading => readingProgress[reading.id]?.completed).length;
@@ -2799,10 +2799,10 @@ export default function App() {
                     return (
                       <div
                         key={item.id}
-                        className={`overflow-hidden rounded-xl border-2 shadow-sm transition-colors ${
+                        className={`overflow-hidden rounded-xl border-[3px] shadow-sm transition-colors ${
                           isCompleted
                             ? 'border-blue-900 bg-blue-800 text-white'
-                            : 'border-blue-200 bg-blue-50'
+                            : 'border-blue-400 bg-blue-50'
                         }`}
                       >
                         <button
@@ -2812,7 +2812,7 @@ export default function App() {
                             setSelectedReadingId(null);
                             setExpandedReadingSeriesId(prev => (prev === item.id ? null : item.id));
                           }}
-                          className={`w-full p-3 text-left transition-colors md:p-4 ${
+                          className={`w-full px-3 py-2.5 text-left transition-colors md:px-4 md:py-3 ${
                             isCompleted ? 'hover:bg-blue-900' : 'hover:bg-blue-100'
                           }`}
                         >
@@ -2842,7 +2842,7 @@ export default function App() {
 
                         {isExpanded && (
                           <div className={`reading-series-scroll max-h-[38dvh] space-y-2 overflow-y-scroll overscroll-contain border-t px-2.5 py-2.5 pr-1.5 md:max-h-[28rem] ${
-                            isCompleted ? 'border-blue-700 bg-blue-950/30' : 'border-blue-200 bg-blue-100/80'
+                            isCompleted ? 'border-blue-700 bg-blue-950/30' : 'border-blue-400 bg-blue-100/80'
                           }`}>
                             {item.lessons.map((reading, index) => {
                               const episodeCompleted = !!readingProgress[reading.id]?.completed;
@@ -2856,7 +2856,7 @@ export default function App() {
                                   className={`w-full rounded-lg border-2 px-3 py-2 text-left transition-colors ${
                                     episodeCompleted
                                       ? 'border-blue-900 bg-blue-800 text-white hover:bg-blue-900'
-                                      : 'border-blue-200 bg-white hover:bg-blue-50'
+                                      : 'border-blue-300 bg-white hover:bg-blue-50'
                                   }`}
                                 >
                                   <div className="flex items-center justify-between gap-3">
@@ -2906,10 +2906,10 @@ export default function App() {
                         setExpandedReadingSeriesId(null);
                         setSelectedReadingId(reading.id);
                       }}
-                      className={`rounded-xl border-2 p-3 text-left shadow-sm transition-colors md:p-4 ${
+                      className={`rounded-xl border-[3px] px-3 py-2.5 text-left shadow-sm transition-colors md:px-4 md:py-3 ${
                         isCompleted
                           ? 'border-emerald-900 bg-emerald-800 text-white hover:bg-emerald-900'
-                          : 'border-white bg-white hover:bg-emerald-100'
+                          : 'border-emerald-300 bg-white hover:bg-emerald-100'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
