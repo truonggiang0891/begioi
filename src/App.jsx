@@ -829,19 +829,32 @@ export default function App() {
       return items;
     }, []);
   }, []);
-  const selectedReadingIndex = selectedReadingId
-    ? READING_LESSONS.findIndex(reading => reading.id === selectedReadingId)
+  const selectedReadingSeriesLessons = selectedReadingSeriesMeta
+    ? READING_SERIES.find(series => series.id === selectedReadingSeriesMeta.seriesId)?.lessonIds
+      .map(readingId => READING_LESSONS.find(reading => reading.id === readingId))
+      .filter(Boolean) || []
+    : [];
+  const selectedReadingSeriesIndex = selectedReadingId && selectedReadingSeriesLessons.length > 0
+    ? selectedReadingSeriesLessons.findIndex(reading => reading.id === selectedReadingId)
     : -1;
+  const hasReadingSeriesNavigation = selectedReadingSeriesLessons.length > 1;
   const selectedReadingScrollTop = selectedReadingId
     ? readingProgress[selectedReadingId]?.scrollTop || 0
     : 0;
   const selectedReadingCompleted = selectedReadingId
     ? !!readingProgress[selectedReadingId]?.completed
     : false;
-  const previousReading = selectedReadingIndex > 0 ? READING_LESSONS[selectedReadingIndex - 1] : null;
-  const nextReading = selectedReadingIndex >= 0 && selectedReadingIndex < READING_LESSONS.length - 1
-    ? READING_LESSONS[selectedReadingIndex + 1]
+  const previousReading = hasReadingSeriesNavigation && selectedReadingSeriesIndex > 0
+    ? selectedReadingSeriesLessons[selectedReadingSeriesIndex - 1]
     : null;
+  const nextReading = hasReadingSeriesNavigation
+    && selectedReadingSeriesIndex >= 0
+    && selectedReadingSeriesIndex < selectedReadingSeriesLessons.length - 1
+    ? selectedReadingSeriesLessons[selectedReadingSeriesIndex + 1]
+    : null;
+  const readingCounterLabel = hasReadingSeriesNavigation
+    ? `${selectedReadingSeriesIndex + 1}/${selectedReadingSeriesLessons.length}`
+    : '1/1';
   const draftLessonTypes = getValidLessonTypes(
     Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
   );
@@ -924,12 +937,13 @@ export default function App() {
       },
     }));
 
-    if (nextReading) {
+    if (hasReadingSeriesNavigation && nextReading) {
       setSelectedReadingId(nextReading.id);
     } else {
       setSelectedReadingId(null);
+      setExpandedReadingSeriesId(selectedReadingSeriesMeta?.seriesId || null);
     }
-  }, [nextReading, selectedReadingId]);
+  }, [hasReadingSeriesNavigation, nextReading, selectedReadingId, selectedReadingSeriesMeta]);
 
   const buildReadingSummary = useCallback((progressSnapshot = readingProgress) => {
     const endedAt = Date.now();
@@ -2749,7 +2763,7 @@ export default function App() {
                       <ChevronLeft size={18} className="shrink-0" />
                     </button>
                     <div className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 md:text-sm">
-                      {selectedReadingIndex + 1}/{READING_LESSONS.length}
+                      {readingCounterLabel}
                     </div>
                     <button
                       type="button"
