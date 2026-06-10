@@ -867,6 +867,7 @@ export default function App() {
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
   const sessionStartedAtRef = useRef(null);
+  const hasShownCongratsThisSessionRef = useRef(false);
   const readingContentRef = useRef(null);
   const readingSaveTimeoutRef = useRef(null);
   const readingSessionStartedAtRef = useRef(null);
@@ -1495,7 +1496,12 @@ export default function App() {
     if (selectedPracticeMode === 'review' && !canPullReview) {
       setCurrentQ(null);
       setPracticeMode('normal');
-      setGameState('congrats');
+      if (hasShownCongratsThisSessionRef.current) {
+        setGameState('idle');
+      } else {
+        hasShownCongratsThisSessionRef.current = true;
+        setGameState('congrats');
+      }
       return;
     }
 
@@ -1592,6 +1598,8 @@ export default function App() {
   }, []);
 
   const queueCongrats = () => {
+    if (hasShownCongratsThisSessionRef.current) return;
+    hasShownCongratsThisSessionRef.current = true;
     clearTimeout(congratsTimeoutRef.current);
     congratsTimeoutRef.current = setTimeout(() => {
       setGameState('congrats');
@@ -1823,6 +1831,7 @@ export default function App() {
     clearInterval(timerRef.current);
     clearPendingTransitions();
     stageRecentQuestionKeysRef.current = [];
+    hasShownCongratsThisSessionRef.current = false;
     sessionStartedAtRef.current = null;
     setScreenTime(0);
     setReviewList([]);
@@ -2512,6 +2521,9 @@ export default function App() {
             <div className="grid gap-2 md:gap-3">
               <button
                 onClick={() => {
+                  if (!sessionStartedAtRef.current) {
+                    hasShownCongratsThisSessionRef.current = false;
+                  }
                   setPracticeMode('normal');
                   generateQuestion({ practiceMode: 'normal' });
                 }}
