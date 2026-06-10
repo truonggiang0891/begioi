@@ -1135,7 +1135,6 @@ export default function App() {
         return items;
       }
 
-      items.push({ type: 'lesson', reading });
       return items;
     }, []);
   }, []);
@@ -3329,12 +3328,12 @@ export default function App() {
                             isCompleted ? 'hover:bg-emerald-200' : 'hover:bg-emerald-50'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className={`truncate text-base font-black md:text-lg ${
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1 pr-1">
+                              <div className={`break-words text-base font-black leading-tight md:text-lg ${
                                 isCompleted ? 'text-emerald-950' : 'text-emerald-800'
                               }`}>
-                                Bộ truyện: {item.title}
+                                {item.title}
                               </div>
                               <div className={`mt-0.5 text-xs font-extrabold md:text-sm ${
                                 isCompleted ? 'text-emerald-700' : 'text-emerald-600'
@@ -3342,7 +3341,7 @@ export default function App() {
                                 {completedCount}/{item.lessons.length} tập đã đọc{hasProgress && !isCompleted ? ' • có tập đang đọc dở' : ''}
                               </div>
                             </div>
-                            <div className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-black md:text-sm ${
+                            <div className={`mt-0.5 flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-black md:px-3 md:text-sm ${
                               isCompleted
                                 ? 'border border-emerald-300 bg-white text-emerald-800'
                                 : 'border border-emerald-100 bg-emerald-50 text-emerald-700'
