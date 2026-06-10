@@ -18,7 +18,7 @@ body {
 
 .reading-series-scroll {
   -webkit-overflow-scrolling: touch;
-  scrollbar-color: #3b82f6 #dbeafe;
+  scrollbar-color: #059669 #d1fae5;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   touch-action: pan-y;
@@ -29,13 +29,13 @@ body {
 }
 
 .reading-series-scroll::-webkit-scrollbar-track {
-  background: #dbeafe;
+  background: #d1fae5;
   border-radius: 999px;
 }
 
 .reading-series-scroll::-webkit-scrollbar-thumb {
-  background: #3b82f6;
-  border: 1px solid #dbeafe;
+  background: #059669;
+  border: 1px solid #d1fae5;
   border-radius: 999px;
 }
 
