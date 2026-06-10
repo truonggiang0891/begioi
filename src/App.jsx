@@ -2968,7 +2968,7 @@ export default function App() {
             role="dialog"
             aria-modal="true"
             aria-label="Lịch sử buổi học"
-            className="flex max-h-[86dvh] w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4"
+            className="flex h-[94dvh] max-h-[94dvh] w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
