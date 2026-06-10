@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -60,6 +60,7 @@ const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
 const STAGED_LEARNING_KEY = 'math_stagedLearningEnabled';
 const STAGED_PROGRESS_KEY = 'math_stagedProgress';
+const STAGED_REMEMBER_TARGET_KEY = 'math_stagedRememberTarget';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
 const READING_PROGRESS_KEY = 'reading_progress';
 const READING_HISTORY_KEY = 'reading_history';
@@ -99,7 +100,9 @@ const STAGED_LEARNING_STAGES = [
   { id: 'stage-3', label: 'Chặng 3/3', name: 'Hoàn thành', min: 7, max: 9, requiredRemembered: 3 },
 ];
 const STAGED_RANDOM_LABEL = 'Random';
-const STAGED_REMEMBER_TARGET = 8;
+const DEFAULT_STAGED_REMEMBER_TARGET = 8;
+const MIN_STAGED_REMEMBER_TARGET = 1;
+const MAX_STAGED_REMEMBER_TARGET = 20;
 const STAGED_RECENT_LIMIT = 3;
 const READING_LESSONS = [
   {
@@ -521,6 +524,13 @@ const loadStagedLearningEnabled = () => (
   localStorage.getItem(STAGED_LEARNING_KEY) === 'true'
 );
 
+const loadStagedRememberTarget = () => clampNumber(
+  localStorage.getItem(STAGED_REMEMBER_TARGET_KEY),
+  DEFAULT_STAGED_REMEMBER_TARGET,
+  MIN_STAGED_REMEMBER_TARGET,
+  MAX_STAGED_REMEMBER_TARGET
+);
+
 const normalizeStagedProgress = (progress) => {
   if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return {};
 
@@ -529,7 +539,7 @@ const normalizeStagedProgress = (progress) => {
       .filter(([questionId]) => typeof questionId === 'string' && questionId.length > 0)
       .map(([questionId, correctCount]) => [
         questionId,
-        clampNumber(correctCount, 0, 0, STAGED_REMEMBER_TARGET),
+        clampNumber(correctCount, 0, 0, MAX_STAGED_REMEMBER_TARGET),
       ])
   );
 };
@@ -543,7 +553,7 @@ const loadStagedProgress = () => {
   }
 };
 
-const getStagedLearningStatus = (pool, progress) => {
+const getStagedLearningStatus = (pool, progress, rememberTarget = DEFAULT_STAGED_REMEMBER_TARGET) => {
   const eligiblePool = pool.filter(question => question.lessonType !== 'custom');
   if (eligiblePool.length === 0) {
     return {
@@ -558,10 +568,10 @@ const getStagedLearningStatus = (pool, progress) => {
   for (const stage of STAGED_LEARNING_STAGES) {
     const stagePool = eligiblePool.filter(question => question.b >= stage.min && question.b <= stage.max);
     const rememberedCount = stagePool.filter(
-      question => (progress[question.id] || 0) >= STAGED_REMEMBER_TARGET
+      question => (progress[question.id] || 0) >= rememberTarget
     ).length;
     const pendingStagePool = stagePool.filter(
-      question => (progress[question.id] || 0) < STAGED_REMEMBER_TARGET
+      question => (progress[question.id] || 0) < rememberTarget
     );
 
     if (stagePool.length > 0 && rememberedCount < stagePool.length) {
@@ -820,6 +830,8 @@ export default function App() {
   const [draftUserAvatar, setDraftUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
   const [stagedLearningEnabled, setStagedLearningEnabled] = useState(() => loadStagedLearningEnabled());
   const [draftStagedLearningEnabled, setDraftStagedLearningEnabled] = useState(() => loadStagedLearningEnabled());
+  const [stagedRememberTarget, setStagedRememberTarget] = useState(() => loadStagedRememberTarget());
+  const [draftStagedRememberTarget, setDraftStagedRememberTarget] = useState(() => loadStagedRememberTarget());
   const [stagedProgress, setStagedProgress] = useState(() => loadStagedProgress());
   const [stageNotice, setStageNotice] = useState('');
   const [settings, setSettings] = useState(initialSettings);
@@ -866,8 +878,8 @@ export default function App() {
   const displayName = userName.trim() || 'bé';
   const fullActivePool = useMemo(() => generateInitialPool(settings), [settings]);
   const stagedLearningStatus = useMemo(
-    () => getStagedLearningStatus(fullActivePool, stagedProgress),
-    [fullActivePool, stagedProgress]
+    () => getStagedLearningStatus(fullActivePool, stagedProgress, stagedRememberTarget),
+    [fullActivePool, stagedProgress, stagedRememberTarget]
   );
   const isStagedLearningActive = stagedLearningEnabled && stagedLearningStatus.eligiblePool.length > 0;
   const activePool = useMemo(
@@ -1104,6 +1116,7 @@ export default function App() {
       setDraftUserName(userName);
       setDraftUserAvatar(userAvatar);
       setDraftStagedLearningEnabled(stagedLearningEnabled);
+      setDraftStagedRememberTarget(stagedRememberTarget);
       setIsAdmin(false);
       setShowAdminLogin(false);
       setAdminError('');
@@ -1125,14 +1138,16 @@ export default function App() {
 
     const nextName = draftUserName.trim().slice(0, 28);
     const stagedModeChanged = stagedLearningEnabled !== draftStagedLearningEnabled;
+    const stagedTargetChanged = stagedRememberTarget !== draftStagedRememberTarget;
     setUserName(nextName);
     setDraftUserName(nextName);
     setUserAvatar(draftUserAvatar);
     setStagedLearningEnabled(draftStagedLearningEnabled);
+    setStagedRememberTarget(draftStagedRememberTarget);
     setShowUserNameForm(false);
     setAvatarError('');
 
-    if (stagedModeChanged) {
+    if (stagedModeChanged || stagedTargetChanged) {
       clearInterval(timerRef.current);
       clearPendingTransitions();
       stageRecentQuestionKeysRef.current = [];
@@ -1353,6 +1368,7 @@ export default function App() {
       localStorage.setItem(USER_NAME_KEY, userName);
       localStorage.setItem(USER_AVATAR_KEY, userAvatar);
       localStorage.setItem(STAGED_LEARNING_KEY, stagedLearningEnabled.toString());
+      localStorage.setItem(STAGED_REMEMBER_TARGET_KEY, stagedRememberTarget.toString());
       localStorage.setItem(STAGED_PROGRESS_KEY, JSON.stringify(stagedProgress));
     } catch {
       console.log("Cannot save data");
@@ -1369,6 +1385,7 @@ export default function App() {
     userName,
     userAvatar,
     stagedLearningEnabled,
+    stagedRememberTarget,
     stagedProgress,
   ]);
 
@@ -1421,12 +1438,12 @@ export default function App() {
     const nextProgress = {
       ...stagedProgress,
       [question.id]: Math.min(
-        STAGED_REMEMBER_TARGET,
+        stagedRememberTarget,
         (stagedProgress[question.id] || 0) + 1
       ),
     };
-    const previousStatus = getStagedLearningStatus(fullActivePool, stagedProgress);
-    const nextStatus = getStagedLearningStatus(fullActivePool, nextProgress);
+    const previousStatus = getStagedLearningStatus(fullActivePool, stagedProgress, stagedRememberTarget);
+    const nextStatus = getStagedLearningStatus(fullActivePool, nextProgress, stagedRememberTarget);
 
     setStagedProgress(nextProgress);
 
@@ -1445,7 +1462,7 @@ export default function App() {
         stageNoticeTimeoutRef.current = null;
       }, 2200);
     }
-  }, [fullActivePool, isStagedLearningActive, stagedLearningEnabled, stagedProgress]);
+  }, [fullActivePool, isStagedLearningActive, stagedLearningEnabled, stagedProgress, stagedRememberTarget]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback((options = {}) => {
@@ -2020,27 +2037,57 @@ export default function App() {
               )}
             </div>
 
-            <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl border-2 border-blue-100 bg-white px-3 py-2">
-              <span className="min-w-0">
+            <div className="mt-2 rounded-xl border-2 border-blue-100 bg-white px-3 py-2">
+              <label className="flex cursor-pointer items-center justify-between gap-3">
+                <span className="min-w-0">
                 <span className="block text-sm font-extrabold text-blue-800">Học theo chặng</span>
                 <span className="block text-[11px] font-bold text-blue-500">
-                  3 chặng, đúng 8 lần mỗi phép tính
+                  3 chặng, đúng {draftStagedRememberTarget} lần mỗi phép tính
                 </span>
-              </span>
-              <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                draftStagedLearningEnabled ? 'bg-blue-500' : 'bg-gray-300'
-              }`}>
-                <input
-                  type="checkbox"
-                  checked={draftStagedLearningEnabled}
-                  onChange={(event) => setDraftStagedLearningEnabled(event.target.checked)}
-                  className="sr-only"
-                />
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                  draftStagedLearningEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </span>
-            </label>
+                </span>
+                <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                  draftStagedLearningEnabled ? 'bg-blue-500' : 'bg-gray-300'
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={draftStagedLearningEnabled}
+                    onChange={(event) => setDraftStagedLearningEnabled(event.target.checked)}
+                    className="sr-only"
+                  />
+                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    draftStagedLearningEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </span>
+              </label>
+              {draftStagedLearningEnabled && (
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-blue-50 px-2 py-1.5">
+                  <span className="text-[11px] font-extrabold text-blue-700">Số lần đúng</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setDraftStagedRememberTarget(value => Math.max(MIN_STAGED_REMEMBER_TARGET, value - 1))}
+                      disabled={draftStagedRememberTarget <= MIN_STAGED_REMEMBER_TARGET}
+                      className="grid h-8 w-8 place-items-center rounded-lg border border-blue-100 bg-white text-blue-600 shadow-sm disabled:opacity-40"
+                      aria-label="Giảm số lần đúng"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="min-w-12 rounded-lg bg-white px-2 py-1 text-center text-base font-black text-blue-700 shadow-sm">
+                      {draftStagedRememberTarget}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDraftStagedRememberTarget(value => Math.min(MAX_STAGED_REMEMBER_TARGET, value + 1))}
+                      disabled={draftStagedRememberTarget >= MAX_STAGED_REMEMBER_TARGET}
+                      className="grid h-8 w-8 place-items-center rounded-lg border border-blue-100 bg-white text-blue-600 shadow-sm disabled:opacity-40"
+                      aria-label="Tăng số lần đúng"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </form>
         )}
 
