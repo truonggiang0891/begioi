@@ -749,6 +749,7 @@ export default function App() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [showAdminSettingsPanel, setShowAdminSettingsPanel] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [activeHistoryTab, setActiveHistoryTab] = useState('math');
   const [showReadingPanel, setShowReadingPanel] = useState(false);
   const [expandedReadingSeriesId, setExpandedReadingSeriesId] = useState(null);
   const [selectedReadingId, setSelectedReadingId] = useState(null);
@@ -1742,6 +1743,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
+              setActiveHistoryTab('math');
               setShowHistoryPanel(prev => !prev);
               setShowUserNameForm(false);
               setShowAdminLogin(false);
@@ -2988,18 +2990,37 @@ export default function App() {
               </button>
             </div>
 
-            {sessionHistory.length === 0 && readingHistory.length === 0 ? (
-              <div className="rounded-xl border-2 border-blue-100 bg-blue-50 px-4 py-8 text-center text-sm font-extrabold text-gray-500 md:text-base">
-                Chưa có lịch sử học nào được lưu.
-              </div>
-            ) : (
-              <div className="max-h-[68dvh] space-y-4 overflow-y-auto pr-1">
-                {sessionHistory.length > 0 && (
+            <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1">
+              <button
+                type="button"
+                onClick={() => setActiveHistoryTab('math')}
+                className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-black transition-colors md:text-sm ${
+                  activeHistoryTab === 'math'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'bg-white text-blue-700 hover:bg-blue-50'
+                }`}
+              >
+                <BarChart size={17} className="shrink-0" />
+                <span>Lịch sử học toán</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveHistoryTab('reading')}
+                className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-black transition-colors md:text-sm ${
+                  activeHistoryTab === 'reading'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : 'bg-white text-emerald-700 hover:bg-emerald-50'
+                }`}
+              >
+                <BookOpen size={17} className="shrink-0" />
+                <span>Lịch sử tập đọc</span>
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              {activeHistoryTab === 'math' && (
+                sessionHistory.length > 0 ? (
                   <section className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-black text-blue-800 md:text-base">
-                      <BarChart size={18} className="text-blue-500" />
-                      Lịch sử học toán
-                    </div>
                     {sessionHistory.map((entry, index) => (
                       <div key={`math-${entry.id}`} className="rounded-xl border-2 border-blue-100 bg-blue-50 p-2.5 md:p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -3025,14 +3046,16 @@ export default function App() {
                       </div>
                     ))}
                   </section>
-                )}
+                ) : (
+                  <div className="rounded-xl border-2 border-blue-100 bg-blue-50 px-4 py-8 text-center text-sm font-extrabold text-gray-500 md:text-base">
+                    Chưa có lịch sử học toán nào được lưu.
+                  </div>
+                )
+              )}
 
-                {readingHistory.length > 0 && (
+              {activeHistoryTab === 'reading' && (
+                readingHistory.length > 0 ? (
                   <section className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-black text-emerald-800 md:text-base">
-                      <BookOpen size={18} className="text-emerald-500" />
-                      Lịch sử tập đọc
-                    </div>
                     {readingHistory.map((entry, index) => (
                       <div key={`reading-${entry.id}`} className="rounded-xl border-2 border-emerald-100 bg-emerald-50 p-2.5 md:p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -3060,9 +3083,13 @@ export default function App() {
                       </div>
                     ))}
                   </section>
-                )}
-              </div>
-            )}
+                ) : (
+                  <div className="rounded-xl border-2 border-emerald-100 bg-emerald-50 px-4 py-8 text-center text-sm font-extrabold text-gray-500 md:text-base">
+                    Chưa có lịch sử tập đọc nào được lưu.
+                  </div>
+                )
+              )}
+            </div>
           </div>
         </div>
       )}
