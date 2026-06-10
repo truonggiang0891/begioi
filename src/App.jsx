@@ -2447,7 +2447,7 @@ export default function App() {
           : `${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] p-2.5 md:p-6`
       }`}>
         {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
-          <div className="absolute left-3 top-2 z-10 rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-extrabold text-blue-600 md:left-4 md:top-3 md:text-sm">
+          <div className="absolute left-3 top-2 z-10 text-[10px] font-semibold text-gray-400 md:left-4 md:top-3 md:text-xs">
             {stageLabel}
           </div>
         )}
