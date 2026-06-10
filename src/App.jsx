@@ -2484,7 +2484,12 @@ export default function App() {
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{activeUnseenList.length}</div>
           </div>
           
-          <div className="col-span-3 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
+          <div className="relative col-span-3 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
+            {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
+              <div className="absolute right-2 top-1 text-[9px] font-semibold text-gray-400 md:right-3 md:top-2 md:text-[11px]">
+                {stageLabel}
+              </div>
+            )}
             <div className="flex items-center gap-1 md:gap-2 text-purple-700 font-bold text-sm md:text-lg">
               <Smartphone size={20} className="md:w-6 md:h-6 animate-pulse" /> Giờ xem điện thoại
             </div>
@@ -2502,12 +2507,6 @@ export default function App() {
           ? 'p-2 md:p-4'
           : `${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] p-2.5 md:p-6`
       }`}>
-        {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
-          <div className="absolute left-3 top-2 z-10 text-[10px] font-semibold text-gray-400 md:left-4 md:top-3 md:text-xs">
-            {stageLabel}
-          </div>
-        )}
-
         {stageNotice && (
           <div className="absolute left-1/2 top-10 z-30 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-green-200 bg-white px-4 py-1.5 text-sm font-black text-green-600 shadow-lg animate-bounce-in md:top-14 md:text-lg">
             {stageNotice}
