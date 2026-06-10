@@ -2801,8 +2801,8 @@ export default function App() {
                         key={item.id}
                         className={`overflow-hidden rounded-xl border-2 shadow-sm transition-colors ${
                           isCompleted
-                            ? 'border-emerald-900 bg-emerald-800 text-white'
-                            : 'border-white bg-white'
+                            ? 'border-blue-900 bg-blue-800 text-white'
+                            : 'border-blue-200 bg-blue-50'
                         }`}
                       >
                         <button
@@ -2813,26 +2813,26 @@ export default function App() {
                             setExpandedReadingSeriesId(prev => (prev === item.id ? null : item.id));
                           }}
                           className={`w-full p-3 text-left transition-colors md:p-4 ${
-                            isCompleted ? 'hover:bg-emerald-900' : 'hover:bg-emerald-100'
+                            isCompleted ? 'hover:bg-blue-900' : 'hover:bg-blue-100'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <div className={`truncate text-base font-black md:text-lg ${
-                                isCompleted ? 'text-white' : 'text-emerald-800'
+                                isCompleted ? 'text-white' : 'text-blue-900'
                               }`}>
                                 Bộ truyện: {item.title}
                               </div>
                               <div className={`mt-0.5 text-xs font-extrabold md:text-sm ${
-                                isCompleted ? 'text-emerald-100' : 'text-emerald-500'
+                                isCompleted ? 'text-blue-100' : 'text-blue-600'
                               }`}>
                                 {completedCount}/{item.lessons.length} tập đã đọc{hasProgress && !isCompleted ? ' • có tập đang đọc dở' : ''}
                               </div>
                             </div>
                             <div className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-black md:text-sm ${
                               isCompleted
-                                ? 'bg-white text-emerald-800'
-                                : 'bg-emerald-50 text-emerald-700'
+                                ? 'bg-white text-blue-800'
+                                : 'bg-blue-600 text-white'
                             }`}>
                               <span>{isExpanded ? 'Thu gọn' : 'Xem tập'}</span>
                               <ChevronDown size={16} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -2841,8 +2841,8 @@ export default function App() {
                         </button>
 
                         {isExpanded && (
-                          <div className={`space-y-2 border-t px-2.5 py-2.5 ${
-                            isCompleted ? 'border-emerald-700 bg-emerald-900/30' : 'border-emerald-100 bg-emerald-50/70'
+                          <div className={`reading-series-scroll max-h-[38dvh] space-y-2 overflow-y-scroll overscroll-contain border-t px-2.5 py-2.5 pr-1.5 md:max-h-[28rem] ${
+                            isCompleted ? 'border-blue-700 bg-blue-950/30' : 'border-blue-200 bg-blue-100/80'
                           }`}>
                             {item.lessons.map((reading, index) => {
                               const episodeCompleted = !!readingProgress[reading.id]?.completed;
@@ -2855,31 +2855,31 @@ export default function App() {
                                   onClick={() => setSelectedReadingId(reading.id)}
                                   className={`w-full rounded-lg border-2 px-3 py-2 text-left transition-colors ${
                                     episodeCompleted
-                                      ? 'border-emerald-900 bg-emerald-800 text-white hover:bg-emerald-900'
-                                      : 'border-emerald-100 bg-white hover:bg-emerald-100'
+                                      ? 'border-blue-900 bg-blue-800 text-white hover:bg-blue-900'
+                                      : 'border-blue-200 bg-white hover:bg-blue-50'
                                   }`}
                                 >
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className={`truncate text-sm font-black md:text-base ${
-                                        episodeCompleted ? 'text-white' : 'text-emerald-800'
+                                        episodeCompleted ? 'text-white' : 'text-blue-900'
                                       }`}>
                                         Tập {index + 1}: {reading.subtitle || reading.title}
                                       </div>
                                       {episodeCompleted ? (
-                                        <div className="mt-0.5 text-[11px] font-extrabold text-emerald-100 md:text-xs">
+                                        <div className="mt-0.5 text-[11px] font-extrabold text-blue-100 md:text-xs">
                                           Đã đọc xong
                                         </div>
                                       ) : episodeInProgress && (
-                                        <div className="mt-0.5 text-[11px] font-extrabold text-emerald-500 md:text-xs">
+                                        <div className="mt-0.5 text-[11px] font-extrabold text-blue-600 md:text-xs">
                                           Đang đọc dở
                                         </div>
                                       )}
                                     </div>
                                     <div className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black md:text-xs ${
                                       episodeCompleted
-                                        ? 'bg-white text-emerald-800'
-                                        : 'bg-emerald-50 text-emerald-600'
+                                        ? 'bg-white text-blue-800'
+                                        : 'bg-blue-50 text-blue-700'
                                     }`}>
                                       {episodeCompleted ? 'Đọc lại' : episodeInProgress ? 'Đọc tiếp' : 'Đọc'}
                                     </div>
