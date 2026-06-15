@@ -107,8 +107,9 @@ const STAGED_RECENT_LIMIT = 3;
 const READING_LESSONS = [
   {
     id: "mr-saiyan-tap-1",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 1",
-    shortTitle: "Mr. Saiyan - T?p 1",
+    title: "Tập 1: Cậu Bé Mang Dòng Máu Saiyan",
+    subtitle: "Cậu Bé Mang Dòng Máu Saiyan",
+    shortTitle: "Tập 1",
     lines: [
       "Tập 1: Cậu Bé Mang Dòng Máu Saiyan",
       "Siro sống cùng mẹ Phương, bố Giang và em gái Simi trong một ngôi nhà nhỏ có giàn hoa giấy trước sân. Buổi sáng nào, Siro cũng chạy vèo vèo ra cổng, đeo cặp màu xanh, rồi gọi bạn bè:",
@@ -155,8 +156,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-2",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 2",
-    shortTitle: "Mr. Saiyan - T?p 2",
+    title: "Tập 2: Đêm Trăng Rằm Và Khỉ Đột Khổng Lồ",
+    subtitle: "Đêm Trăng Rằm Và Khỉ Đột Khổng Lồ",
+    shortTitle: "Tập 2",
     lines: [
       "Tập 2: Đêm Trăng Rằm Và Khỉ Đột Khổng Lồ",
       "Sau chuyện Rô-bốt Đen, Siro luyện tập với bố Giang mỗi sáng. Bố dạy cậu hít thở.",
@@ -210,8 +212,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-3",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 3",
-    shortTitle: "Mr. Saiyan - T?p 3",
+    title: "Tập 3: Hào Quang Vàng Chưa Hoàn Chỉnh",
+    subtitle: "Hào Quang Vàng Chưa Hoàn Chỉnh",
+    shortTitle: "Tập 3",
     lines: [
       "Tập 3: Hào Quang Vàng Chưa Hoàn Chỉnh",
       "Siro muốn mạnh hơn thật nhanh. Sau đêm trăng rằm, cậu sợ mình lại làm ai đó bị thương. Vì vậy sáng nào cậu cũng chạy quanh đồi, chống đẩy, nhảy cao và đấm vào bao cát.",
@@ -267,8 +270,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-4",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 4",
-    shortTitle: "Mr. Saiyan - T?p 4",
+    title: "Tập 4: Giới Vương Quyền Đỏ Rực",
+    subtitle: "Giới Vương Quyền Đỏ Rực",
+    shortTitle: "Tập 4",
     lines: [
       "Tập 4: Giới Vương Quyền Đỏ Rực",
       "Một mảnh sao băng rơi xuống ngoại ô thành phố. Nó không nằm yên như đá thường. Nó nhúc nhích, rung rung, rồi mọc ra hai cánh tay bằng đá cháy.",
@@ -322,8 +326,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-5",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 5",
-    shortTitle: "Mr. Saiyan - T?p 5",
+    title: "Tập 5: Phi Za Từ Hành Tinh Lạnh",
+    subtitle: "Phi Za Từ Hành Tinh Lạnh",
+    shortTitle: "Tập 5",
     lines: [
       "Tập 5: Phi Za Từ Hành Tinh Lạnh",
       "Một buổi sáng, bầu trời thành phố bỗng tối lại. Không phải vì mưa. Một chiếc phi thuyền khổng lồ lơ lửng trên mây, tỏa ra hơi lạnh trắng xóa.",
@@ -372,8 +377,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-6",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 6",
-    shortTitle: "Mr. Saiyan - T?p 6",
+    title: "Tập 6: Super Saiyan Thức Tỉnh",
+    subtitle: "Super Saiyan Thức Tỉnh",
+    shortTitle: "Tập 6",
     lines: [
       "Tập 6: Super Saiyan Thức Tỉnh",
       "Ngày hôm sau, Phi Za quay lại. Lần này hắn không tấn công lẻ tẻ. Hắn thả xuống thành phố một cỗ máy hình bông tuyết, gọi là Trái Tim Băng.",
@@ -423,8 +429,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-7",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 7",
-    shortTitle: "Mr. Saiyan - T?p 7",
+    title: "Tập 7: Xen Và Trò Chơi Hấp Thụ Năng Lượng",
+    subtitle: "Xen Và Trò Chơi Hấp Thụ Năng Lượng",
+    shortTitle: "Tập 7",
     lines: [
       "Tập 7: Xen Và Trò Chơi Hấp Thụ Năng Lượng",
       "Sau khi Phi Za rút lui, thành phố đang sửa lại đường dây điện thì một điều lạ xảy ra. Đèn vừa bật lại đã tắt. Điện thoại hết pin. Xe buýt điện đứng im. Ngay cả đèn lồng của Simi cũng chỉ sáng lờ mờ.",
@@ -476,8 +483,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-8",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 8",
-    shortTitle: "Mr. Saiyan - T?p 8",
+    title: "Tập 8: Cơn Bão Tia Sét Của SSJ2",
+    subtitle: "Cơn Bão Tia Sét Của SSJ2",
+    shortTitle: "Tập 8",
     lines: [
       "Tập 8: Cơn Bão Tia Sét Của SSJ2",
       "Tưởng Xen đã bỏ đi, nhưng một mảnh dữ liệu của hắn rơi vào nhà máy cũ. Mảnh dữ liệu ấy chui vào hàng trăm linh kiện, dây điện và tấm thép, tạo thành Xen Mắc.",
@@ -524,8 +532,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-9",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 9",
-    shortTitle: "Mr. Saiyan - T?p 9",
+    title: "Tập 9: Bu Và Viên Kẹo Năng Lượng",
+    subtitle: "Bu Và Viên Kẹo Năng Lượng",
+    shortTitle: "Tập 9",
     lines: [
       "Tập 9: Bu Và Viên Kẹo Năng Lượng",
       "Sáng chủ nhật, công viên mở hội kẹo. Có kẹo bông trắng xốp, kẹo táo đỏ bóng, bánh quy hình sao và nước cam mát lạnh. Simi nhảy chân sáo, kéo tay Siro.",
@@ -585,8 +594,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-10",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 10",
-    shortTitle: "Mr. Saiyan - T?p 10",
+    title: "Tập 10: Mái Tóc Vàng Dài Đến Chân",
+    subtitle: "Mái Tóc Vàng Dài Đến Chân",
+    shortTitle: "Tập 10",
     lines: [
       "Tập 10: Mái Tóc Vàng Dài Đến Chân",
       "Sau hội kẹo, Bu trở thành bạn của Siro. Bu thích chơi xích đu, thích ăn bánh chuối của mẹ Phương và thích nghe Simi kể chuyện.",
@@ -633,8 +643,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-11",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 11",
-    shortTitle: "Mr. Saiyan - T?p 11",
+    title: "Tập 11: Bóng Trăng Và Khỉ Đột Vàng",
+    subtitle: "Bóng Trăng Và Khỉ Đột Vàng",
+    shortTitle: "Tập 11",
     lines: [
       "Tập 11: Bóng Trăng Và Khỉ Đột Vàng",
       "Khi thành phố vui trở lại, một người lạ xuất hiện ở đài thiên văn cũ. Hắn mặc áo xanh đen, nói năng như thầy pháp và luôn cho rằng mình đúng. Hắn tên là Za-mát.",
@@ -694,8 +705,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-12",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 12",
-    shortTitle: "Mr. Saiyan - T?p 12",
+    title: "Tập 12: Super Saiyan 4 Xuất Hiện",
+    subtitle: "Super Saiyan 4 Xuất Hiện",
+    shortTitle: "Tập 12",
     lines: [
       "Tập 12: Super Saiyan 4 Xuất Hiện",
       "Za-mát không bỏ cuộc. Hắn dựng quanh thành phố bảy mảnh trăng giả nhỏ. Chúng không đủ biến Siro thành Khỉ Đột Vàng hoàn toàn, nhưng làm sức mạnh trong người cậu rung lên dữ dội.",
@@ -744,8 +756,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-13",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 13",
-    shortTitle: "Mr. Saiyan - T?p 13",
+    title: "Tập 13: Bê-ru Và Bài Học Của Thần",
+    subtitle: "Bê-ru Và Bài Học Của Thần",
+    shortTitle: "Tập 13",
     lines: [
       "Tập 13: Bê-ru Và Bài Học Của Thần",
       "Sau trận Za-mát, Siro nghĩ mình đã rất mạnh. SSJ4 giúp cậu chạy nhanh như gió, nhảy cao qua núi và đẩy được những tảng đá lớn. Nhưng chính vì vậy, cậu bắt đầu hơi tự tin quá.",
@@ -793,8 +806,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-14",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 14",
-    shortTitle: "Mr. Saiyan - T?p 14",
+    title: "Tập 14: Ngọn Lửa Đỏ Của Super Saiyan God",
+    subtitle: "Ngọn Lửa Đỏ Của Super Saiyan God",
+    shortTitle: "Tập 14",
     lines: [
       "Tập 14: Ngọn Lửa Đỏ Của Super Saiyan God",
       "Bê-ru vừa rời đi thì bầu trời báo động. Một thiên thạch khổng lồ đang lao về phía thành phố biển. Nó không phải đá thường. Bên trong nó có mảnh hạt đen lớn, biến nó thành Quái Vật Sao Băng Đỏ.",
@@ -847,8 +861,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-15",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 15",
-    shortTitle: "Mr. Saiyan - T?p 15",
+    title: "Tập 15: Bờ-lách Và Bầu Trời Đen",
+    subtitle: "Bờ-lách Và Bầu Trời Đen",
+    shortTitle: "Tập 15",
     lines: [
       "Tập 15: Bờ-lách Và Bầu Trời Đen",
       "Một buổi chiều, bầu trời thành phố bỗng đen lại ở giữa ban ngày. Không phải mây mưa. Đó là một vết xoáy bóng tối. Từ trong vết xoáy, một cậu bé bước ra.",
@@ -887,8 +902,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-16",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 16",
-    shortTitle: "Mr. Saiyan - T?p 16",
+    title: "Tập 16: Super Saiyan Blue Và Trận Chiến Không Trung",
+    subtitle: "Super Saiyan Blue Và Trận Chiến Không Trung",
+    shortTitle: "Tập 16",
     lines: [
       "Tập 16: Super Saiyan Blue Và Trận Chiến Không Trung",
       "Bờ-lách không chịu thua. Hắn học cách điều khiển bóng tối thành hàng trăm lưỡi kiếm bay. Lần này, hắn không đứng dưới đất. Hắn kéo trận chiến lên trời, nơi Siro phải vừa bay vừa bảo vệ máy bay, chim trời và các tòa nhà bên dưới.",
@@ -937,8 +953,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-17",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 17",
-    shortTitle: "Mr. Saiyan - T?p 17",
+    title: "Tập 17: Mô-rô Kẻ Hút Năng Lượng Trái Đất",
+    subtitle: "Mô-rô Kẻ Hút Năng Lượng Trái Đất",
+    shortTitle: "Tập 17",
     lines: [
       "Tập 17: Mô-rô Kẻ Hút Năng Lượng Trái Đất",
       "Mùa hè năm ấy, cây cối bỗng héo nhanh. Nước sông thấp xuống. Đất trong vườn nhà Siro nứt thành những đường nhỏ. Không chỉ thành phố, nhiều nơi trên Trái Đất cũng mất dần sức sống.",
@@ -982,8 +999,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-18",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 18",
-    shortTitle: "Mr. Saiyan - T?p 18",
+    title: "Tập 18: Đôi Mắt Bạc Và Bản Năng Vô Cực",
+    subtitle: "Đôi Mắt Bạc Và Bản Năng Vô Cực",
+    shortTitle: "Tập 18",
     lines: [
       "Tập 18: Đôi Mắt Bạc Và Bản Năng Vô Cực",
       "Mô-rô trở lại nhanh hơn mọi người nghĩ. Hắn cắm bảy cột hút năng lượng quanh một hố sâu dẫn xuống lòng đất. Bảy bóng quái vật canh giữ bảy cột. Mỗi bóng có hình dạng khác nhau: chim đen, bò đá, rắn khói, cá sét, người cây, nhện lửa và khổng lồ đất.",
@@ -1027,8 +1045,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-19",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 19",
-    shortTitle: "Mr. Saiyan - T?p 19",
+    title: "Tập 19: True UI Và Trái Tim Saiyan",
+    subtitle: "True UI Và Trái Tim Saiyan",
+    shortTitle: "Tập 19",
     lines: [
       "Tập 19: True UI Và Trái Tim Saiyan",
       "Khi cả nhóm chuẩn bị tìm hạt giống dưới thành phố, một chiến binh mới rơi xuống sa mạc đá. Hắn tên là Ga-gô. Hắn nhanh, mạnh và luôn muốn chứng minh mình là số một.",
@@ -1074,8 +1093,9 @@ const READING_LESSONS = [
   },
   {
     id: "mr-saiyan-tap-20",
-    title: "Mr. Saiyan Ng??i H?ng Tr?i ??t - T?p 20",
-    shortTitle: "Mr. Saiyan - T?p 20",
+    title: "Tập 20: Cây Vũ Trụ Và Lời Hứa Bảo Vệ Trái Đất",
+    subtitle: "Cây Vũ Trụ Và Lời Hứa Bảo Vệ Trái Đất",
+    shortTitle: "Tập 20",
     lines: [
       "Tập 20: Cây Vũ Trụ Và Lời Hứa Bảo Vệ Trái Đất",
       "Cây Vũ Trụ Đen mọc lên giữa thành phố. Thân cây to như ngọn núi. Cành cây xuyên qua mây. Rễ đen bò dưới đường, quấn quanh nhà cửa, công viên và bờ sông.",
@@ -1508,7 +1528,7 @@ const READING_SERIES = [
   {
     id: 'mr-saiyan',
     title: "Mr. Saiyan Người Hùng Trái Đất",
-    description: 'B? truy?n ng??i h?ng Tr?i ??t',
+    description: 'Truyện người hùng Trái Đất',
     lessonIds: [
       'mr-saiyan-tap-1',
       'mr-saiyan-tap-2',
@@ -4438,7 +4458,7 @@ export default function App() {
                                 >
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
-                                      <div className={`truncate text-sm font-black md:text-base ${
+                                      <div className={`text-sm font-black leading-snug md:text-base ${
                                         episodeCompleted ? 'text-emerald-950' : 'text-emerald-800'
                                       }`}>
                                         Tập {index + 1}: {reading.subtitle || reading.title}
