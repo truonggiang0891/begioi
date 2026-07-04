@@ -1,5 +1,15 @@
 export const animalEmojis = ['🐳','🐻','🐱','🐶','🐰','🐷','🐸','🐧','🦉','🐟','🐢','🦀','🐭','🦊','🦁','🐯','🐘','🦛','🐵','🐼','🐨','🐑','🐮','🐴','🦌','🦇','🦋','🐞','🐝','🐌'];
 export const pokemonEmojis = ['⚡','🌱','🔥','💧','🎤','💤','🐾','👻','🦆','🪙','🌿','🐉','🌸','🥚','🌀','🕳️','🐛','🦇','🥊','🌟','🧚','🦊','🦕','🦥','🦴','🐟','🐍','🍃','🐭','🐊'];
+export const animalNames = [
+  'Cá voi', 'Gấu', 'Mèo', 'Chó', 'Thỏ', 'Heo', 'Ếch', 'Chim cánh cụt', 'Cú mèo', 'Cá',
+  'Rùa', 'Cua', 'Chuột', 'Cáo', 'Sư tử', 'Hổ', 'Voi', 'Hà mã', 'Khỉ', 'Gấu trúc',
+  'Gấu túi', 'Cừu', 'Bò', 'Ngựa', 'Hươu', 'Dơi', 'Bướm', 'Bọ rùa', 'Ong', 'Ốc sên'
+];
+export const pokemonNames = [
+  'Pikachu', 'Bulbasaur', 'Charmander', 'Squirtle', 'Jigglypuff', 'Snorlax', 'Eevee', 'Gengar', 'Psyduck', 'Meowth',
+  'Chikorita', 'Dragonite', 'Clefairy', 'Togepi', 'Poliwhirl', 'Diglett', 'Caterpie', 'Zubat', 'Hitmonchan', 'Staryu',
+  'Sylveon', 'Vulpix', 'Lapras', 'Slowpoke', 'Cubone', 'Magikarp', 'Ekans', 'Leafeon', 'Rattata', 'Totodile'
+];
 
 export const colorThemes = {
     nature: ["#2ecc71", "#27ae60", "#3498db", "#2980b9", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#8e44ad", "#34495e"],

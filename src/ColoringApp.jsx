@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Clock, Gem, LockKeyhole, RotateCcw, Redo2, Undo2 } from 'lucide-react';
-import { animalEmojis, pokemonEmojis, colorThemes, coloringSVGs } from './ColoringData';
+import { Clock, Cuboid, Eraser, Gem, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Undo2, X } from 'lucide-react';
+import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, colorThemes, coloringSVGs } from './ColoringData';
 
 const EMPTY_FILL_VALUES = new Set(['', '#ffffff', '#fff', 'white', 'none']);
 const THEME_LABELS = {
@@ -8,6 +8,16 @@ const THEME_LABELS = {
     candy: 'Kẹo Ngọt',
     magic: 'Kỳ Ảo',
 };
+const MIN_ZOOM = 0.75;
+const MAX_ZOOM = 1.75;
+const ZOOM_STEP = 0.15;
+const THREE_PREVIEW_READY_PROGRESS = 100;
+const SAMPLE_PALETTES = [
+    ['#dff6ff', '#36a2eb', '#1f78b4', '#ffd166', '#f97316', '#8b5cf6', '#22c55e', '#f43f5e'],
+    ['#fff7ed', '#fb7185', '#f97316', '#facc15', '#34d399', '#38bdf8', '#6366f1', '#a855f7'],
+    ['#f0fdf4', '#16a34a', '#65a30d', '#f59e0b', '#ef4444', '#0ea5e9', '#7c3aed', '#334155'],
+    ['#fdf2f8', '#ec4899', '#fb7185', '#fbbf24', '#60a5fa', '#2dd4bf', '#a78bfa', '#475569'],
+];
 
 let sharedAudioContext = null;
 
@@ -85,6 +95,49 @@ const playTadaSound = () => {
 const normalizeFill = (fill) => (fill || '').trim().toLowerCase();
 const isFilledColor = (fill) => !EMPTY_FILL_VALUES.has(normalizeFill(fill));
 
+const buildSampleSvg = (level) => {
+    const sourceSvg = coloringSVGs[level];
+    if (!sourceSvg || typeof DOMParser === 'undefined' || typeof XMLSerializer === 'undefined') {
+        return sourceSvg || '';
+    }
+
+    try {
+        const parser = new DOMParser();
+        const documentSvg = parser.parseFromString(sourceSvg, 'image/svg+xml');
+        const svgElement = documentSvg.querySelector('svg');
+        if (!svgElement || documentSvg.querySelector('parsererror')) return sourceSvg;
+
+        const palette = SAMPLE_PALETTES[(level - 1) % SAMPLE_PALETTES.length];
+        let paintIndex = 0;
+
+        svgElement.querySelectorAll('.colorable').forEach((element) => {
+            const tagName = element.tagName.toLowerCase();
+            const fill = normalizeFill(element.getAttribute('fill'));
+            if (tagName === 'line' || fill === 'none') return;
+
+            const nextFill = paintIndex === 0
+                ? palette[0]
+                : palette[((paintIndex + level) % (palette.length - 1)) + 1];
+            element.setAttribute('fill', nextFill);
+            paintIndex += 1;
+        });
+
+        return new XMLSerializer().serializeToString(svgElement);
+    } catch {
+        return sourceSvg;
+    }
+};
+
+const serializeSvgElement = (svgElement) => {
+    if (!svgElement || typeof XMLSerializer === 'undefined') return '';
+
+    const clone = svgElement.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width', '1024');
+    clone.setAttribute('height', '1024');
+    return new XMLSerializer().serializeToString(clone);
+};
+
 export default function ColoringApp({
     onBack,
     robuxBalance = 0,
@@ -97,10 +150,16 @@ export default function ColoringApp({
     const [currentLevel, setCurrentLevel] = useState(1);
     const [activeTheme, setActiveTheme] = useState('nature');
     const [activeColor, setActiveColor] = useState(colorThemes.nature[0]);
+    const [isEraserActive, setIsEraserActive] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState(1);
+    const [showSamplePreview, setShowSamplePreview] = useState(false);
+    const [showThreeDPreview, setShowThreeDPreview] = useState(false);
+    const [threeDArtworkSvg, setThreeDArtworkSvg] = useState('');
     const [progress, setProgress] = useState(0);
     const [historyStatus, setHistoryStatus] = useState({ canUndo: false, canRedo: false });
     const [unlockNotice, setUnlockNotice] = useState('');
     const svgContainerRef = useRef(null);
+    const threeDContainerRef = useRef(null);
     const currentLevelRef = useRef(currentLevel);
     const undoStacksRef = useRef({});
     const redoStacksRef = useRef({});
@@ -112,6 +171,7 @@ export default function ColoringApp({
     const isCurrentUnlocked = unlockedLevelSet.has(currentLevel);
     const hasEnoughRobux = robuxBalance >= unlockCost;
     const displayTimeLeft = `${Math.floor(Math.max(0, coloringTimeLeftSec) / 60)}:${String(Math.max(0, coloringTimeLeftSec) % 60).padStart(2, '0')}`;
+    const sampleSvg = useMemo(() => buildSampleSvg(currentLevel), [currentLevel]);
 
     const syncHistoryStatus = useCallback((level = currentLevelRef.current) => {
         const nextStatus = {
@@ -210,7 +270,196 @@ export default function ColoringApp({
 
     useEffect(() => {
         setUnlockNotice('');
+        setShowSamplePreview(false);
+        setShowThreeDPreview(false);
     }, [currentLevel, isCurrentUnlocked]);
+
+    useEffect(() => {
+        if (progress < THREE_PREVIEW_READY_PROGRESS) {
+            setShowThreeDPreview(false);
+        }
+    }, [progress]);
+
+    useEffect(() => {
+        if (!showThreeDPreview || !threeDArtworkSvg || !threeDContainerRef.current) return undefined;
+
+        let disposeScene = null;
+        let cancelled = false;
+
+        const setupScene = async () => {
+            const THREE = await import('three');
+            if (cancelled || !threeDContainerRef.current) return;
+
+            const container = threeDContainerRef.current;
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf1f5f9);
+
+            const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+            camera.position.set(0, 0.15, 4.4);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.6);
+            mainLight.position.set(2.2, 2.6, 4);
+            scene.add(mainLight);
+            const rimLight = new THREE.DirectionalLight(0x93c5fd, 0.7);
+            rimLight.position.set(-3, 1.6, -2);
+            scene.add(rimLight);
+
+            const backing = new THREE.Mesh(
+                new THREE.BoxGeometry(3.15, 3.15, 0.16),
+                new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6, metalness: 0.04 })
+            );
+            backing.position.z = -0.08;
+            group.add(backing);
+
+            const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.45, metalness: 0.08 });
+            const framePieces = [
+                { size: [3.3, 0.14, 0.24], position: [0, 1.65, 0.05] },
+                { size: [3.3, 0.14, 0.24], position: [0, -1.65, 0.05] },
+                { size: [0.14, 3.3, 0.24], position: [-1.65, 0, 0.05] },
+                { size: [0.14, 3.3, 0.24], position: [1.65, 0, 0.05] },
+            ].map(({ size, position }) => {
+                const piece = new THREE.Mesh(new THREE.BoxGeometry(...size), frameMaterial);
+                piece.position.set(...position);
+                group.add(piece);
+                return piece;
+            });
+
+            let artworkMesh = null;
+            let artworkTexture = null;
+            let isDisposed = false;
+            const svgBlob = new Blob([threeDArtworkSvg], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(svgUrl, (texture) => {
+                if (isDisposed) {
+                    texture.dispose();
+                    return;
+                }
+                artworkTexture = texture;
+                texture.colorSpace = THREE.SRGBColorSpace;
+                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                const artworkMaterial = new THREE.MeshStandardMaterial({
+                    map: texture,
+                    roughness: 0.5,
+                    metalness: 0.02,
+                    side: THREE.DoubleSide,
+                });
+                artworkMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.95, 2.95), artworkMaterial);
+                artworkMesh.position.z = 0.07;
+                group.add(artworkMesh);
+            });
+
+            let frameId = 0;
+            let targetRotationX = -0.12;
+            let targetRotationY = 0.28;
+            let autoPhase = 0;
+            let isDragging = false;
+            let lastPointer = { x: 0, y: 0 };
+
+            const resize = () => {
+                const rect = container.getBoundingClientRect();
+                const width = Math.max(1, Math.floor(rect.width));
+                const height = Math.max(1, Math.floor(rect.height));
+                renderer.setSize(width, height, false);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            };
+
+            const animate = () => {
+                frameId = window.requestAnimationFrame(animate);
+                if (!isDragging) {
+                    autoPhase += 0.018;
+                    targetRotationX = -0.1 + Math.sin(autoPhase * 0.75) * 0.05;
+                    targetRotationY = Math.sin(autoPhase) * 0.42;
+                }
+                group.rotation.x += (targetRotationX - group.rotation.x) * 0.08;
+                group.rotation.y += (targetRotationY - group.rotation.y) * 0.08;
+                renderer.render(scene, camera);
+            };
+
+            const handlePointerDown = (event) => {
+                isDragging = true;
+                lastPointer = { x: event.clientX, y: event.clientY };
+                renderer.domElement.setPointerCapture?.(event.pointerId);
+            };
+            const handlePointerMove = (event) => {
+                if (!isDragging) return;
+                const dx = event.clientX - lastPointer.x;
+                const dy = event.clientY - lastPointer.y;
+                targetRotationY += dx * 0.01;
+                targetRotationX = Math.max(-0.7, Math.min(0.7, targetRotationX + dy * 0.008));
+                lastPointer = { x: event.clientX, y: event.clientY };
+            };
+            const handlePointerUp = (event) => {
+                isDragging = false;
+                renderer.domElement.releasePointerCapture?.(event.pointerId);
+            };
+
+            renderer.domElement.className = 'h-full w-full rounded-xl';
+            renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+            renderer.domElement.addEventListener('pointermove', handlePointerMove);
+            renderer.domElement.addEventListener('pointerup', handlePointerUp);
+            renderer.domElement.addEventListener('pointercancel', handlePointerUp);
+
+            const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
+            resizeObserver?.observe(container);
+            resize();
+            animate();
+
+            disposeScene = () => {
+                isDisposed = true;
+                window.cancelAnimationFrame(frameId);
+                resizeObserver?.disconnect();
+                renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+                renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+                renderer.domElement.removeEventListener('pointerup', handlePointerUp);
+                renderer.domElement.removeEventListener('pointercancel', handlePointerUp);
+                URL.revokeObjectURL(svgUrl);
+                if (artworkMesh) {
+                    artworkMesh.geometry.dispose();
+                    artworkMesh.material.dispose();
+                }
+                backing.geometry.dispose();
+                backing.material.dispose();
+                framePieces.forEach(piece => piece.geometry.dispose());
+                frameMaterial.dispose();
+                artworkTexture?.dispose();
+                renderer.dispose();
+                if (renderer.domElement.parentNode === container) {
+                    container.removeChild(renderer.domElement);
+                }
+            };
+
+            if (cancelled) {
+                disposeScene();
+                disposeScene = null;
+            }
+        };
+
+        void setupScene().catch(() => {
+            if (!cancelled) {
+                setShowThreeDPreview(false);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+            if (disposeScene) {
+                disposeScene();
+                disposeScene = null;
+            }
+        };
+    }, [showThreeDPreview, threeDArtworkSvg]);
 
     const pushHistoryEntry = (entry) => {
         const level = entry.level;
@@ -288,24 +537,25 @@ export default function ColoringApp({
 
         const target = event.target;
         const className = target?.getAttribute?.('class') || '';
-        if (!className.includes('colorable') || !activeColor) return;
+        if (!className.includes('colorable') || (!isEraserActive && !activeColor)) return;
 
         const previousFill = target.getAttribute('fill') || target.dataset.initialFill || '#ffffff';
-        if (normalizeFill(previousFill) === normalizeFill(activeColor)) return;
+        const nextFill = isEraserActive ? (target.dataset.initialFill || '#ffffff') : activeColor;
+        if (normalizeFill(previousFill) === normalizeFill(nextFill)) return;
 
         const index = Number(target.dataset.colorIndex);
         if (!Number.isFinite(index)) return;
 
-        target.setAttribute('fill', activeColor);
+        target.setAttribute('fill', nextFill);
         pushHistoryEntry({
             type: 'fill',
             level: currentLevelRef.current,
             index,
             before: previousFill,
-            after: activeColor,
+            after: nextFill,
         });
         playPopSound();
-        updateProgress(currentLevelRef.current, { celebrate: true });
+        updateProgress(currentLevelRef.current, { celebrate: !isEraserActive });
     };
 
     const clearCanvas = () => {
@@ -341,9 +591,37 @@ export default function ColoringApp({
         setUnlockNotice(didUnlock ? 'Đã mở khóa hình này!' : `Cần ${unlockCost} Robux để mở khóa`);
     };
 
+    const zoomOut = () => {
+        setZoomLevel(previous => Math.max(MIN_ZOOM, Number((previous - ZOOM_STEP).toFixed(2))));
+    };
+
+    const zoomIn = () => {
+        setZoomLevel(previous => Math.min(MAX_ZOOM, Number((previous + ZOOM_STEP).toFixed(2))));
+    };
+
+    const resetZoom = () => {
+        setZoomLevel(1);
+    };
+
+    const openThreeDPreview = () => {
+        if (!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS) return;
+
+        const currentSvgContainer = getCurrentSvgContainer(currentLevelRef.current);
+        const svgElement = currentSvgContainer?.querySelector('svg');
+        const serializedSvg = serializeSvgElement(svgElement);
+        if (!serializedSvg) return;
+
+        setThreeDArtworkSvg(serializedSvg);
+        setShowSamplePreview(false);
+        setShowThreeDPreview(true);
+    };
+
     const list = currentCategory === 'animal' ? animalEmojis : pokemonEmojis;
+    const nameList = currentCategory === 'animal' ? animalNames : pokemonNames;
     const startIndex = currentCategory === 'animal' ? 1 : 31;
-    const currentEmoji = list[currentLevel - startIndex] || '?';
+    const currentListIndex = currentLevel - startIndex;
+    const currentEmoji = list[currentListIndex] || '?';
+    const currentCharacterName = nameList[currentListIndex] || 'Nhân vật';
     const { canUndo, canRedo } = historyStatus;
 
     return (
@@ -418,6 +696,7 @@ export default function ColoringApp({
                         className={`flex h-full w-full items-center justify-center transition ${isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
                         onClick={handleSvgClick}
+                        style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center', transition: 'transform 0.16s ease' }}
                     />
 
                     {!isCurrentUnlocked && (
@@ -429,7 +708,7 @@ export default function ColoringApp({
                                 <div className="text-4xl leading-none" style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                     {currentEmoji}
                                 </div>
-                                <div className="mt-2 text-lg font-black text-slate-800">Hình đang khóa</div>
+                                <div className="mt-2 text-lg font-black text-slate-800">{currentCharacterName}</div>
                                 <div className="mt-1 text-sm font-bold text-slate-500">
                                     Mở khóa {unlockCost} Robux, dùng mãi mãi
                                 </div>
@@ -453,10 +732,60 @@ export default function ColoringApp({
                             </div>
                         </div>
                     )}
+
+                    {showSamplePreview && isCurrentUnlocked && (
+                        <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+                            <div className="relative flex h-[92%] w-full max-w-[340px] flex-col rounded-2xl border-2 border-white bg-white p-3 shadow-2xl">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSamplePreview(false)}
+                                    title="Đóng mẫu"
+                                    aria-label="Đóng mẫu"
+                                    className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                                >
+                                    <X size={17} />
+                                </button>
+                                <div className="mb-2 pr-8 text-left">
+                                    <div className="text-xs font-black uppercase text-pink-500">Mẫu phối màu</div>
+                                    <div className="text-lg font-black text-slate-800">{currentCharacterName}</div>
+                                </div>
+                                <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-slate-100 p-2">
+                                    <div
+                                        className="flex h-full w-full items-center justify-center"
+                                        dangerouslySetInnerHTML={{ __html: sampleSvg }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showThreeDPreview && isCurrentUnlocked && (
+                        <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/55 px-3 text-center">
+                            <div className="relative flex h-[94%] w-full max-w-[360px] flex-col rounded-2xl border-2 border-white bg-white p-3 shadow-2xl">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowThreeDPreview(false)}
+                                    title="Đóng 3D"
+                                    aria-label="Đóng 3D"
+                                    className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                                >
+                                    <X size={17} />
+                                </button>
+                                <div className="mb-2 pr-9 text-left">
+                                    <div className="text-xs font-black uppercase text-indigo-500">Xem 3D</div>
+                                    <div className="text-lg font-black text-slate-800">{currentCharacterName}</div>
+                                </div>
+                                <div
+                                    ref={threeDContainerRef}
+                                    className="min-h-0 flex-1 overflow-hidden rounded-xl bg-slate-100 shadow-inner"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-2 border-t border-[#e2e8f0] bg-white px-3 py-2">
-                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5">
+                <div className="flex shrink-0 flex-col gap-1.5 border-t border-[#e2e8f0] bg-white px-2 py-1.5">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1">
                         {Object.keys(colorThemes).map(theme => (
                             <button
                                 type="button"
@@ -464,72 +793,144 @@ export default function ColoringApp({
                                 onClick={() => {
                                     setActiveTheme(theme);
                                     setActiveColor(colorThemes[theme][0]);
+                                    setIsEraserActive(false);
                                 }}
-                                className={`min-h-8 rounded-lg border-none px-1 text-xs font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
+                                className={`min-h-7 rounded-lg border-none px-1 text-xs font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
                             >
                                 {THEME_LABELS[theme] || theme}
                             </button>
                         ))}
                         <label
-                            className="relative grid h-8 w-10 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
+                            className="relative grid h-7 w-9 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
                             title="Chọn màu tự do"
                             aria-label="Chọn màu tự do"
                         >
                             <input
                                 type="color"
                                 value={activeColor}
-                                onChange={(event) => setActiveColor(event.target.value)}
-                                className="h-6 w-7 cursor-pointer rounded-md border-0 bg-transparent p-0"
+                                onChange={(event) => {
+                                    setActiveColor(event.target.value);
+                                    setIsEraserActive(false);
+                                }}
+                                className="h-5 w-6 cursor-pointer rounded-md border-0 bg-transparent p-0"
                                 aria-label="Chọn màu tự do"
                             />
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-10 justify-items-center gap-1.5">
+                    <div className="grid grid-cols-5 justify-items-center gap-1">
                         {colorThemes[activeTheme].map((color, index) => (
                             <button
                                 type="button"
                                 key={`${activeTheme}-${index}`}
-                                onClick={() => setActiveColor(color)}
+                                onClick={() => {
+                                    setActiveColor(color);
+                                    setIsEraserActive(false);
+                                }}
                                 style={{ backgroundColor: color }}
-                                className={`h-8 w-8 cursor-pointer rounded-full border-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.15)] transition-transform md:h-9 md:w-9 ${normalizeFill(activeColor) === normalizeFill(color) ? 'scale-110 border-[#1a202c]' : 'border-white'}`}
+                                className={`h-10 w-10 cursor-pointer rounded-full border-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-11 md:w-11 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-white'}`}
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
                     </div>
 
-                    <div className="flex items-center justify-between rounded-lg bg-[#f8fafc] px-2.5 py-1.5 text-xs font-black text-[#718096]">
+                    <div className="flex items-center justify-between rounded-lg bg-[#f8fafc] px-2 py-1 text-xs font-black text-[#718096]">
                         <span>Tiến độ</span>
-                        <div className="mx-2.5 h-2 flex-1 overflow-hidden rounded-full bg-[#e2e8f0]">
+                        <div className="mx-2 h-2 flex-1 overflow-hidden rounded-full bg-[#e2e8f0]">
                             <div className="h-full bg-[#48bb78] transition-all duration-300" style={{ width: `${progress}%` }} />
                         </div>
                         <span>{progress}%</span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1.5">
+                    <div className="grid grid-cols-9 gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setShowSamplePreview(true)}
+                            disabled={!isCurrentUnlocked}
+                            title="Xem mẫu phối màu"
+                            aria-label="Xem mẫu phối màu"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <Sparkles size={17} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={openThreeDPreview}
+                            disabled={!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS}
+                            title="Xem 3D"
+                            aria-label="Xem 3D"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <Cuboid size={17} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={zoomOut}
+                            disabled={zoomLevel <= MIN_ZOOM}
+                            title="Thu nhỏ"
+                            aria-label="Thu nhỏ"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <Minus size={17} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetZoom}
+                            title="Vừa khung"
+                            aria-label="Vừa khung"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#3182ce] transition"
+                        >
+                            <Square size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={zoomIn}
+                            disabled={zoomLevel >= MAX_ZOOM}
+                            title="Phóng to"
+                            aria-label="Phóng to"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <Plus size={17} />
+                        </button>
                         <button
                             type="button"
                             onClick={undo}
                             disabled={!isCurrentUnlocked || !canUndo}
-                            className="flex min-h-8 items-center justify-center gap-1 rounded-lg bg-[#edf2f7] px-2 text-xs font-black text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Hoàn tác"
+                            aria-label="Hoàn tác"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Undo2 size={15} /> Hoàn tác
+                            <Undo2 size={17} />
                         </button>
                         <button
                             type="button"
                             onClick={redo}
                             disabled={!isCurrentUnlocked || !canRedo}
-                            className="flex min-h-8 items-center justify-center gap-1 rounded-lg bg-[#edf2f7] px-2 text-xs font-black text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Làm lại"
+                            aria-label="Làm lại"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Redo2 size={15} /> Làm lại
+                            <Redo2 size={17} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsEraserActive(previous => !previous)}
+                            disabled={!isCurrentUnlocked}
+                            title="Cục tẩy"
+                            aria-label="Cục tẩy"
+                            className={`grid min-h-8 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
+                        >
+                            <Eraser size={17} />
                         </button>
                         <button
                             type="button"
                             onClick={clearCanvas}
                             disabled={!isCurrentUnlocked}
-                            className="flex min-h-8 items-center justify-center gap-1 rounded-lg bg-[#fed7d7] px-2 text-xs font-black text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Vẽ lại"
+                            aria-label="Vẽ lại"
+                            className="grid min-h-8 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <RotateCcw size={15} /> Vẽ lại
+                            <RotateCcw size={17} />
                         </button>
                     </div>
                 </div>

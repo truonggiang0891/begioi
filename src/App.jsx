@@ -73,12 +73,18 @@ const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
 const DEFAULT_ROBUX_CORRECT_REWARD = 1;
 const ROBUX_WRONG_PENALTY = 4;
-const COLORING_TIME_EXCHANGE_COST = 5;
+const DEFAULT_COLORING_TIME_EXCHANGE_COST = 5;
+const DEFAULT_DRAWING_TIME_EXCHANGE_COST = 5;
+const DEFAULT_GAME_TIME_EXCHANGE_COST = 5;
 const COLORING_TIME_EXCHANGE_SECONDS = 60;
+const MIN_COLORING_PURCHASE_MINUTES = 1;
+const MAX_COLORING_PURCHASE_MINUTES = 180;
 const MAX_COLORING_TIME_LEFT = 24 * 60 * 60;
 const DEFAULT_COLORING_UNLOCK_COST = 5;
 const MIN_ROBUX_REWARD = 1;
 const MAX_ROBUX_REWARD = 100;
+const MIN_TIME_EXCHANGE_COST = 1;
+const MAX_TIME_EXCHANGE_COST = 999;
 const MIN_COLORING_UNLOCK_COST = 1;
 const MAX_COLORING_UNLOCK_COST = 999;
 const COLORING_LEVEL_IDS = Array.from({ length: 60 }, (_, index) => index + 1);
@@ -105,6 +111,9 @@ const DEFAULT_SETTINGS = {
   penaltySec: 60,
   robuxReward: DEFAULT_ROBUX_CORRECT_REWARD,
   coloringUnlockCost: DEFAULT_COLORING_UNLOCK_COST,
+  coloringTimeExchangeCost: DEFAULT_COLORING_TIME_EXCHANGE_COST,
+  drawingTimeExchangeCost: DEFAULT_DRAWING_TIME_EXCHANGE_COST,
+  gameTimeExchangeCost: DEFAULT_GAME_TIME_EXCHANGE_COST,
   soundVolumePercent: DEFAULT_SOUND_VOLUME_PERCENT,
   learningMode: DEFAULT_LEARNING_MODE,
   lessonType: DEFAULT_LESSON_TYPE,
@@ -2052,6 +2061,24 @@ const normalizeSettings = (settings = {}) => {
       MIN_COLORING_UNLOCK_COST,
       MAX_COLORING_UNLOCK_COST
     ),
+    coloringTimeExchangeCost: clampNumber(
+      settings.coloringTimeExchangeCost,
+      DEFAULT_SETTINGS.coloringTimeExchangeCost,
+      MIN_TIME_EXCHANGE_COST,
+      MAX_TIME_EXCHANGE_COST
+    ),
+    drawingTimeExchangeCost: clampNumber(
+      settings.drawingTimeExchangeCost,
+      DEFAULT_SETTINGS.drawingTimeExchangeCost,
+      MIN_TIME_EXCHANGE_COST,
+      MAX_TIME_EXCHANGE_COST
+    ),
+    gameTimeExchangeCost: clampNumber(
+      settings.gameTimeExchangeCost,
+      DEFAULT_SETTINGS.gameTimeExchangeCost,
+      MIN_TIME_EXCHANGE_COST,
+      MAX_TIME_EXCHANGE_COST
+    ),
     soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
     learningMode: normalizeLearningMode(settings.learningMode),
     lessonType: lessonTypes[0],
@@ -2551,6 +2578,7 @@ export default function App() {
   const [showColoringAccessPanel, setShowColoringAccessPanel] = useState(false);
   const [robuxBalance, setRobuxBalance] = useState(() => loadRobuxBalance());
   const [coloringTimeLeftSec, setColoringTimeLeftSec] = useState(() => loadColoringTimeLeft());
+  const [coloringPurchaseMinutes, setColoringPurchaseMinutes] = useState(MIN_COLORING_PURCHASE_MINUTES);
   const [unlockedColoringLevels, setUnlockedColoringLevels] = useState(() => loadUnlockedColoringLevels());
   
   const [currentQ, setCurrentQ] = useState(null);
@@ -2674,6 +2702,32 @@ export default function App() {
   const readingCounterLabel = hasReadingSeriesNavigation
     ? `${selectedReadingSeriesIndex + 1}/${selectedReadingSeriesLessons.length}`
     : '1/1';
+  const coloringTimeExchangeCost = clampNumber(
+    settings.coloringTimeExchangeCost,
+    DEFAULT_SETTINGS.coloringTimeExchangeCost,
+    MIN_TIME_EXCHANGE_COST,
+    MAX_TIME_EXCHANGE_COST
+  );
+  const maxAffordableColoringMinutes = Math.max(
+    MIN_COLORING_PURCHASE_MINUTES,
+    Math.floor(robuxBalance / coloringTimeExchangeCost)
+  );
+  const maxAllowedColoringPurchaseMinutes = Math.max(
+    MIN_COLORING_PURCHASE_MINUTES,
+    Math.min(
+      MAX_COLORING_PURCHASE_MINUTES,
+      Math.floor((MAX_COLORING_TIME_LEFT - coloringTimeLeftSec) / COLORING_TIME_EXCHANGE_SECONDS)
+    )
+  );
+  const maxSelectableColoringMinutes = Math.min(maxAllowedColoringPurchaseMinutes, maxAffordableColoringMinutes);
+  const safeColoringPurchaseMinutes = clampNumber(
+    coloringPurchaseMinutes,
+    MIN_COLORING_PURCHASE_MINUTES,
+    MIN_COLORING_PURCHASE_MINUTES,
+    maxSelectableColoringMinutes
+  );
+  const coloringPurchaseCost = safeColoringPurchaseMinutes * coloringTimeExchangeCost;
+  const canBuySelectedColoringTime = robuxBalance >= coloringPurchaseCost;
   const draftLessonTypes = useMemo(
     () => getValidLessonTypes(
       Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
@@ -3757,6 +3811,24 @@ export default function App() {
     generateQuestion({ practiceMode: 'normal' });
   };
 
+  const toggleRobuxMode = () => {
+    setRewardMode(prev => (prev === 'robux' ? 'screenTime' : 'robux'));
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    setShowParentConfirm(false);
+    rememberCurrentReadingPosition();
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
+    setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
+    setShowHistoryPanel(false);
+  };
+
   const handleColoringMenuClick = () => {
     if (showColoringPanel) {
       setShowColoringPanel(false);
@@ -3784,14 +3856,18 @@ export default function App() {
     }
 
     setShowColoringPanel(false);
+    setColoringPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
     setShowColoringAccessPanel(true);
   };
 
   const handleBuyColoringTime = () => {
-    if (robuxBalance < COLORING_TIME_EXCHANGE_COST) return;
+    if (!canBuySelectedColoringTime) return;
 
-    setRobuxBalance(prev => normalizeRobuxBalance(prev - COLORING_TIME_EXCHANGE_COST));
-    setColoringTimeLeftSec(prev => normalizeColoringTimeLeft(prev + COLORING_TIME_EXCHANGE_SECONDS));
+    setRobuxBalance(prev => normalizeRobuxBalance(prev - coloringPurchaseCost));
+    setColoringTimeLeftSec(prev => (
+      normalizeColoringTimeLeft(prev + safeColoringPurchaseMinutes * COLORING_TIME_EXCHANGE_SECONDS)
+    ));
+    setColoringPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
     setShowColoringAccessPanel(false);
     setShowColoringPanel(true);
   };
@@ -4053,14 +4129,14 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => startPracticeSession('robux')}
+            onClick={toggleRobuxMode}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
-              rewardMode === 'robux' && gameState !== 'idle'
+              rewardMode === 'robux'
                 ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
                 : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
             }`}
           >
-            <Gem size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Kiếm Robux</span>
+            <Gem size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">{rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}</span>
           </button>
         </div>
 
@@ -4397,6 +4473,138 @@ export default function App() {
                           aria-label="Giá mở khóa mỗi ảnh tô màu"
                         />
                         <span className="pr-3 text-sm font-bold text-amber-500">Robux</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <PencilLine size={18} className="text-amber-500" /> Robux đổi 1 phút tô màu
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('coloringTimeExchangeCost', -1, DEFAULT_SETTINGS.coloringTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700 transition hover:bg-amber-200"
+                        aria-label="Giảm Robux đổi thời gian tô màu"
+                      >
+                        <Minus size={18} />
+                      </button>
+                      <input
+                        type="range"
+                        min={MIN_TIME_EXCHANGE_COST}
+                        max={MAX_TIME_EXCHANGE_COST}
+                        value={clampNumber(draftSettings.coloringTimeExchangeCost, DEFAULT_SETTINGS.coloringTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        onChange={(event) => updateDraftSetting('coloringTimeExchangeCost', event.target.value)}
+                        className="min-w-0 flex-1 accent-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('coloringTimeExchangeCost', 1, DEFAULT_SETTINGS.coloringTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700 transition hover:bg-amber-200"
+                        aria-label="Tăng Robux đổi thời gian tô màu"
+                      >
+                        <Plus size={18} />
+                      </button>
+                      <div className="flex items-center rounded-xl border-2 border-amber-100 bg-amber-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min={MIN_TIME_EXCHANGE_COST}
+                          max={MAX_TIME_EXCHANGE_COST}
+                          value={draftSettings.coloringTimeExchangeCost}
+                          onChange={(event) => updateDraftSetting('coloringTimeExchangeCost', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-amber-700 outline-none"
+                          aria-label="Robux đổi 1 phút tô màu"
+                        />
+                        <span className="pr-3 text-sm font-bold text-amber-500">Robux</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <Brush size={18} className="text-pink-500" /> Robux đổi 1 phút học vẽ
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('drawingTimeExchangeCost', -1, DEFAULT_SETTINGS.drawingTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pink-100 text-pink-700 transition hover:bg-pink-200"
+                        aria-label="Giảm Robux đổi thời gian học vẽ"
+                      >
+                        <Minus size={18} />
+                      </button>
+                      <input
+                        type="range"
+                        min={MIN_TIME_EXCHANGE_COST}
+                        max={MAX_TIME_EXCHANGE_COST}
+                        value={clampNumber(draftSettings.drawingTimeExchangeCost, DEFAULT_SETTINGS.drawingTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        onChange={(event) => updateDraftSetting('drawingTimeExchangeCost', event.target.value)}
+                        className="min-w-0 flex-1 accent-pink-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('drawingTimeExchangeCost', 1, DEFAULT_SETTINGS.drawingTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pink-100 text-pink-700 transition hover:bg-pink-200"
+                        aria-label="Tăng Robux đổi thời gian học vẽ"
+                      >
+                        <Plus size={18} />
+                      </button>
+                      <div className="flex items-center rounded-xl border-2 border-pink-100 bg-pink-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min={MIN_TIME_EXCHANGE_COST}
+                          max={MAX_TIME_EXCHANGE_COST}
+                          value={draftSettings.drawingTimeExchangeCost}
+                          onChange={(event) => updateDraftSetting('drawingTimeExchangeCost', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-pink-700 outline-none"
+                          aria-label="Robux đổi 1 phút học vẽ"
+                        />
+                        <span className="pr-3 text-sm font-bold text-pink-500">Robux</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <Gamepad2 size={18} className="text-orange-500" /> Robux đổi 1 phút trò chơi
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('gameTimeExchangeCost', -1, DEFAULT_SETTINGS.gameTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-700 transition hover:bg-orange-200"
+                        aria-label="Giảm Robux đổi thời gian trò chơi"
+                      >
+                        <Minus size={18} />
+                      </button>
+                      <input
+                        type="range"
+                        min={MIN_TIME_EXCHANGE_COST}
+                        max={MAX_TIME_EXCHANGE_COST}
+                        value={clampNumber(draftSettings.gameTimeExchangeCost, DEFAULT_SETTINGS.gameTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        onChange={(event) => updateDraftSetting('gameTimeExchangeCost', event.target.value)}
+                        className="min-w-0 flex-1 accent-orange-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('gameTimeExchangeCost', 1, DEFAULT_SETTINGS.gameTimeExchangeCost, MIN_TIME_EXCHANGE_COST, MAX_TIME_EXCHANGE_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-100 text-orange-700 transition hover:bg-orange-200"
+                        aria-label="Tăng Robux đổi thời gian trò chơi"
+                      >
+                        <Plus size={18} />
+                      </button>
+                      <div className="flex items-center rounded-xl border-2 border-orange-100 bg-orange-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min={MIN_TIME_EXCHANGE_COST}
+                          max={MAX_TIME_EXCHANGE_COST}
+                          value={draftSettings.gameTimeExchangeCost}
+                          onChange={(event) => updateDraftSetting('gameTimeExchangeCost', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-orange-700 outline-none"
+                          aria-label="Robux đổi 1 phút trò chơi"
+                        />
+                        <span className="pr-3 text-sm font-bold text-orange-500">Robux</span>
                       </div>
                     </div>
                   </label>
@@ -4858,18 +5066,22 @@ export default function App() {
             <h2 className="text-lg md:text-2xl font-bold text-gray-700 mb-3 md:mb-8">Bé đã sẵn sàng chưa?</h2>
             <div className="grid gap-2 md:gap-3">
               <button
-                onClick={() => startPracticeSession('screenTime')}
+                onClick={() => startPracticeSession(rewardMode)}
                 className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
               >
                 <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" /> BẮT ĐẦU
               </button>
               <button
                 type="button"
-                onClick={() => startPracticeSession('robux')}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-6 py-2.5 text-base font-extrabold text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition-all active:translate-y-1 active:shadow-none md:text-2xl"
+                onClick={toggleRobuxMode}
+                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-2.5 text-base font-extrabold transition-all active:translate-y-1 active:shadow-none md:text-2xl ${
+                  rewardMode === 'robux'
+                    ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
+                    : 'bg-yellow-50 text-yellow-700 shadow-[0_4px_0_rgb(250,204,21)]'
+                }`}
               >
                 <Gem size={21} className="fill-yellow-100 text-yellow-700 md:h-6 md:w-6" />
-                Kiếm Robux
+                {rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}
               </button>
               {activeReviewList.length > 0 && (
                 <button
@@ -5234,26 +5446,72 @@ export default function App() {
             </div>
             <h2 className="text-xl font-black text-slate-800">Tô màu đang khóa</h2>
             <p className="mt-2 text-sm font-bold text-slate-500">
-              Đổi {COLORING_TIME_EXCHANGE_COST} Robux để dùng tô màu trong {formatTime(COLORING_TIME_EXCHANGE_SECONDS)}.
+              Đổi {coloringTimeExchangeCost} Robux cho mỗi phút sử dụng tô màu.
             </p>
             {coloringTimeLeftSec > 0 && (
               <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
                 Còn lại: {formatClockTime(coloringTimeLeftSec)}
               </div>
             )}
+            <div className="mt-4 rounded-2xl border-2 border-yellow-100 bg-yellow-50 p-3">
+              <div className="mb-2 text-xs font-black uppercase text-yellow-700">Chọn thời gian mua</div>
+              <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setColoringPurchaseMinutes(prev => (
+                    clampNumber(
+                      prev - 1,
+                      MIN_COLORING_PURCHASE_MINUTES,
+                      MIN_COLORING_PURCHASE_MINUTES,
+                      maxSelectableColoringMinutes
+                    )
+                  ))}
+                  disabled={safeColoringPurchaseMinutes <= MIN_COLORING_PURCHASE_MINUTES}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
+                  aria-label="Giảm thời gian tô màu muốn mua"
+                >
+                  <Minus size={20} />
+                </button>
+                <div className="rounded-xl bg-white px-3 py-2">
+                  <div className="text-3xl font-black leading-none text-yellow-700">
+                    {safeColoringPurchaseMinutes}
+                  </div>
+                  <div className="text-xs font-black text-yellow-500">phút</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setColoringPurchaseMinutes(prev => (
+                    clampNumber(
+                      prev + 1,
+                      MIN_COLORING_PURCHASE_MINUTES,
+                      MIN_COLORING_PURCHASE_MINUTES,
+                      maxSelectableColoringMinutes
+                    )
+                  ))}
+                  disabled={safeColoringPurchaseMinutes >= maxSelectableColoringMinutes}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
+                  aria-label="Tăng thời gian tô màu muốn mua"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+              <div className="mt-2 text-sm font-black text-yellow-800">
+                Cần: {coloringPurchaseCost} Robux
+              </div>
+            </div>
             <div className="mt-4 rounded-xl bg-yellow-50 px-3 py-2 text-sm font-black text-yellow-700">
               Robux hiện có: {robuxBalance}
             </div>
             <button
               type="button"
               onClick={handleBuyColoringTime}
-              disabled={robuxBalance < COLORING_TIME_EXCHANGE_COST}
+              disabled={!canBuySelectedColoringTime}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-5 py-3 text-base font-black text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
             >
               <Gem size={19} className="fill-yellow-100" />
-              Đổi {COLORING_TIME_EXCHANGE_COST} Robux lấy 1 phút
+              Đổi {coloringPurchaseCost} Robux lấy {safeColoringPurchaseMinutes} phút
             </button>
-            {robuxBalance < COLORING_TIME_EXCHANGE_COST && (
+            {!canBuySelectedColoringTime && (
               <div className="mt-2 text-xs font-bold text-rose-500">
                 Bé cần kiếm thêm Robux để mở mục tô màu.
               </div>
