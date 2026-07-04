@@ -3,6 +3,11 @@ import { RotateCcw, Redo2, Undo2 } from 'lucide-react';
 import { animalEmojis, pokemonEmojis, colorThemes, coloringSVGs } from './ColoringData';
 
 const EMPTY_FILL_VALUES = new Set(['', '#ffffff', '#fff', 'white', 'none']);
+const THEME_LABELS = {
+    nature: 'Tự Nhiên',
+    candy: 'Kẹo Ngọt',
+    magic: 'Kỳ Ảo',
+};
 
 let sharedAudioContext = null;
 
@@ -371,9 +376,9 @@ export default function ColoringApp({ onBack }) {
                                     setActiveTheme(theme);
                                     setActiveColor(colorThemes[theme][0]);
                                 }}
-                                className={`min-h-8 rounded-lg border-none px-1 text-xs font-black capitalize transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
+                                className={`min-h-8 rounded-lg border-none px-1 text-xs font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
                             >
-                                {theme}
+                                {THEME_LABELS[theme] || theme}
                             </button>
                         ))}
                         <label
