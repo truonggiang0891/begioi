@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
+import ColoringApp from './ColoringApp';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2 } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -61,6 +62,7 @@ const USER_AVATAR_KEY = 'math_userAvatar';
 const STAGED_LEARNING_KEY = 'math_stagedLearningEnabled';
 const STAGED_PROGRESS_KEY = 'math_stagedProgress';
 const STAGED_REMEMBER_TARGET_KEY = 'math_stagedRememberTarget';
+const STAGED_STAGES_KEY = 'math_stagedStages';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
 const READING_PROGRESS_KEY = 'reading_progress';
 const READING_HISTORY_KEY = 'reading_history';
@@ -94,15 +96,16 @@ const DEFAULT_SETTINGS = {
   customQuestionsText: '',
   selectedTables: ALL_ADDITION_TABLES,
 };
-const STAGED_LEARNING_STAGES = [
-  { id: 'stage-1', label: 'Chặng 1/3', name: 'Làm quen', min: 0, max: 3, requiredRemembered: 4 },
-  { id: 'stage-2', label: 'Chặng 2/3', name: 'Tăng nhẹ', min: 4, max: 6, requiredRemembered: 3 },
-  { id: 'stage-3', label: 'Chặng 3/3', name: 'Hoàn thành', min: 7, max: 9, requiredRemembered: 3 },
+const DEFAULT_STAGED_STAGE_GROUPS = [
+  { id: 'stage-1', name: 'Chặng 1', bValues: [0, 1, 2, 3] },
+  { id: 'stage-2', name: 'Chặng 2', bValues: [4, 5, 6] },
+  { id: 'stage-3', name: 'Chặng 3', bValues: [7, 8, 9] },
 ];
 const STAGED_RANDOM_LABEL = 'Random';
 const DEFAULT_STAGED_REMEMBER_TARGET = 8;
 const MIN_STAGED_REMEMBER_TARGET = 1;
 const MAX_STAGED_REMEMBER_TARGET = 20;
+const MAX_STAGED_STAGE_NAME_LENGTH = 24;
 const STAGED_RECENT_LIMIT = 3;
 const READING_LESSONS = [
   {
@@ -2026,6 +2029,100 @@ const loadStagedRememberTarget = () => clampNumber(
   MAX_STAGED_REMEMBER_TARGET
 );
 
+const getGeneratedQuestionPool = (settings = DEFAULT_SETTINGS) => (
+  generateInitialPool(settings).filter(question => question.lessonType !== 'custom')
+);
+
+const normalizeStageName = (name, fallback) => {
+  const normalizedName = String(name || '').trim().slice(0, MAX_STAGED_STAGE_NAME_LENGTH);
+  return normalizedName || fallback;
+};
+
+const buildDefaultStagedStages = (settings = DEFAULT_SETTINGS) => {
+  const generatedPool = getGeneratedQuestionPool(settings);
+
+  return DEFAULT_STAGED_STAGE_GROUPS
+    .map((stage, index) => ({
+      id: stage.id,
+      name: stage.name || `Chặng ${index + 1}`,
+      questionIds: generatedPool
+        .filter(question => stage.bValues.includes(question.b))
+        .map(question => question.id),
+    }))
+    .filter(stage => stage.questionIds.length > 0);
+};
+
+const normalizeStagedStages = (stages, settings = DEFAULT_SETTINGS, options = {}) => {
+  const { keepEmpty = false, fallbackToDefault = true } = options;
+  const generatedPool = getGeneratedQuestionPool(settings);
+  const generatedQuestionIds = new Set(generatedPool.map(question => question.id));
+  const sourceStages = Array.isArray(stages) ? stages : [];
+  const rawStages = sourceStages.length > 0
+    ? sourceStages
+    : fallbackToDefault
+      ? buildDefaultStagedStages(settings)
+      : [];
+  const seenStageIds = new Set();
+  const seenQuestionIds = new Set();
+
+  return rawStages
+    .map((stage, index) => {
+      const fallbackId = `stage-${index + 1}`;
+      const rawId = typeof stage?.id === 'string' && stage.id.trim()
+        ? stage.id.trim()
+        : fallbackId;
+      const id = seenStageIds.has(rawId) ? `${rawId}-${index + 1}` : rawId;
+      const fallbackName = `Chặng ${index + 1}`;
+      const rawQuestionIds = Array.isArray(stage?.questionIds)
+        ? stage.questionIds
+        : Number.isInteger(stage?.min) && Number.isInteger(stage?.max)
+          ? generatedPool
+            .filter(question => question.b >= stage.min && question.b <= stage.max)
+            .map(question => question.id)
+          : [];
+      const questionIds = [];
+
+      seenStageIds.add(id);
+
+      rawQuestionIds.forEach((questionId) => {
+        if (
+          typeof questionId === 'string'
+          && generatedQuestionIds.has(questionId)
+          && !seenQuestionIds.has(questionId)
+        ) {
+          seenQuestionIds.add(questionId);
+          questionIds.push(questionId);
+        }
+      });
+
+      return {
+        id,
+        name: keepEmpty
+          ? String(stage?.name || '').slice(0, MAX_STAGED_STAGE_NAME_LENGTH)
+          : normalizeStageName(stage?.name, fallbackName),
+        questionIds,
+      };
+    })
+    .filter(stage => keepEmpty || stage.questionIds.length > 0);
+};
+
+const loadStagedStages = (settings = DEFAULT_SETTINGS) => {
+  try {
+    const savedStages = localStorage.getItem(STAGED_STAGES_KEY);
+    const normalizedStages = savedStages
+      ? normalizeStagedStages(JSON.parse(savedStages), settings, { fallbackToDefault: false })
+      : [];
+
+    return normalizedStages.length > 0 ? normalizedStages : buildDefaultStagedStages(settings);
+  } catch {
+    return buildDefaultStagedStages(settings);
+  }
+};
+
+const getStagedStagesConfigKey = (stages, settings = DEFAULT_SETTINGS) => (
+  JSON.stringify(normalizeStagedStages(stages, settings, { fallbackToDefault: false }))
+);
+
 const normalizeStagedProgress = (progress) => {
   if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return {};
 
@@ -2048,8 +2145,46 @@ const loadStagedProgress = () => {
   }
 };
 
-const getStagedLearningStatus = (pool, progress, rememberTarget = DEFAULT_STAGED_REMEMBER_TARGET) => {
-  const eligiblePool = pool.filter(question => question.lessonType !== 'custom');
+const getStagedLearningStatus = (
+  pool,
+  progress,
+  rememberTarget = DEFAULT_STAGED_REMEMBER_TARGET,
+  stages = []
+) => {
+  const generatedPool = pool.filter(question => question.lessonType !== 'custom');
+  const poolById = new Map(generatedPool.map(question => [question.id, question]));
+  const rawStages = Array.isArray(stages) && stages.length > 0
+    ? stages
+    : DEFAULT_STAGED_STAGE_GROUPS.map((stage, index) => ({
+      id: stage.id,
+      name: stage.name || `Chặng ${index + 1}`,
+      questionIds: generatedPool
+        .filter(question => stage.bValues.includes(question.b))
+        .map(question => question.id),
+    }));
+  const seenQuestionIds = new Set();
+  const stageEntries = rawStages
+    .map((stage, index) => {
+      const questionIds = Array.isArray(stage?.questionIds) ? stage.questionIds : [];
+      const stagePool = questionIds
+        .filter(questionId => {
+          if (seenQuestionIds.has(questionId)) return false;
+          seenQuestionIds.add(questionId);
+          return true;
+        })
+        .map(questionId => poolById.get(questionId))
+        .filter(Boolean);
+
+      return {
+        id: stage?.id || `stage-${index + 1}`,
+        name: normalizeStageName(stage?.name, `Chặng ${index + 1}`),
+        questionIds: stagePool.map(question => question.id),
+        stagePool,
+      };
+    })
+    .filter(stage => stage.stagePool.length > 0);
+  const eligiblePool = stageEntries.flatMap(stage => stage.stagePool);
+
   if (eligiblePool.length === 0) {
     return {
       eligiblePool,
@@ -2060,8 +2195,8 @@ const getStagedLearningStatus = (pool, progress, rememberTarget = DEFAULT_STAGED
     };
   }
 
-  for (const stage of STAGED_LEARNING_STAGES) {
-    const stagePool = eligiblePool.filter(question => question.b >= stage.min && question.b <= stage.max);
+  for (const stage of stageEntries) {
+    const stagePool = stage.stagePool;
     const rememberedCount = stagePool.filter(
       question => (progress[question.id] || 0) >= rememberTarget
     ).length;
@@ -2074,7 +2209,7 @@ const getStagedLearningStatus = (pool, progress, rememberTarget = DEFAULT_STAGED
         eligiblePool,
         currentPool: pendingStagePool,
         currentStage: stage,
-        label: stage.label,
+        label: stage.name,
         isRandom: false,
         rememberedCount,
         totalCount: stagePool.length,
@@ -2327,6 +2462,8 @@ export default function App() {
   const [draftStagedLearningEnabled, setDraftStagedLearningEnabled] = useState(() => loadStagedLearningEnabled());
   const [stagedRememberTarget, setStagedRememberTarget] = useState(() => loadStagedRememberTarget());
   const [draftStagedRememberTarget, setDraftStagedRememberTarget] = useState(() => loadStagedRememberTarget());
+  const [stagedStages, setStagedStages] = useState(() => loadStagedStages(initialSettings));
+  const [draftStagedStages, setDraftStagedStages] = useState(() => loadStagedStages(initialSettings));
   const [stagedProgress, setStagedProgress] = useState(() => loadStagedProgress());
   const [stageNotice, setStageNotice] = useState('');
   const [settings, setSettings] = useState(initialSettings);
@@ -2348,8 +2485,10 @@ export default function App() {
   const [readingProgress, setReadingProgress] = useState(() => loadReadingProgress());
   const [readingHistory, setReadingHistory] = useState(() => loadReadingHistory());
   const [readingSummary, setReadingSummary] = useState(null);
+  const [showColoringPanel, setShowColoringPanel] = useState(false);
   
   const [currentQ, setCurrentQ] = useState(null);
+  const [pausedQuestion, setPausedQuestion] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
   const [gameState, setGameState] = useState('idle'); // idle, playing, wrong_paused, timeout_paused, celebrating, congrats, summary
   const [practiceMode, setPracticeMode] = useState('normal'); // normal, review
@@ -2374,15 +2513,19 @@ export default function App() {
   const displayName = userName.trim() || 'bé';
   const fullActivePool = useMemo(() => generateInitialPool(settings), [settings]);
   const stagedLearningStatus = useMemo(
-    () => getStagedLearningStatus(fullActivePool, stagedProgress, stagedRememberTarget),
-    [fullActivePool, stagedProgress, stagedRememberTarget]
+    () => getStagedLearningStatus(fullActivePool, stagedProgress, stagedRememberTarget, stagedStages),
+    [fullActivePool, stagedProgress, stagedRememberTarget, stagedStages]
   );
   const isStagedLearningActive = stagedLearningEnabled && stagedLearningStatus.eligiblePool.length > 0;
   const activePool = useMemo(
     () => (isStagedLearningActive ? stagedLearningStatus.currentPool : fullActivePool),
     [fullActivePool, isStagedLearningActive, stagedLearningStatus.currentPool]
   );
-  const stageLabel = isStagedLearningActive ? stagedLearningStatus.label : '';
+  const stageLabel = isStagedLearningActive
+    ? stagedLearningStatus.isRandom
+      ? stagedLearningStatus.label
+      : `${stagedLearningStatus.label} ${stagedLearningStatus.rememberedCount}/${stagedLearningStatus.totalCount}`
+    : '';
   const activeReviewList = useMemo(
     () => {
       const reviewByKey = new Map(reviewList.map(question => [getQuestionKey(question), question]));
@@ -2463,18 +2606,49 @@ export default function App() {
   const readingCounterLabel = hasReadingSeriesNavigation
     ? `${selectedReadingSeriesIndex + 1}/${selectedReadingSeriesLessons.length}`
     : '1/1';
-  const draftLessonTypes = getValidLessonTypes(
-    Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
+  const draftLessonTypes = useMemo(
+    () => getValidLessonTypes(
+      Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
+    ),
+    [draftSettings.lessonType, draftSettings.lessonTypes]
   );
-  const draftGeneratedLessonTypes = draftLessonTypes
-    .filter(type => type !== 'custom')
-    .map(type => getLessonType(type));
+  const draftGeneratedLessonTypes = useMemo(
+    () => draftLessonTypes
+      .filter(type => type !== 'custom')
+      .map(type => getLessonType(type)),
+    [draftLessonTypes]
+  );
   const draftTableLabel = draftGeneratedLessonTypes.length === 1
     ? draftGeneratedLessonTypes[0].tableLabel
     : 'Bảng luyện tập';
   const draftCustomQuestions = useMemo(
     () => parseCustomQuestions(draftSettings.customQuestionsText),
     [draftSettings.customQuestionsText]
+  );
+  const draftGeneratedQuestionPool = useMemo(
+    () => getGeneratedQuestionPool(draftSettings),
+    [draftSettings]
+  );
+  const draftVisibleStagedStages = useMemo(() => {
+    const normalizedStages = normalizeStagedStages(draftStagedStages, draftSettings, {
+      keepEmpty: true,
+      fallbackToDefault: false,
+    });
+
+    return normalizedStages.length > 0 ? normalizedStages : buildDefaultStagedStages(draftSettings);
+  }, [draftSettings, draftStagedStages]);
+  const draftStageQuestionIdSet = useMemo(
+    () => new Set(draftVisibleStagedStages.flatMap(stage => stage.questionIds)),
+    [draftVisibleStagedStages]
+  );
+  const draftStageQuestionGroups = useMemo(
+    () => draftGeneratedLessonTypes
+      .map(type => ({
+        ...type,
+        questions: draftGeneratedQuestionPool.filter(question => question.lessonType === type.id),
+      }))
+      .filter(type => type.questions.length > 0),
+    [draftGeneratedLessonTypes, draftGeneratedQuestionPool]
   );
 
   const saveReadingPosition = useCallback((readingId, scrollTop) => {
@@ -2610,8 +2784,6 @@ export default function App() {
     if (shouldOpen) {
       setDraftUserName(userName);
       setDraftUserAvatar(userAvatar);
-      setDraftStagedLearningEnabled(stagedLearningEnabled);
-      setDraftStagedRememberTarget(stagedRememberTarget);
       setIsAdmin(false);
       setShowAdminLogin(false);
       setAdminError('');
@@ -2625,6 +2797,7 @@ export default function App() {
       setShowReadingPanel(false);
       setSelectedReadingId(null);
       setExpandedReadingSeriesId(null);
+      setShowColoringPanel(false);
     }
   };
 
@@ -2632,30 +2805,11 @@ export default function App() {
     event.preventDefault();
 
     const nextName = draftUserName.trim().slice(0, 28);
-    const stagedModeChanged = stagedLearningEnabled !== draftStagedLearningEnabled;
-    const stagedTargetChanged = stagedRememberTarget !== draftStagedRememberTarget;
     setUserName(nextName);
     setDraftUserName(nextName);
     setUserAvatar(draftUserAvatar);
-    setStagedLearningEnabled(draftStagedLearningEnabled);
-    setStagedRememberTarget(draftStagedRememberTarget);
     setShowUserNameForm(false);
     setAvatarError('');
-
-    if (stagedModeChanged || stagedTargetChanged) {
-      clearInterval(timerRef.current);
-      clearPendingTransitions();
-      stageRecentQuestionKeysRef.current = [];
-      sessionStartedAtRef.current = null;
-      setUnseenList(generateInitialPool(settings));
-      setCurrentQ(null);
-      setSelectedAns(null);
-      setShowFlashcardAnswer(false);
-      setSummaryStats(null);
-      setPracticeMode('normal');
-      setGameState('idle');
-      setTimer(settings.timeLimit);
-    }
   };
 
   const handleAvatarChange = async (event) => {
@@ -2707,6 +2861,7 @@ export default function App() {
     setAvatarError('');
     setShowHistoryPanel(false);
     setShowParentConfirm(false);
+    setShowColoringPanel(false);
   };
 
   const handleAdminLogin = (event) => {
@@ -2720,6 +2875,9 @@ export default function App() {
 
     setIsAdmin(true);
     setDraftSettings(settings);
+    setDraftStagedLearningEnabled(stagedLearningEnabled);
+    setDraftStagedRememberTarget(stagedRememberTarget);
+    setDraftStagedStages(stagedStages);
     setShowUserNameForm(false);
     setAvatarError('');
     setShowAdminLogin(false);
@@ -2779,6 +2937,74 @@ export default function App() {
     setSettingsSaved(false);
   };
 
+  const resetDraftStagedStages = () => {
+    setDraftStagedStages(buildDefaultStagedStages(draftSettings));
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
+  const addDraftStagedStage = () => {
+    const currentStages = draftVisibleStagedStages.length > 0
+      ? draftVisibleStagedStages
+      : buildDefaultStagedStages(draftSettings);
+    const usedQuestionIds = new Set(currentStages.flatMap(stage => stage.questionIds));
+    const nextQuestionIds = draftGeneratedQuestionPool
+      .filter(question => !usedQuestionIds.has(question.id))
+      .slice(0, 4)
+      .map(question => question.id);
+
+    setDraftStagedStages([
+      ...currentStages,
+      {
+        id: `stage-${Date.now()}`,
+        name: `Chặng ${currentStages.length + 1}`,
+        questionIds: nextQuestionIds,
+      },
+    ]);
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
+  const removeDraftStagedStage = (stageId) => {
+    if (draftVisibleStagedStages.length <= 1) return;
+
+    setDraftStagedStages(draftVisibleStagedStages.filter(stage => stage.id !== stageId));
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
+  const updateDraftStagedStageName = (stageId, name) => {
+    setDraftStagedStages(draftVisibleStagedStages.map(stage => (
+      stage.id === stageId
+        ? { ...stage, name: String(name || '').slice(0, MAX_STAGED_STAGE_NAME_LENGTH) }
+        : stage
+    )));
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
+  const toggleDraftStagedQuestion = (stageId, questionId) => {
+    const targetStage = draftVisibleStagedStages.find(stage => stage.id === stageId);
+    const isSelectedInTargetStage = targetStage?.questionIds.includes(questionId);
+
+    setDraftStagedStages(draftVisibleStagedStages.map(stage => {
+      const questionIdsWithoutCurrent = stage.questionIds.filter(id => id !== questionId);
+
+      if (stage.id !== stageId) {
+        return { ...stage, questionIds: questionIdsWithoutCurrent };
+      }
+
+      return {
+        ...stage,
+        questionIds: isSelectedInTargetStage
+          ? questionIdsWithoutCurrent
+          : [...questionIdsWithoutCurrent, questionId],
+      };
+    }));
+    setSettingsError('');
+    setSettingsSaved(false);
+  };
+
   const saveAdminSettings = (event) => {
     event.preventDefault();
     const nextLessonTypes = getValidLessonTypes(
@@ -2810,10 +3036,33 @@ export default function App() {
       lessonType: nextLessonTypes[0],
       lessonTypes: nextLessonTypes,
     });
+    const normalizedDraftStages = normalizeStagedStages(draftStagedStages, nextSettings, {
+      fallbackToDefault: false,
+    });
+    const nextStagedStages = hasGeneratedLessons
+      ? normalizedDraftStages.length > 0
+        ? normalizedDraftStages
+        : buildDefaultStagedStages(nextSettings)
+      : [];
+
+    if (draftStagedLearningEnabled && hasGeneratedLessons && nextStagedStages.length === 0) {
+      setSettingsError('Vui lòng chọn ít nhất một câu cho học theo chặng');
+      setSettingsSaved(false);
+      return;
+    }
+
     const lessonChanged = getLessonConfigKey(settings) !== getLessonConfigKey(nextSettings);
     const learningModeChanged = settings.learningMode !== nextSettings.learningMode;
+    const stagedModeChanged = stagedLearningEnabled !== draftStagedLearningEnabled;
+    const stagedTargetChanged = stagedRememberTarget !== draftStagedRememberTarget;
+    const stagedStagesChanged = getStagedStagesConfigKey(stagedStages, nextSettings)
+      !== getStagedStagesConfigKey(nextStagedStages, nextSettings);
     setSettings(nextSettings);
     setDraftSettings(nextSettings);
+    setStagedLearningEnabled(draftStagedLearningEnabled);
+    setStagedRememberTarget(draftStagedRememberTarget);
+    setStagedStages(nextStagedStages);
+    setDraftStagedStages(nextStagedStages);
 
     if (lessonChanged) {
       clearInterval(timerRef.current);
@@ -2826,6 +3075,7 @@ export default function App() {
       setWrongTotal(0);
       setTimeoutTotal(0);
       setCurrentQ(null);
+      setPausedQuestion(null);
       setSelectedAns(null);
       setShowFlashcardAnswer(false);
       setSummaryStats(null);
@@ -2834,10 +3084,14 @@ export default function App() {
       setTimer(nextSettings.timeLimit);
     } else {
       setTimer(prev => Math.min(prev, nextSettings.timeLimit));
-      if (learningModeChanged) {
+      if (learningModeChanged || stagedModeChanged || stagedTargetChanged || stagedStagesChanged) {
         clearInterval(timerRef.current);
         clearPendingTransitions();
+        stageRecentQuestionKeysRef.current = [];
+        sessionStartedAtRef.current = null;
+        setUnseenList(generateInitialPool(nextSettings));
         setCurrentQ(null);
+        setPausedQuestion(null);
         setSelectedAns(null);
         setShowFlashcardAnswer(false);
         setSummaryStats(null);
@@ -2864,6 +3118,7 @@ export default function App() {
       localStorage.setItem(USER_AVATAR_KEY, userAvatar);
       localStorage.setItem(STAGED_LEARNING_KEY, stagedLearningEnabled.toString());
       localStorage.setItem(STAGED_REMEMBER_TARGET_KEY, stagedRememberTarget.toString());
+      localStorage.setItem(STAGED_STAGES_KEY, JSON.stringify(stagedStages));
       localStorage.setItem(STAGED_PROGRESS_KEY, JSON.stringify(stagedProgress));
     } catch {
       console.log("Cannot save data");
@@ -2881,6 +3136,7 @@ export default function App() {
     userAvatar,
     stagedLearningEnabled,
     stagedRememberTarget,
+    stagedStages,
     stagedProgress,
   ]);
 
@@ -2937,8 +3193,8 @@ export default function App() {
         (stagedProgress[question.id] || 0) + 1
       ),
     };
-    const previousStatus = getStagedLearningStatus(fullActivePool, stagedProgress, stagedRememberTarget);
-    const nextStatus = getStagedLearningStatus(fullActivePool, nextProgress, stagedRememberTarget);
+    const previousStatus = getStagedLearningStatus(fullActivePool, stagedProgress, stagedRememberTarget, stagedStages);
+    const nextStatus = getStagedLearningStatus(fullActivePool, nextProgress, stagedRememberTarget, stagedStages);
 
     setStagedProgress(nextProgress);
 
@@ -2957,7 +3213,7 @@ export default function App() {
         stageNoticeTimeoutRef.current = null;
       }, 2200);
     }
-  }, [fullActivePool, isStagedLearningActive, stagedLearningEnabled, stagedProgress, stagedRememberTarget]);
+  }, [fullActivePool, isStagedLearningActive, stagedLearningEnabled, stagedProgress, stagedRememberTarget, stagedStages]);
 
   // --- LOGIC SINH CÂU HỎI ---
   const generateQuestion = useCallback((options = {}) => {
@@ -3248,6 +3504,16 @@ export default function App() {
     clearInterval(timerRef.current);
     clearPendingTransitions();
     rememberCurrentReadingPosition();
+    const unfinishedQuestion = gameState === 'playing' && currentQ
+      ? {
+          question: currentQ,
+          timer: Math.max(1, timer),
+          practiceMode,
+          showFlashcardAnswer,
+        }
+      : null;
+
+    setPausedQuestion(unfinishedQuestion);
     setShowParentConfirm(false);
     setShowHistoryPanel(false);
     setReadingSummary(null);
@@ -3255,6 +3521,7 @@ export default function App() {
     setShowReadingPanel(false);
     setSelectedReadingId(null);
     setExpandedReadingSeriesId(null);
+    setShowColoringPanel(false);
     setShowFlashcardAnswer(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
@@ -3285,10 +3552,15 @@ export default function App() {
     activeReviewList.length,
     clearPendingTransitions,
     correctTotal,
+    currentQ,
     currentLessonLabel,
     displayName,
+    gameState,
+    practiceMode,
     rememberCurrentReadingPosition,
     screenTime,
+    showFlashcardAnswer,
+    timer,
     timeoutTotal,
     userAvatar,
     wrongTotal,
@@ -3297,8 +3569,20 @@ export default function App() {
   const handleContinueLearning = () => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
-    setPracticeMode('normal');
     setSummaryStats(null);
+    setSelectedAns(null);
+
+    if (pausedQuestion?.question) {
+      setPracticeMode(pausedQuestion.practiceMode || 'normal');
+      setCurrentQ(pausedQuestion.question);
+      setTimer(pausedQuestion.timer || settings.timeLimit);
+      setShowFlashcardAnswer(!!pausedQuestion.showFlashcardAnswer);
+      setPausedQuestion(null);
+      setGameState('playing');
+      return;
+    }
+
+    setPracticeMode('normal');
     setShowFlashcardAnswer(false);
     generateQuestion({ practiceMode: 'normal' });
   };
@@ -3308,6 +3592,7 @@ export default function App() {
 
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    setPausedQuestion(null);
     setPracticeMode('review');
     setSummaryStats(null);
     setShowFlashcardAnswer(false);
@@ -3334,6 +3619,7 @@ export default function App() {
     setWrongTotal(0);
     setTimeoutTotal(0);
     setCurrentQ(null);
+    setPausedQuestion(null);
     setSelectedAns(null);
     setShowFlashcardAnswer(false);
     setSummaryStats(null);
@@ -3356,6 +3642,7 @@ export default function App() {
     localStorage.removeItem('math_wrongTotal');
     localStorage.removeItem('math_timeoutTotal');
     localStorage.removeItem(STAGED_PROGRESS_KEY);
+    localStorage.removeItem(STAGED_STAGES_KEY);
     localStorage.removeItem(SESSION_HISTORY_KEY);
     localStorage.removeItem(READING_PROGRESS_KEY);
     localStorage.removeItem(READING_HISTORY_KEY);
@@ -3438,6 +3725,7 @@ export default function App() {
               setShowReadingPanel(false);
               setSelectedReadingId(null);
               setExpandedReadingSeriesId(null);
+              setShowColoringPanel(false);
             }}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               isAdmin
@@ -3476,6 +3764,7 @@ export default function App() {
               setShowReadingPanel(false);
               setSelectedReadingId(null);
               setExpandedReadingSeriesId(null);
+              setShowColoringPanel(false);
             }}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               showHistoryPanel
@@ -3484,6 +3773,48 @@ export default function App() {
             }`}
           >
             <BarChart size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
+          </button>
+        </div>
+
+        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowColoringPanel(prev => !prev);
+              setShowUserNameForm(false);
+              setShowAdminLogin(false);
+              setAdminError('');
+              setAvatarError('');
+              setShowParentConfirm(false);
+              rememberCurrentReadingPosition();
+              setReadingSummary(null);
+              readingSessionStartedAtRef.current = null;
+              setShowReadingPanel(false);
+              setSelectedReadingId(null);
+              setExpandedReadingSeriesId(null);
+              setShowHistoryPanel(false);
+            }}
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
+              showColoringPanel
+                ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(217,119,6)]'
+                : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            <PencilLine size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Tô màu</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-pink-100 bg-pink-50 px-1 py-2 text-[11px] font-extrabold text-pink-700 transition-all hover:bg-pink-100 sm:text-xs md:px-2 md:text-base"
+          >
+            <Brush size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Học vẽ</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 px-1 py-2 text-[11px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-xs md:px-2 md:text-base"
+          >
+            <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Trò chơi</span>
           </button>
         </div>
 
@@ -3540,57 +3871,6 @@ export default function App() {
               )}
             </div>
 
-            <div className="mt-2 rounded-xl border-2 border-blue-100 bg-white px-3 py-2">
-              <label className="flex cursor-pointer items-center justify-between gap-3">
-                <span className="min-w-0">
-                <span className="block text-sm font-extrabold text-blue-800">Học theo chặng</span>
-                <span className="block text-[11px] font-bold text-blue-500">
-                  3 chặng, đúng {draftStagedRememberTarget} lần mỗi phép tính
-                </span>
-                </span>
-                <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                  draftStagedLearningEnabled ? 'bg-blue-500' : 'bg-gray-300'
-                }`}>
-                  <input
-                    type="checkbox"
-                    checked={draftStagedLearningEnabled}
-                    onChange={(event) => setDraftStagedLearningEnabled(event.target.checked)}
-                    className="sr-only"
-                  />
-                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                    draftStagedLearningEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
-                </span>
-              </label>
-              {draftStagedLearningEnabled && (
-                <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-blue-50 px-2 py-1.5">
-                  <span className="text-[11px] font-extrabold text-blue-700">Số lần đúng</span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setDraftStagedRememberTarget(value => Math.max(MIN_STAGED_REMEMBER_TARGET, value - 1))}
-                      disabled={draftStagedRememberTarget <= MIN_STAGED_REMEMBER_TARGET}
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-blue-100 bg-white text-blue-600 shadow-sm disabled:opacity-40"
-                      aria-label="Giảm số lần đúng"
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="min-w-12 rounded-lg bg-white px-2 py-1 text-center text-base font-black text-blue-700 shadow-sm">
-                      {draftStagedRememberTarget}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setDraftStagedRememberTarget(value => Math.min(MAX_STAGED_REMEMBER_TARGET, value + 1))}
-                      disabled={draftStagedRememberTarget >= MAX_STAGED_REMEMBER_TARGET}
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-blue-100 bg-white text-blue-600 shadow-sm disabled:opacity-40"
-                      aria-label="Tăng số lần đúng"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           </form>
         )}
 
@@ -3902,6 +4182,166 @@ export default function App() {
                 <div className="mt-2 text-xs md:text-sm font-bold text-amber-700">
                   Đang chọn: {(draftSettings.selectedTables || []).length}/10 bảng cho {draftGeneratedLessonTypes.map(type => type.label).join(', ')}
                 </div>
+              </div>
+            )}
+
+            {draftGeneratedLessonTypes.length > 0 && (
+              <div className="rounded-xl border-2 border-blue-100 bg-blue-50 p-3">
+                <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 border-2 border-blue-100">
+                  <span className="min-w-0">
+                    <span className="block text-sm md:text-base font-extrabold text-blue-800">Học theo chặng</span>
+                    <span className="block text-[11px] md:text-xs font-bold text-blue-500">
+                      {draftVisibleStagedStages.length} chặng • {draftStageQuestionIdSet.size} câu cố định
+                    </span>
+                  </span>
+                  <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                    draftStagedLearningEnabled ? 'bg-blue-500' : 'bg-gray-300'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={draftStagedLearningEnabled}
+                      onChange={(event) => {
+                        setDraftStagedLearningEnabled(event.target.checked);
+                        setSettingsError('');
+                        setSettingsSaved(false);
+                      }}
+                      className="sr-only"
+                    />
+                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                      draftStagedLearningEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </span>
+                </label>
+
+                {draftStagedLearningEnabled && (
+                  <div className="mt-3 space-y-3">
+                    <div className="flex flex-col gap-2 rounded-xl bg-white px-3 py-2 border-2 border-blue-100 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs md:text-sm font-extrabold text-blue-700">Số lần đúng để qua câu</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDraftStagedRememberTarget(value => Math.max(MIN_STAGED_REMEMBER_TARGET, value - 1));
+                            setSettingsError('');
+                            setSettingsSaved(false);
+                          }}
+                          disabled={draftStagedRememberTarget <= MIN_STAGED_REMEMBER_TARGET}
+                          className="grid h-8 w-8 place-items-center rounded-lg border border-blue-100 bg-white text-blue-600 shadow-sm disabled:opacity-40"
+                          aria-label="Giảm số lần đúng"
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="min-w-12 rounded-lg bg-blue-50 px-2 py-1 text-center text-base font-black text-blue-700 shadow-sm">
+                          {draftStagedRememberTarget}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDraftStagedRememberTarget(value => Math.min(MAX_STAGED_REMEMBER_TARGET, value + 1));
+                            setSettingsError('');
+                            setSettingsSaved(false);
+                          }}
+                          disabled={draftStagedRememberTarget >= MAX_STAGED_REMEMBER_TARGET}
+                          className="grid h-8 w-8 place-items-center rounded-lg border border-blue-100 bg-white text-blue-600 shadow-sm disabled:opacity-40"
+                          aria-label="Tăng số lần đúng"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={addDraftStagedStage}
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-500 px-3 py-2 text-xs md:text-sm font-extrabold text-white shadow-[0_3px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none transition-all"
+                      >
+                        <Plus size={16} /> Thêm chặng
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetDraftStagedStages}
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs md:text-sm font-extrabold text-blue-700 border-2 border-blue-100 hover:border-blue-300 transition-colors"
+                      >
+                        <RotateCcw size={15} /> Chia mặc định
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {draftVisibleStagedStages.map((stage, stageIndex) => (
+                        <div key={stage.id} className="rounded-xl border-2 border-blue-100 bg-white p-2.5">
+                          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                              <input
+                                type="text"
+                                value={stage.name}
+                                onChange={(event) => updateDraftStagedStageName(stage.id, event.target.value)}
+                                placeholder={`Chặng ${stageIndex + 1}`}
+                                className="min-w-0 flex-1 rounded-lg border-2 border-blue-100 bg-blue-50 px-3 py-2 text-sm md:text-base font-black text-blue-800 outline-none focus:border-blue-400"
+                                aria-label={`Tên chặng ${stageIndex + 1}`}
+                              />
+                              <span className="shrink-0 rounded-lg bg-blue-50 px-2 py-1 text-xs md:text-sm font-black text-blue-700">
+                                {stage.questionIds.length} câu
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeDraftStagedStage(stage.id)}
+                              disabled={draftVisibleStagedStages.length <= 1}
+                              className="flex items-center justify-center gap-1 rounded-lg bg-rose-50 px-3 py-2 text-xs md:text-sm font-extrabold text-rose-600 border-2 border-rose-100 disabled:opacity-40"
+                            >
+                              <Minus size={15} /> Xóa
+                            </button>
+                          </div>
+
+                          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                            {draftStageQuestionGroups.map(group => (
+                              <div key={`${stage.id}-${group.id}`} className="rounded-lg bg-blue-50 p-2">
+                                <div className="mb-1.5 text-xs md:text-sm font-extrabold text-blue-700">
+                                  {group.label}
+                                </div>
+                                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                                  {group.questions.map(question => {
+                                    const isSelected = stage.questionIds.includes(question.id);
+                                    const isUsedElsewhere = draftStageQuestionIdSet.has(question.id) && !isSelected;
+                                    const questionLabel = question.questionText.replace(/\s*=\s*\?$/, '');
+
+                                    return (
+                                      <button
+                                        key={`${stage.id}-${question.id}`}
+                                        type="button"
+                                        onClick={() => toggleDraftStagedQuestion(stage.id, question.id)}
+                                        title={isUsedElsewhere ? 'Chuyển câu này vào chặng này' : undefined}
+                                        className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg border-2 px-2 py-1.5 text-center text-xs md:text-sm font-black transition-colors active:translate-y-0.5 ${
+                                          isSelected
+                                            ? 'border-blue-500 bg-blue-500 text-white shadow-[0_2px_0_rgb(29,78,216)]'
+                                            : isUsedElsewhere
+                                              ? 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100'
+                                              : 'border-blue-100 bg-white text-blue-700 hover:border-blue-300 hover:bg-blue-50'
+                                        }`}
+                                      >
+                                        <span className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 ${
+                                          isSelected
+                                            ? 'border-white bg-white text-blue-500'
+                                            : isUsedElsewhere
+                                              ? 'border-amber-400 bg-white text-amber-500'
+                                              : 'border-blue-200 bg-white text-transparent'
+                                        }`}>
+                                          {isSelected ? <CheckCircle size={12} /> : <Plus size={10} />}
+                                        </span>
+                                        <span>{questionLabel}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -4358,6 +4798,10 @@ export default function App() {
            </div>
          )}
       </div>
+      )}
+
+      {!isSummary && showColoringPanel && (
+        <ColoringApp onBack={() => setShowColoringPanel(false)} />
       )}
 
       {!isSummary && showReadingPanel && (
