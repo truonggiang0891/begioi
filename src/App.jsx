@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ColoringApp from './ColoringApp';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2 } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -66,8 +66,22 @@ const STAGED_STAGES_KEY = 'math_stagedStages';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
 const READING_PROGRESS_KEY = 'reading_progress';
 const READING_HISTORY_KEY = 'reading_history';
+const ROBUX_BALANCE_KEY = 'math_robuxBalance';
+const ROBUX_UNLOCKED_COLORING_KEY = 'coloring_unlockedLevels';
+const COLORING_TIME_LEFT_KEY = 'coloring_timeLeftSec';
 const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
+const DEFAULT_ROBUX_CORRECT_REWARD = 1;
+const ROBUX_WRONG_PENALTY = 4;
+const COLORING_TIME_EXCHANGE_COST = 5;
+const COLORING_TIME_EXCHANGE_SECONDS = 60;
+const MAX_COLORING_TIME_LEFT = 24 * 60 * 60;
+const DEFAULT_COLORING_UNLOCK_COST = 5;
+const MIN_ROBUX_REWARD = 1;
+const MAX_ROBUX_REWARD = 100;
+const MIN_COLORING_UNLOCK_COST = 1;
+const MAX_COLORING_UNLOCK_COST = 999;
+const COLORING_LEVEL_IDS = Array.from({ length: 60 }, (_, index) => index + 1);
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const ALL_ADDITION_TABLES = Array.from({ length: 10 }, (_, index) => index + 1);
 const LESSON_TYPES = [
@@ -89,6 +103,8 @@ const DEFAULT_SETTINGS = {
   timeLimit: 9,
   rewardSec: 30,
   penaltySec: 60,
+  robuxReward: DEFAULT_ROBUX_CORRECT_REWARD,
+  coloringUnlockCost: DEFAULT_COLORING_UNLOCK_COST,
   soundVolumePercent: DEFAULT_SOUND_VOLUME_PERCENT,
   learningMode: DEFAULT_LEARNING_MODE,
   lessonType: DEFAULT_LESSON_TYPE,
@@ -1946,6 +1962,45 @@ const loadSessionHistory = () => {
   }
 };
 
+const normalizeRobuxBalance = (value) => clampNumber(value, 0, 0, 999999);
+
+const loadRobuxBalance = () => {
+  try {
+    return normalizeRobuxBalance(localStorage.getItem(ROBUX_BALANCE_KEY));
+  } catch {
+    return 0;
+  }
+};
+
+const normalizeColoringTimeLeft = (value) => clampNumber(value, 0, 0, MAX_COLORING_TIME_LEFT);
+
+const loadColoringTimeLeft = () => {
+  try {
+    return normalizeColoringTimeLeft(localStorage.getItem(COLORING_TIME_LEFT_KEY));
+  } catch {
+    return 0;
+  }
+};
+
+const normalizeUnlockedColoringLevels = (levels) => {
+  if (!Array.isArray(levels)) return [];
+
+  const validLevelIds = new Set(COLORING_LEVEL_IDS);
+  return Array.from(new Set(levels
+    .map(level => Number(level))
+    .filter(level => Number.isInteger(level) && validLevelIds.has(level))
+  )).sort((a, b) => a - b);
+};
+
+const loadUnlockedColoringLevels = () => {
+  try {
+    const savedLevels = localStorage.getItem(ROBUX_UNLOCKED_COLORING_KEY);
+    return savedLevels ? normalizeUnlockedColoringLevels(JSON.parse(savedLevels)) : [];
+  } catch {
+    return [];
+  }
+};
+
 const normalizeSelectedTables = (tables) => {
   if (!Array.isArray(tables)) return ALL_ADDITION_TABLES;
 
@@ -1990,6 +2045,13 @@ const normalizeSettings = (settings = {}) => {
     timeLimit: clampNumber(settings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60),
     rewardSec: clampNumber(settings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600),
     penaltySec: clampNumber(settings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600),
+    robuxReward: clampNumber(settings.robuxReward, DEFAULT_SETTINGS.robuxReward, MIN_ROBUX_REWARD, MAX_ROBUX_REWARD),
+    coloringUnlockCost: clampNumber(
+      settings.coloringUnlockCost,
+      DEFAULT_SETTINGS.coloringUnlockCost,
+      MIN_COLORING_UNLOCK_COST,
+      MAX_COLORING_UNLOCK_COST
+    ),
     soundVolumePercent: clampNumber(settings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT),
     learningMode: normalizeLearningMode(settings.learningMode),
     lessonType: lessonTypes[0],
@@ -2486,12 +2548,17 @@ export default function App() {
   const [readingHistory, setReadingHistory] = useState(() => loadReadingHistory());
   const [readingSummary, setReadingSummary] = useState(null);
   const [showColoringPanel, setShowColoringPanel] = useState(false);
+  const [showColoringAccessPanel, setShowColoringAccessPanel] = useState(false);
+  const [robuxBalance, setRobuxBalance] = useState(() => loadRobuxBalance());
+  const [coloringTimeLeftSec, setColoringTimeLeftSec] = useState(() => loadColoringTimeLeft());
+  const [unlockedColoringLevels, setUnlockedColoringLevels] = useState(() => loadUnlockedColoringLevels());
   
   const [currentQ, setCurrentQ] = useState(null);
   const [pausedQuestion, setPausedQuestion] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
   const [gameState, setGameState] = useState('idle'); // idle, playing, wrong_paused, timeout_paused, celebrating, congrats, summary
   const [practiceMode, setPracticeMode] = useState('normal'); // normal, review
+  const [rewardMode, setRewardMode] = useState('screenTime'); // screenTime, robux
   const [selectedAns, setSelectedAns] = useState(null);
   const [showFlashcardAnswer, setShowFlashcardAnswer] = useState(false);
   const [showParentConfirm, setShowParentConfirm] = useState(false);
@@ -2510,6 +2577,7 @@ export default function App() {
   const activePoolRef = useRef([]);
   const activeReviewListRef = useRef([]);
   const activeUnseenListRef = useRef([]);
+  const coloringUnlockInFlightRef = useRef(new Set());
   const displayName = userName.trim() || 'bé';
   const fullActivePool = useMemo(() => generateInitialPool(settings), [settings]);
   const stagedLearningStatus = useMemo(
@@ -2798,6 +2866,7 @@ export default function App() {
       setSelectedReadingId(null);
       setExpandedReadingSeriesId(null);
       setShowColoringPanel(false);
+      setShowColoringAccessPanel(false);
     }
   };
 
@@ -2862,6 +2931,7 @@ export default function App() {
     setShowHistoryPanel(false);
     setShowParentConfirm(false);
     setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
   };
 
   const handleAdminLogin = (event) => {
@@ -2885,12 +2955,18 @@ export default function App() {
     setAdminError('');
     setSettingsError('');
     setSettingsSaved(false);
+    setShowColoringAccessPanel(false);
   };
 
   const updateDraftSetting = (key, value) => {
     setDraftSettings(prev => ({ ...prev, [key]: value }));
     setSettingsError('');
     setSettingsSaved(false);
+  };
+
+  const adjustDraftNumberSetting = (key, delta, fallback, min, max) => {
+    const currentValue = clampNumber(draftSettings[key], fallback, min, max);
+    updateDraftSetting(key, clampNumber(currentValue + delta, fallback, min, max));
   };
 
   const toggleDraftLessonType = (lessonType) => {
@@ -3142,6 +3218,47 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem(ROBUX_BALANCE_KEY, String(robuxBalance));
+    } catch {
+      console.log("Cannot save Robux balance");
+    }
+  }, [robuxBalance]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLORING_TIME_LEFT_KEY, String(coloringTimeLeftSec));
+    } catch {
+      console.log("Cannot save coloring time");
+    }
+  }, [coloringTimeLeftSec]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ROBUX_UNLOCKED_COLORING_KEY, JSON.stringify(unlockedColoringLevels));
+    } catch {
+      console.log("Cannot save unlocked coloring levels");
+    }
+  }, [unlockedColoringLevels]);
+
+  useEffect(() => {
+    if (!showColoringPanel) return undefined;
+
+    const intervalId = setInterval(() => {
+      setColoringTimeLeftSec(prev => normalizeColoringTimeLeft(prev - 1));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [showColoringPanel]);
+
+  useEffect(() => {
+    if (showColoringPanel && coloringTimeLeftSec <= 0) {
+      setShowColoringPanel(false);
+      setShowColoringAccessPanel(true);
+    }
+  }, [coloringTimeLeftSec, showColoringPanel]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(READING_PROGRESS_KEY, JSON.stringify(readingProgress));
     } catch {
       console.log("Cannot save reading progress");
@@ -3306,6 +3423,19 @@ export default function App() {
     });
   }
 
+  function updateRobux(amount) {
+    setRobuxBalance(prev => normalizeRobuxBalance(prev + amount));
+  }
+
+  function applyLearningReward(isCorrect) {
+    if (rewardMode === 'robux') {
+      updateRobux(isCorrect ? settings.robuxReward : -ROBUX_WRONG_PENALTY);
+      return;
+    }
+
+    updateScreenTime(isCorrect ? settings.rewardSec : -settings.penaltySec);
+  }
+
   function addToReview(question) {
     const questionKey = getQuestionKey(question);
     const questionForReview = stripQuestionForStorage(question, 0);
@@ -3330,7 +3460,7 @@ export default function App() {
 
     playSound('wrong', settings.soundVolumePercent);
     setGameState('timeout_paused');
-    updateScreenTime(-settings.penaltySec);
+    applyLearningReward(false);
     setTimeoutTotal(prev => prev + 1);
     if (currentQ?.isUnseen) {
       // Loại khỏi danh sách chưa làm
@@ -3386,7 +3516,7 @@ export default function App() {
       setGameState('celebrating');
       setCorrectTotal(prev => prev + 1);
       markStagedQuestionCorrect(currentQ);
-      updateScreenTime(settings.rewardSec);
+      applyLearningReward(true);
       
       if (currentQ.isUnseen) {
         setUnseenList(prev => {
@@ -3414,7 +3544,7 @@ export default function App() {
       // SAI
       playSound('wrong', settings.soundVolumePercent);
       setGameState('wrong_paused');
-      updateScreenTime(-settings.penaltySec);
+      applyLearningReward(false);
       setWrongTotal(prev => prev + 1);
       if (currentQ.isUnseen) {
         // Loại khỏi danh sách chưa làm
@@ -3439,7 +3569,7 @@ export default function App() {
     playSound('correct', settings.soundVolumePercent);
     setCorrectTotal(prev => prev + 1);
     markStagedQuestionCorrect(currentQ);
-    updateScreenTime(settings.rewardSec);
+    applyLearningReward(true);
     setShowFlashcardAnswer(false);
 
     if (currentQ.isUnseen) {
@@ -3464,6 +3594,10 @@ export default function App() {
 
     const currentKey = getQuestionKey(currentQ);
     setWrongTotal(prev => prev + 1);
+    if (rewardMode === 'robux') {
+      playSound('wrong', settings.soundVolumePercent);
+      applyLearningReward(false);
+    }
     setShowFlashcardAnswer(false);
 
     if (currentQ.isUnseen) {
@@ -3509,6 +3643,7 @@ export default function App() {
           question: currentQ,
           timer: Math.max(1, timer),
           practiceMode,
+          rewardMode,
           showFlashcardAnswer,
         }
       : null;
@@ -3522,6 +3657,7 @@ export default function App() {
     setSelectedReadingId(null);
     setExpandedReadingSeriesId(null);
     setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
     setShowFlashcardAnswer(false);
     const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
@@ -3531,6 +3667,8 @@ export default function App() {
       timeoutTotal,
       reviewCount: activeReviewList.length,
       screenTime,
+      robuxBalance,
+      rewardMode,
       durationSec: Math.max(0, Math.round((endedAt - startedAt) / 1000)),
       endedAt,
       studentName: displayName,
@@ -3558,6 +3696,8 @@ export default function App() {
     gameState,
     practiceMode,
     rememberCurrentReadingPosition,
+    rewardMode,
+    robuxBalance,
     screenTime,
     showFlashcardAnswer,
     timer,
@@ -3574,6 +3714,7 @@ export default function App() {
 
     if (pausedQuestion?.question) {
       setPracticeMode(pausedQuestion.practiceMode || 'normal');
+      setRewardMode(pausedQuestion.rewardMode || rewardMode);
       setCurrentQ(pausedQuestion.question);
       setTimer(pausedQuestion.timer || settings.timeLimit);
       setShowFlashcardAnswer(!!pausedQuestion.showFlashcardAnswer);
@@ -3587,6 +3728,74 @@ export default function App() {
     generateQuestion({ practiceMode: 'normal' });
   };
 
+  const startPracticeSession = (nextRewardMode = 'screenTime') => {
+    clearInterval(timerRef.current);
+    clearPendingTransitions();
+    if (!sessionStartedAtRef.current) {
+      hasShownCongratsThisSessionRef.current = false;
+    }
+    setPausedQuestion(null);
+    setSummaryStats(null);
+    setSelectedAns(null);
+    setShowFlashcardAnswer(false);
+    setShowParentConfirm(false);
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    rememberCurrentReadingPosition();
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
+    setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
+    setShowHistoryPanel(false);
+    setPracticeMode('normal');
+    setRewardMode(nextRewardMode);
+    generateQuestion({ practiceMode: 'normal' });
+  };
+
+  const handleColoringMenuClick = () => {
+    if (showColoringPanel) {
+      setShowColoringPanel(false);
+      setShowColoringAccessPanel(false);
+      return;
+    }
+
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    setShowParentConfirm(false);
+    rememberCurrentReadingPosition();
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
+    setShowHistoryPanel(false);
+
+    if (coloringTimeLeftSec > 0) {
+      setShowColoringAccessPanel(false);
+      setShowColoringPanel(true);
+      return;
+    }
+
+    setShowColoringPanel(false);
+    setShowColoringAccessPanel(true);
+  };
+
+  const handleBuyColoringTime = () => {
+    if (robuxBalance < COLORING_TIME_EXCHANGE_COST) return;
+
+    setRobuxBalance(prev => normalizeRobuxBalance(prev - COLORING_TIME_EXCHANGE_COST));
+    setColoringTimeLeftSec(prev => normalizeColoringTimeLeft(prev + COLORING_TIME_EXCHANGE_SECONDS));
+    setShowColoringAccessPanel(false);
+    setShowColoringPanel(true);
+  };
+
   const handleReviewPractice = () => {
     if (activeReviewList.length === 0) return;
 
@@ -3594,6 +3803,7 @@ export default function App() {
     clearPendingTransitions();
     setPausedQuestion(null);
     setPracticeMode('review');
+    setRewardMode('screenTime');
     setSummaryStats(null);
     setShowFlashcardAnswer(false);
     generateQuestion({
@@ -3624,6 +3834,7 @@ export default function App() {
     setShowFlashcardAnswer(false);
     setSummaryStats(null);
     setPracticeMode('normal');
+    setRewardMode('screenTime');
     setTimer(settings.timeLimit);
     generateQuestion({
       activePool: freshPool,
@@ -3632,6 +3843,30 @@ export default function App() {
       practiceMode: 'normal',
     });
   };
+
+  const handleUnlockColoringLevel = useCallback((levelId) => {
+    const normalizedLevelId = Number(levelId);
+    if (!COLORING_LEVEL_IDS.includes(normalizedLevelId)) return false;
+    if (
+      unlockedColoringLevels.includes(normalizedLevelId)
+      || coloringUnlockInFlightRef.current.has(normalizedLevelId)
+    ) {
+      return true;
+    }
+    if (robuxBalance < settings.coloringUnlockCost) return false;
+
+    coloringUnlockInFlightRef.current.add(normalizedLevelId);
+    setRobuxBalance(prev => {
+      if (prev < settings.coloringUnlockCost) {
+        coloringUnlockInFlightRef.current.delete(normalizedLevelId);
+        return prev;
+      }
+
+      return normalizeRobuxBalance(prev - settings.coloringUnlockCost);
+    });
+    setUnlockedColoringLevels(prev => normalizeUnlockedColoringLevels([...prev, normalizedLevelId]));
+    return true;
+  }, [robuxBalance, settings.coloringUnlockCost, unlockedColoringLevels]);
 
   const resetAllData = () => {
     setSummaryStats(null);
@@ -3646,6 +3881,9 @@ export default function App() {
     localStorage.removeItem(SESSION_HISTORY_KEY);
     localStorage.removeItem(READING_PROGRESS_KEY);
     localStorage.removeItem(READING_HISTORY_KEY);
+    localStorage.removeItem(ROBUX_BALANCE_KEY);
+    localStorage.removeItem(ROBUX_UNLOCKED_COLORING_KEY);
+    localStorage.removeItem(COLORING_TIME_LEFT_KEY);
     window.location.reload();
   };
 
@@ -3672,12 +3910,20 @@ export default function App() {
 
     return parts.join(' ');
   };
+  const formatClockTime = (seconds = 0) => {
+    const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
   const visibleSummary = summaryStats || {
     correctTotal,
     wrongTotal,
     timeoutTotal,
     reviewCount: activeReviewList.length,
     screenTime,
+    robuxBalance,
+    rewardMode,
     durationSec: 0,
     endedAt: null,
     studentName: displayName,
@@ -3726,6 +3972,7 @@ export default function App() {
               setSelectedReadingId(null);
               setExpandedReadingSeriesId(null);
               setShowColoringPanel(false);
+              setShowColoringAccessPanel(false);
             }}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               isAdmin
@@ -3765,6 +4012,7 @@ export default function App() {
               setSelectedReadingId(null);
               setExpandedReadingSeriesId(null);
               setShowColoringPanel(false);
+              setShowColoringAccessPanel(false);
             }}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
               showHistoryPanel
@@ -3776,26 +4024,12 @@ export default function App() {
           </button>
         </div>
 
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
+        <div className="mt-1.5 grid grid-cols-4 gap-1.5 md:mt-2 md:gap-2">
           <button
             type="button"
-            onClick={() => {
-              setShowColoringPanel(prev => !prev);
-              setShowUserNameForm(false);
-              setShowAdminLogin(false);
-              setAdminError('');
-              setAvatarError('');
-              setShowParentConfirm(false);
-              rememberCurrentReadingPosition();
-              setReadingSummary(null);
-              readingSessionStartedAtRef.current = null;
-              setShowReadingPanel(false);
-              setSelectedReadingId(null);
-              setExpandedReadingSeriesId(null);
-              setShowHistoryPanel(false);
-            }}
+            onClick={handleColoringMenuClick}
             className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
-              showColoringPanel
+              showColoringPanel || showColoringAccessPanel
                 ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(217,119,6)]'
                 : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100'
             }`}
@@ -3815,6 +4049,18 @@ export default function App() {
             className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 px-1 py-2 text-[11px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-xs md:px-2 md:text-base"
           >
             <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Trò chơi</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => startPracticeSession('robux')}
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
+              rewardMode === 'robux' && gameState !== 'idle'
+                ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
+                : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+            }`}
+          >
+            <Gem size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Kiếm Robux</span>
           </button>
         </div>
 
@@ -3936,14 +4182,30 @@ export default function App() {
                       <Clock size={18} className="text-blue-500" /> Thời gian đếm ngược mỗi câu
                     </span>
                     <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('timeLimit', -1, DEFAULT_SETTINGS.timeLimit, 3, 60)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blue-100 text-blue-700 transition hover:bg-blue-200"
+                        aria-label="Giảm thời gian đếm ngược"
+                      >
+                        <Minus size={18} />
+                      </button>
                       <input
                         type="range"
                         min="3"
                         max="60"
                         value={clampNumber(draftSettings.timeLimit, DEFAULT_SETTINGS.timeLimit, 3, 60)}
                         onChange={(event) => updateDraftSetting('timeLimit', event.target.value)}
-                        className="flex-1 accent-blue-500"
+                        className="min-w-0 flex-1 accent-blue-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('timeLimit', 1, DEFAULT_SETTINGS.timeLimit, 3, 60)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blue-100 text-blue-700 transition hover:bg-blue-200"
+                        aria-label="Tăng thời gian đếm ngược"
+                      >
+                        <Plus size={18} />
+                      </button>
                       <div className="flex items-center rounded-xl border-2 border-blue-100 bg-blue-50 overflow-hidden">
                         <input
                           type="number"
@@ -3964,6 +4226,14 @@ export default function App() {
                       <Smartphone size={18} className="text-green-500" /> Thời gian xem điện thoại mỗi câu đúng
                     </span>
                     <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('rewardSec', -5, DEFAULT_SETTINGS.rewardSec, 5, 600)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                        aria-label="Giảm thời gian thưởng"
+                      >
+                        <Minus size={18} />
+                      </button>
                       <input
                         type="range"
                         min="5"
@@ -3971,8 +4241,16 @@ export default function App() {
                         step="5"
                         value={clampNumber(draftSettings.rewardSec, DEFAULT_SETTINGS.rewardSec, 5, 600)}
                         onChange={(event) => updateDraftSetting('rewardSec', event.target.value)}
-                        className="flex-1 accent-green-500"
+                        className="min-w-0 flex-1 accent-green-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('rewardSec', 5, DEFAULT_SETTINGS.rewardSec, 5, 600)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                        aria-label="Tăng thời gian thưởng"
+                      >
+                        <Plus size={18} />
+                      </button>
                       <div className="flex items-center rounded-xl border-2 border-green-100 bg-green-50 overflow-hidden">
                         <input
                           type="number"
@@ -3994,6 +4272,14 @@ export default function App() {
                       <XCircle size={18} className="text-red-500" /> Thời gian bị trừ khi trả lời sai
                     </span>
                     <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('penaltySec', -5, DEFAULT_SETTINGS.penaltySec, 5, 600)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                        aria-label="Giảm thời gian phạt"
+                      >
+                        <Minus size={18} />
+                      </button>
                       <input
                         type="range"
                         min="5"
@@ -4001,8 +4287,16 @@ export default function App() {
                         step="5"
                         value={clampNumber(draftSettings.penaltySec, DEFAULT_SETTINGS.penaltySec, 5, 600)}
                         onChange={(event) => updateDraftSetting('penaltySec', event.target.value)}
-                        className="flex-1 accent-red-500"
+                        className="min-w-0 flex-1 accent-red-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('penaltySec', 5, DEFAULT_SETTINGS.penaltySec, 5, 600)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                        aria-label="Tăng thời gian phạt"
+                      >
+                        <Plus size={18} />
+                      </button>
                       <div className="flex items-center rounded-xl border-2 border-red-100 bg-red-50 overflow-hidden">
                         <input
                           type="number"
@@ -4021,9 +4315,105 @@ export default function App() {
 
                   <label className="block">
                     <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <Gem size={18} className="text-yellow-500" /> Robux thưởng mỗi câu đúng
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('robuxReward', -1, DEFAULT_SETTINGS.robuxReward, MIN_ROBUX_REWARD, MAX_ROBUX_REWARD)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                        aria-label="Giảm Robux thưởng"
+                      >
+                        <Minus size={18} />
+                      </button>
+                      <input
+                        type="range"
+                        min={MIN_ROBUX_REWARD}
+                        max={MAX_ROBUX_REWARD}
+                        value={clampNumber(draftSettings.robuxReward, DEFAULT_SETTINGS.robuxReward, MIN_ROBUX_REWARD, MAX_ROBUX_REWARD)}
+                        onChange={(event) => updateDraftSetting('robuxReward', event.target.value)}
+                        className="min-w-0 flex-1 accent-yellow-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('robuxReward', 1, DEFAULT_SETTINGS.robuxReward, MIN_ROBUX_REWARD, MAX_ROBUX_REWARD)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                        aria-label="Tăng Robux thưởng"
+                      >
+                        <Plus size={18} />
+                      </button>
+                      <div className="flex items-center rounded-xl border-2 border-yellow-100 bg-yellow-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min={MIN_ROBUX_REWARD}
+                          max={MAX_ROBUX_REWARD}
+                          value={draftSettings.robuxReward}
+                          onChange={(event) => updateDraftSetting('robuxReward', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-yellow-700 outline-none"
+                          aria-label="Robux thưởng mỗi câu đúng"
+                        />
+                        <span className="pr-3 text-sm font-bold text-yellow-500">Robux</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
+                      <LockKeyhole size={18} className="text-amber-500" /> Giá mở khóa mỗi ảnh tô màu
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('coloringUnlockCost', -1, DEFAULT_SETTINGS.coloringUnlockCost, MIN_COLORING_UNLOCK_COST, MAX_COLORING_UNLOCK_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700 transition hover:bg-amber-200"
+                        aria-label="Giảm giá mở khóa ảnh"
+                      >
+                        <Minus size={18} />
+                      </button>
+                      <input
+                        type="range"
+                        min={MIN_COLORING_UNLOCK_COST}
+                        max={MAX_COLORING_UNLOCK_COST}
+                        value={clampNumber(draftSettings.coloringUnlockCost, DEFAULT_SETTINGS.coloringUnlockCost, MIN_COLORING_UNLOCK_COST, MAX_COLORING_UNLOCK_COST)}
+                        onChange={(event) => updateDraftSetting('coloringUnlockCost', event.target.value)}
+                        className="min-w-0 flex-1 accent-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('coloringUnlockCost', 1, DEFAULT_SETTINGS.coloringUnlockCost, MIN_COLORING_UNLOCK_COST, MAX_COLORING_UNLOCK_COST)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700 transition hover:bg-amber-200"
+                        aria-label="Tăng giá mở khóa ảnh"
+                      >
+                        <Plus size={18} />
+                      </button>
+                      <div className="flex items-center rounded-xl border-2 border-amber-100 bg-amber-50 overflow-hidden">
+                        <input
+                          type="number"
+                          min={MIN_COLORING_UNLOCK_COST}
+                          max={MAX_COLORING_UNLOCK_COST}
+                          value={draftSettings.coloringUnlockCost}
+                          onChange={(event) => updateDraftSetting('coloringUnlockCost', event.target.value)}
+                          className="w-20 bg-transparent px-2 py-2 text-right text-lg font-black text-amber-700 outline-none"
+                          aria-label="Giá mở khóa mỗi ảnh tô màu"
+                        />
+                        <span className="pr-3 text-sm font-bold text-amber-500">Robux</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="flex items-center gap-2 text-sm md:text-base font-extrabold text-gray-700 mb-2">
                       <Volume2 size={18} className="text-purple-500" /> Âm lượng âm thanh
                     </span>
                     <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('soundVolumePercent', -5, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-100 text-purple-700 transition hover:bg-purple-200"
+                        aria-label="Giảm âm lượng"
+                      >
+                        <Minus size={18} />
+                      </button>
                       <input
                         type="range"
                         min="0"
@@ -4031,8 +4421,16 @@ export default function App() {
                         step="5"
                         value={clampNumber(draftSettings.soundVolumePercent, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT)}
                         onChange={(event) => updateDraftSetting('soundVolumePercent', event.target.value)}
-                        className="flex-1 accent-purple-500"
+                        className="min-w-0 flex-1 accent-purple-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => adjustDraftNumberSetting('soundVolumePercent', 5, DEFAULT_SETTINGS.soundVolumePercent, 0, MAX_SOUND_VOLUME_PERCENT)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-100 text-purple-700 transition hover:bg-purple-200"
+                        aria-label="Tăng âm lượng"
+                      >
+                        <Plus size={18} />
+                      </button>
                       <div className="flex items-center rounded-xl border-2 border-purple-100 bg-purple-50 overflow-hidden">
                         <input
                           type="number"
@@ -4418,7 +4816,7 @@ export default function App() {
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{activeUnseenList.length}</div>
           </div>
           
-          <div className="relative col-span-3 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
+          <div className="relative col-span-2 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
             {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
               <div className="absolute right-2 top-1 text-[9px] font-semibold text-gray-400 md:right-3 md:top-2 md:text-[11px]">
                 {stageLabel}
@@ -4430,6 +4828,13 @@ export default function App() {
             <div className="text-lg md:text-3xl font-black text-purple-600 text-center">
               {formatTime(screenTime)} <span className="text-lg md:text-xl text-purple-400">/ 90p</span>
             </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center p-1.5 md:p-2 bg-yellow-100 rounded-xl md:rounded-2xl border-2 border-yellow-200">
+            <div className="flex items-center gap-1 text-yellow-700 font-bold text-[11px] sm:text-xs md:text-base">
+              <Gem size={16} className="md:w-5 md:h-5" /> Robux
+            </div>
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-yellow-600">{robuxBalance}</div>
           </div>
         </div>
       </div>
@@ -4453,16 +4858,18 @@ export default function App() {
             <h2 className="text-lg md:text-2xl font-bold text-gray-700 mb-3 md:mb-8">Bé đã sẵn sàng chưa?</h2>
             <div className="grid gap-2 md:gap-3">
               <button
-                onClick={() => {
-                  if (!sessionStartedAtRef.current) {
-                    hasShownCongratsThisSessionRef.current = false;
-                  }
-                  setPracticeMode('normal');
-                  generateQuestion({ practiceMode: 'normal' });
-                }}
+                onClick={() => startPracticeSession('screenTime')}
                 className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
               >
                 <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" /> BẮT ĐẦU
+              </button>
+              <button
+                type="button"
+                onClick={() => startPracticeSession('robux')}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-6 py-2.5 text-base font-extrabold text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition-all active:translate-y-1 active:shadow-none md:text-2xl"
+              >
+                <Gem size={21} className="fill-yellow-100 text-yellow-700 md:h-6 md:w-6" />
+                Kiếm Robux
               </button>
               {activeReviewList.length > 0 && (
                 <button
@@ -4546,6 +4953,13 @@ export default function App() {
                     <Smartphone size={18} className="md:w-6 md:h-6 text-purple-500"/> Giờ xem điện thoại
                   </div>
                   <div className="text-right text-2xl md:text-3xl font-black text-purple-600 leading-tight">{formatTime(visibleSummary.screenTime)}</div>
+                </div>
+
+                <div className="rounded-xl border-2 border-yellow-100 bg-yellow-50 px-3 py-2 md:p-3">
+                  <div className="flex items-center gap-1.5 text-sm md:text-lg font-extrabold text-gray-700">
+                    <Gem size={18} className="md:w-6 md:h-6 text-yellow-500"/> Robux
+                  </div>
+                  <div className="text-right text-2xl md:text-3xl font-black text-yellow-600 leading-tight">{visibleSummary.robuxBalance}</div>
                 </div>
 
                 <div className="rounded-xl border-2 border-sky-100 bg-sky-50 px-3 py-2 md:p-3">
@@ -4668,6 +5082,12 @@ export default function App() {
           </div>
         ) : (
           <>
+            {rewardMode === 'robux' && (
+              <div className="absolute left-3 top-2 z-10 flex items-center gap-1 rounded-full border-2 border-yellow-100 bg-yellow-50 px-2 py-0.5 text-[11px] font-black text-yellow-700 shadow-sm md:left-4 md:top-3 md:text-sm">
+                <Gem size={13} className="fill-yellow-100 md:h-4 md:w-4" />
+                Kiếm Robux
+              </div>
+            )}
             <div className="absolute top-2 right-3 md:top-3 md:right-4 z-10 flex items-center gap-1 text-[11px] md:text-sm font-semibold text-gray-400">
               <Clock size={13} className="md:w-4 md:h-4 text-gray-300" />
               <span>{timer} giây</span>
@@ -4679,7 +5099,11 @@ export default function App() {
                 {isCelebrating && (
                   <div className="inline-flex max-w-full items-center justify-center gap-1.5 md:gap-2 rounded-full border-2 border-green-200 bg-white px-3 py-1.5 md:px-5 md:py-2 text-sm md:text-xl font-black text-green-600 shadow-sm animate-bounce-in">
                     <Star size={18} className="shrink-0 fill-yellow-300 text-yellow-400 md:w-6 md:h-6" />
-                    <span className="whitespace-nowrap">+ {formatTime(settings.rewardSec)} xem điện thoại</span>
+                    <span className="whitespace-nowrap">
+                      {rewardMode === 'robux'
+                        ? `+${settings.robuxReward} Robux`
+                        : `+ ${formatTime(settings.rewardSec)} xem điện thoại`}
+                    </span>
                   </div>
                 )}
               </div>
@@ -4741,7 +5165,9 @@ export default function App() {
                     </div>
                   </div>
                   <div className="text-red-500 font-bold text-sm md:text-lg">
-                    - {formatTime(settings.penaltySec)} xem điện thoại 😢
+                    {rewardMode === 'robux'
+                      ? `- ${ROBUX_WRONG_PENALTY} Robux`
+                      : `- ${formatTime(settings.penaltySec)} xem điện thoại 😢`}
                   </div>
                   <div className="flex w-full flex-col gap-2 md:gap-3">
                     <button
@@ -4800,8 +5226,58 @@ export default function App() {
       </div>
       )}
 
+      {!isSummary && showColoringAccessPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+          <div className="w-full max-w-sm rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-amber-100 text-amber-600">
+              <LockKeyhole size={30} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800">Tô màu đang khóa</h2>
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              Đổi {COLORING_TIME_EXCHANGE_COST} Robux để dùng tô màu trong {formatTime(COLORING_TIME_EXCHANGE_SECONDS)}.
+            </p>
+            {coloringTimeLeftSec > 0 && (
+              <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
+                Còn lại: {formatClockTime(coloringTimeLeftSec)}
+              </div>
+            )}
+            <div className="mt-4 rounded-xl bg-yellow-50 px-3 py-2 text-sm font-black text-yellow-700">
+              Robux hiện có: {robuxBalance}
+            </div>
+            <button
+              type="button"
+              onClick={handleBuyColoringTime}
+              disabled={robuxBalance < COLORING_TIME_EXCHANGE_COST}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-5 py-3 text-base font-black text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              <Gem size={19} className="fill-yellow-100" />
+              Đổi {COLORING_TIME_EXCHANGE_COST} Robux lấy 1 phút
+            </button>
+            {robuxBalance < COLORING_TIME_EXCHANGE_COST && (
+              <div className="mt-2 text-xs font-bold text-rose-500">
+                Bé cần kiếm thêm Robux để mở mục tô màu.
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowColoringAccessPanel(false)}
+              className="mt-3 w-full rounded-full bg-slate-100 px-5 py-2.5 text-sm font-black text-slate-600 transition hover:bg-slate-200"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
       {!isSummary && showColoringPanel && (
-        <ColoringApp onBack={() => setShowColoringPanel(false)} />
+        <ColoringApp
+          onBack={() => setShowColoringPanel(false)}
+          robuxBalance={robuxBalance}
+          unlockCost={settings.coloringUnlockCost}
+          coloringTimeLeftSec={coloringTimeLeftSec}
+          unlockedLevels={unlockedColoringLevels}
+          onUnlockLevel={handleUnlockColoringLevel}
+        />
       )}
 
       {!isSummary && showReadingPanel && (
