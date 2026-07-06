@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ColoringApp from './ColoringApp';
+import DrawingApp from './DrawingApp';
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
@@ -71,6 +72,7 @@ const READING_HISTORY_KEY = 'reading_history';
 const ROBUX_BALANCE_KEY = 'math_robuxBalance';
 const ROBUX_UNLOCKED_COLORING_KEY = 'coloring_unlockedLevels';
 const COLORING_TIME_LEFT_KEY = 'coloring_timeLeftSec';
+const DRAWING_TIME_LEFT_KEY = 'drawing_timeLeftSec';
 const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
 const DEFAULT_ROBUX_CORRECT_REWARD = 1;
@@ -2066,6 +2068,14 @@ const loadColoringTimeLeft = () => {
   }
 };
 
+const loadDrawingTimeLeft = () => {
+  try {
+    return normalizeColoringTimeLeft(localStorage.getItem(DRAWING_TIME_LEFT_KEY));
+  } catch {
+    return 0;
+  }
+};
+
 const normalizeUnlockedColoringLevels = (levels) => {
   if (!Array.isArray(levels)) return [];
 
@@ -2661,7 +2671,11 @@ export default function App() {
   const [coloringTimeLeftSec, setColoringTimeLeftSec] = useState(() => loadColoringTimeLeft());
   const [coloringPurchaseMinutes, setColoringPurchaseMinutes] = useState(MIN_COLORING_PURCHASE_MINUTES);
   const [unlockedColoringLevels, setUnlockedColoringLevels] = useState(() => loadUnlockedColoringLevels());
-  
+  const [showDrawingPanel, setShowDrawingPanel] = useState(false);
+  const [showDrawingAccessPanel, setShowDrawingAccessPanel] = useState(false);
+  const [drawingTimeLeftSec, setDrawingTimeLeftSec] = useState(() => loadDrawingTimeLeft());
+  const [drawingPurchaseMinutes, setDrawingPurchaseMinutes] = useState(MIN_COLORING_PURCHASE_MINUTES);
+
   const [currentQ, setCurrentQ] = useState(null);
   const [pausedQuestion, setPausedQuestion] = useState(null);
   const [timer, setTimer] = useState(settings.timeLimit);
@@ -2809,6 +2823,32 @@ export default function App() {
   );
   const coloringPurchaseCost = safeColoringPurchaseMinutes * coloringTimeExchangeCost;
   const canBuySelectedColoringTime = robuxBalance >= coloringPurchaseCost;
+  const drawingTimeExchangeCost = clampNumber(
+    settings.drawingTimeExchangeCost,
+    DEFAULT_SETTINGS.drawingTimeExchangeCost,
+    MIN_TIME_EXCHANGE_COST,
+    MAX_TIME_EXCHANGE_COST
+  );
+  const maxAffordableDrawingMinutes = Math.max(
+    MIN_COLORING_PURCHASE_MINUTES,
+    Math.floor(robuxBalance / drawingTimeExchangeCost)
+  );
+  const maxAllowedDrawingPurchaseMinutes = Math.max(
+    MIN_COLORING_PURCHASE_MINUTES,
+    Math.min(
+      MAX_COLORING_PURCHASE_MINUTES,
+      Math.floor((MAX_COLORING_TIME_LEFT - drawingTimeLeftSec) / COLORING_TIME_EXCHANGE_SECONDS)
+    )
+  );
+  const maxSelectableDrawingMinutes = Math.min(maxAllowedDrawingPurchaseMinutes, maxAffordableDrawingMinutes);
+  const safeDrawingPurchaseMinutes = clampNumber(
+    drawingPurchaseMinutes,
+    MIN_COLORING_PURCHASE_MINUTES,
+    MIN_COLORING_PURCHASE_MINUTES,
+    maxSelectableDrawingMinutes
+  );
+  const drawingPurchaseCost = safeDrawingPurchaseMinutes * drawingTimeExchangeCost;
+  const canBuySelectedDrawingTime = robuxBalance >= drawingPurchaseCost;
   const draftLessonTypes = useMemo(
     () => getValidLessonTypes(
       Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
@@ -3390,6 +3430,31 @@ export default function App() {
 
     return () => clearInterval(intervalId);
   }, [showColoringPanel]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAWING_TIME_LEFT_KEY, JSON.stringify(drawingTimeLeftSec));
+    } catch {
+      console.log('Cannot save drawing time');
+    }
+  }, [drawingTimeLeftSec]);
+
+  useEffect(() => {
+    if (!showDrawingPanel) return undefined;
+
+    const intervalId = setInterval(() => {
+      setDrawingTimeLeftSec(prev => normalizeColoringTimeLeft(prev - 1));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [showDrawingPanel]);
+
+  useEffect(() => {
+    if (showDrawingPanel && drawingTimeLeftSec <= 0) {
+      setShowDrawingPanel(false);
+      setShowDrawingAccessPanel(true);
+    }
+  }, [drawingTimeLeftSec, showDrawingPanel]);
 
   useEffect(() => {
     if (showColoringPanel && coloringTimeLeftSec <= 0) {
@@ -4054,6 +4119,8 @@ export default function App() {
     setSelectedReadingId(null);
     setExpandedReadingSeriesId(null);
     setShowHistoryPanel(false);
+    setShowDrawingPanel(false);
+    setShowDrawingAccessPanel(false);
 
     if (coloringTimeLeftSec > 0) {
       setShowColoringAccessPanel(false);
@@ -4076,6 +4143,51 @@ export default function App() {
     setColoringPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
     setShowColoringAccessPanel(false);
     setShowColoringPanel(true);
+  };
+
+  const handleDrawingMenuClick = () => {
+    if (showDrawingPanel) {
+      setShowDrawingPanel(false);
+      setShowDrawingAccessPanel(false);
+      return;
+    }
+
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    setShowParentConfirm(false);
+    setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
+    rememberCurrentReadingPosition();
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
+    setShowHistoryPanel(false);
+
+    if (drawingTimeLeftSec > 0) {
+      setShowDrawingAccessPanel(false);
+      setShowDrawingPanel(true);
+      return;
+    }
+
+    setShowDrawingPanel(false);
+    setDrawingPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
+    setShowDrawingAccessPanel(true);
+  };
+
+  const handleBuyDrawingTime = () => {
+    if (!canBuySelectedDrawingTime) return;
+
+    setRobuxBalance(prev => normalizeRobuxBalance(prev - drawingPurchaseCost));
+    setDrawingTimeLeftSec(prev => (
+      normalizeColoringTimeLeft(prev + safeDrawingPurchaseMinutes * COLORING_TIME_EXCHANGE_SECONDS)
+    ));
+    setDrawingPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
+    setShowDrawingAccessPanel(false);
+    setShowDrawingPanel(true);
   };
 
   const handleReviewPractice = () => {
@@ -4332,7 +4444,12 @@ export default function App() {
 
           <button
             type="button"
-            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-pink-100 bg-pink-50 px-1 py-2 text-[11px] font-extrabold text-pink-700 transition-all hover:bg-pink-100 sm:text-xs md:px-2 md:text-base"
+            onClick={handleDrawingMenuClick}
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
+              showDrawingPanel || showDrawingAccessPanel
+                ? 'bg-pink-500 text-white shadow-[0_4px_0_rgb(190,24,93)]'
+                : 'border-2 border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100'
+            }`}
           >
             <Brush size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Học vẽ</span>
           </button>
@@ -5762,6 +5879,85 @@ export default function App() {
         </div>
       )}
 
+      {!isSummary && showDrawingAccessPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+          <div className="w-full max-w-sm rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-pink-100 text-pink-600">
+              <LockKeyhole size={30} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800">Học vẽ đang khóa</h2>
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              Đổi {drawingTimeExchangeCost} Robux cho mỗi phút học vẽ.
+            </p>
+            {drawingTimeLeftSec > 0 && (
+              <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
+                Còn lại: {formatClockTime(drawingTimeLeftSec)}
+              </div>
+            )}
+            <div className="mt-4 rounded-2xl border-2 border-yellow-100 bg-yellow-50 p-3">
+              <div className="mb-2 text-xs font-black uppercase text-yellow-700">Chọn thời gian mua</div>
+              <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDrawingPurchaseMinutes(prev => (
+                    clampNumber(prev - 1, MIN_COLORING_PURCHASE_MINUTES, MIN_COLORING_PURCHASE_MINUTES, maxSelectableDrawingMinutes)
+                  ))}
+                  disabled={safeDrawingPurchaseMinutes <= MIN_COLORING_PURCHASE_MINUTES}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
+                  aria-label="Giảm thời gian học vẽ muốn mua"
+                >
+                  <Minus size={20} />
+                </button>
+                <div className="rounded-xl bg-white px-3 py-2">
+                  <div className="text-3xl font-black leading-none text-yellow-700">
+                    {safeDrawingPurchaseMinutes}
+                  </div>
+                  <div className="text-xs font-black text-yellow-500">phút</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDrawingPurchaseMinutes(prev => (
+                    clampNumber(prev + 1, MIN_COLORING_PURCHASE_MINUTES, MIN_COLORING_PURCHASE_MINUTES, maxSelectableDrawingMinutes)
+                  ))}
+                  disabled={safeDrawingPurchaseMinutes >= maxSelectableDrawingMinutes}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
+                  aria-label="Tăng thời gian học vẽ muốn mua"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+              <div className="mt-2 text-sm font-black text-yellow-800">
+                Cần: {drawingPurchaseCost} Robux
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl bg-yellow-50 px-3 py-2 text-sm font-black text-yellow-700">
+              Robux hiện có: {robuxBalance}
+            </div>
+            <button
+              type="button"
+              onClick={handleBuyDrawingTime}
+              disabled={!canBuySelectedDrawingTime}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-5 py-3 text-base font-black text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              <Gem size={19} className="fill-yellow-100" />
+              Đổi {drawingPurchaseCost} Robux lấy {safeDrawingPurchaseMinutes} phút
+            </button>
+            {!canBuySelectedDrawingTime && (
+              <div className="mt-2 text-xs font-bold text-rose-500">
+                Bé cần kiếm thêm Robux để mở mục học vẽ.
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowDrawingAccessPanel(false)}
+              className="mt-3 w-full rounded-full bg-slate-100 px-5 py-2.5 text-sm font-black text-slate-600 transition hover:bg-slate-200"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
       {!isSummary && showColoringPanel && (
         <ColoringApp
           onBack={() => setShowColoringPanel(false)}
@@ -5770,6 +5966,14 @@ export default function App() {
           coloringTimeLeftSec={coloringTimeLeftSec}
           unlockedLevels={unlockedColoringLevels}
           onUnlockLevel={handleUnlockColoringLevel}
+        />
+      )}
+
+      {!isSummary && showDrawingPanel && (
+        <DrawingApp
+          onBack={() => setShowDrawingPanel(false)}
+          robuxBalance={robuxBalance}
+          drawingTimeLeftSec={drawingTimeLeftSec}
         />
       )}
 
