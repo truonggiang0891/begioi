@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Clock, Cuboid, Eraser, Gem, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Undo2, X } from 'lucide-react';
 import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, colorThemes, coloringSVGs } from './ColoringData';
 
@@ -182,6 +182,16 @@ const serializeSvgElement = (svgElement) => {
     clone.setAttribute('height', '1024');
     return new XMLSerializer().serializeToString(clone);
 };
+
+// Memo hóa để ảnh mẫu không bị tiêm lại (và chạy lại animation) mỗi khi app re-render
+const SampleArtwork = memo(function SampleArtwork({ svg }) {
+    return (
+        <div
+            className="flex h-full w-full items-center justify-center"
+            dangerouslySetInnerHTML={{ __html: svg }}
+        />
+    );
+});
 
 export default function ColoringApp({
     onBack,
@@ -862,8 +872,8 @@ export default function ColoringApp({
                     )}
 
                     {showSamplePreview && isCurrentUnlocked && (
-                        <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/45 px-4 text-center">
-                            <div className="relative flex h-[92%] w-full max-w-[340px] flex-col rounded-2xl border-2 border-white bg-white p-3 shadow-2xl">
+                        <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/45 px-2 text-center">
+                            <div className="relative flex h-[92%] w-full max-w-[440px] flex-col rounded-2xl border-2 border-white bg-white p-2 shadow-2xl">
                                 <button
                                     type="button"
                                     onClick={() => setShowSamplePreview(false)}
@@ -877,11 +887,8 @@ export default function ColoringApp({
                                     <div className="text-xs font-black uppercase text-pink-500">Mẫu phối màu</div>
                                     <div className="text-lg font-black text-slate-800">{currentCharacterName}</div>
                                 </div>
-                                <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-slate-100 p-2">
-                                    <div
-                                        className="flex h-full w-full items-center justify-center"
-                                        dangerouslySetInnerHTML={{ __html: sampleSvg }}
-                                    />
+                                <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-slate-100 p-1">
+                                    <SampleArtwork svg={sampleSvg} />
                                 </div>
                             </div>
                         </div>
