@@ -746,45 +746,45 @@ export default function ColoringApp({
         <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
             <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] text-center">
-                    <div className="flex h-7 items-center justify-between gap-1.5 px-2.5 pt-0.5">
+                    <div className="flex h-11 items-center justify-between gap-1.5 px-2.5 py-1">
                         <button
                             type="button"
                             onClick={onBack}
-                            className="h-6 shrink-0 rounded-lg bg-[#e2e8f0] px-2 text-[11px] font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
+                            className="h-9 shrink-0 rounded-lg bg-[#e2e8f0] px-3 text-sm font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
                         >
                             Trở lại
                         </button>
-                        <h1 className="m-0 min-w-0 flex-1 truncate text-xs font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
+                        <h1 className="m-0 min-w-0 flex-1 truncate text-sm font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
                         <div className="flex shrink-0 items-center gap-1">
-                            <div className="flex h-6 items-center gap-1 rounded-full bg-emerald-100 px-1.5 text-[11px] font-black text-emerald-700">
-                                <Clock size={12} />
+                            <div className="flex h-9 items-center gap-1 rounded-full bg-emerald-100 px-2.5 text-sm font-black text-emerald-700">
+                                <Clock size={14} />
                                 {displayTimeLeft}
                             </div>
-                            <div className="flex h-6 items-center gap-1 rounded-full bg-yellow-100 px-1.5 text-[11px] font-black text-yellow-700">
-                                <Gem size={12} className="fill-yellow-200" />
+                            <div className="flex h-9 items-center gap-1 rounded-full bg-yellow-100 px-2.5 text-sm font-black text-yellow-700">
+                                <Gem size={14} className="fill-yellow-200" />
                                 {robuxBalance}
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 px-2.5 py-0.5">
+                    <div className="grid grid-cols-2 gap-2 px-2.5 py-1">
                         <button
                             type="button"
-                            className={`h-6 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-11 rounded-full border-none px-2 text-sm font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-6 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-11 rounded-full border-none px-2 text-sm font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
                         </button>
                     </div>
 
-                    <div className="flex gap-1.5 overflow-x-auto px-2.5 pb-0.5 pt-0.5 scroll-smooth scrollbar-none">
+                    <div className="flex gap-2 overflow-x-auto px-2.5 pb-1 pt-1 scroll-smooth scrollbar-none">
                         {list.map((emoji, index) => {
                             const id = startIndex + index;
                             const isUnlocked = unlockedLevelSet.has(id);
@@ -793,7 +793,7 @@ export default function ColoringApp({
                                     type="button"
                                     key={id}
                                     onClick={(event) => handleLevelSelect(id, event)}
-                                    className={`relative flex h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-lg text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
+                                    className={`relative flex h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-2xl text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
                                 >
                                     <span className={!isUnlocked ? 'opacity-55' : ''} style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                         {emoji || '?'}
@@ -869,7 +869,7 @@ export default function ColoringApp({
                                     disabled={!hasEnoughRobux}
                                     className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-4 py-2.5 text-sm font-black text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
                                 >
-                                    <Gem size={17} className="fill-yellow-100" />
+                                    <Gem size={21} className="fill-yellow-100" />
                                     Mở khóa
                                 </button>
                                 <div className="mt-2 text-xs font-black text-yellow-700">
@@ -894,7 +894,7 @@ export default function ColoringApp({
                                     aria-label="Đóng mẫu"
                                     className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
                                 >
-                                    <X size={17} />
+                                    <X size={21} />
                                 </button>
                                 <div className="mb-2 pr-8 text-left">
                                     <div className="text-xs font-black uppercase text-pink-500">Mẫu phối màu</div>
@@ -917,7 +917,7 @@ export default function ColoringApp({
                                     aria-label="Đóng 3D"
                                     className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
                                 >
-                                    <X size={17} />
+                                    <X size={21} />
                                 </button>
                                 <div className="mb-2 pr-9 text-left">
                                     <div className="text-xs font-black uppercase text-indigo-500">Xem 3D</div>
@@ -932,8 +932,8 @@ export default function ColoringApp({
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-0.5 border-t border-[#e2e8f0] bg-white px-1.5 py-0.5">
-                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1">
+                <div className="flex shrink-0 flex-col gap-1.5 border-t border-[#e2e8f0] bg-white px-2 py-1.5">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5">
                         {Object.keys(colorThemes).map(theme => (
                             <button
                                 type="button"
@@ -943,13 +943,13 @@ export default function ColoringApp({
                                     setActiveColor(colorThemes[theme][0]);
                                     setIsEraserActive(false);
                                 }}
-                                className={`h-6 rounded-lg border-none px-1 text-[11px] font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
+                                className={`h-9 rounded-lg border-none px-1 text-sm font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
                             >
                                 {THEME_LABELS[theme] || theme}
                             </button>
                         ))}
                         <label
-                            className="relative grid h-6 w-8 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
+                            className="relative grid h-9 w-11 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
                             title="Chọn màu tự do"
                             aria-label="Chọn màu tự do"
                         >
@@ -966,7 +966,7 @@ export default function ColoringApp({
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-6 justify-items-center gap-0.5">
+                    <div className="grid grid-cols-6 justify-items-center gap-1.5">
                         {colorThemes[activeTheme].map((color, index) => (
                             <button
                                 type="button"
@@ -976,22 +976,22 @@ export default function ColoringApp({
                                     setIsEraserActive(false);
                                 }}
                                 style={{ backgroundColor: color }}
-                                className={`h-9 w-9 cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-10 md:w-10 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-[#cbd5e0]'}`}
+                                className={`h-12 w-12 cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-12 md:w-12 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-[#cbd5e0]'}`}
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-6 gap-0.5">
+                    <div className="grid grid-cols-6 gap-1.5">
                         <button
                             type="button"
                             onClick={() => { setShowThreeDPreview(false); setShowSamplePreview(prev => !prev); }}
                             disabled={!isCurrentUnlocked}
                             title="Xem mẫu phối màu"
                             aria-label="Xem mẫu phối màu"
-                            className="grid h-7 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-11 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Sparkles size={17} />
+                            <Sparkles size={21} />
                         </button>
                         <button
                             type="button"
@@ -999,9 +999,9 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS}
                             title="Xem 3D"
                             aria-label="Xem 3D"
-                            className="grid h-7 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-11 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Cuboid size={17} />
+                            <Cuboid size={21} />
                         </button>
                         <button
                             type="button"
@@ -1009,9 +1009,9 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canUndo}
                             title="Hoàn tác"
                             aria-label="Hoàn tác"
-                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-11 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Undo2 size={17} />
+                            <Undo2 size={21} />
                         </button>
                         <button
                             type="button"
@@ -1019,9 +1019,9 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canRedo}
                             title="Làm lại"
                             aria-label="Làm lại"
-                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-11 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Redo2 size={17} />
+                            <Redo2 size={21} />
                         </button>
                         <button
                             type="button"
@@ -1029,9 +1029,9 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Cục tẩy"
                             aria-label="Cục tẩy"
-                            className={`grid h-7 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
+                            className={`grid h-11 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
                         >
-                            <Eraser size={17} />
+                            <Eraser size={21} />
                         </button>
                         <button
                             type="button"
@@ -1039,9 +1039,9 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Vẽ lại"
                             aria-label="Vẽ lại"
-                            className="grid h-7 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-11 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <RotateCcw size={17} />
+                            <RotateCcw size={21} />
                         </button>
                     </div>
                 </div>
