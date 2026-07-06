@@ -14,11 +14,14 @@ const MAX_ZOOM = 1.75;
 const ZOOM_STEP = 0.15;
 const THREE_PREVIEW_READY_PROGRESS = 100;
 const BACKGROUND_CONFIRM_MS = 2200;
+// Mỗi palette: [nền dịu, màu chủ đạo (lặp lại nhiều lần) + sắc độ nhạt + điểm nhấn hài hòa]
 const SAMPLE_PALETTES = [
-    ['#dff6ff', '#36a2eb', '#1f78b4', '#ffd166', '#f97316', '#8b5cf6', '#22c55e', '#f43f5e'],
-    ['#fff7ed', '#fb7185', '#f97316', '#facc15', '#34d399', '#38bdf8', '#6366f1', '#a855f7'],
-    ['#f0fdf4', '#16a34a', '#65a30d', '#f59e0b', '#ef4444', '#0ea5e9', '#7c3aed', '#334155'],
-    ['#fdf2f8', '#ec4899', '#fb7185', '#fbbf24', '#60a5fa', '#2dd4bf', '#a78bfa', '#475569'],
+    ['#eaf6ff', '#5eb3e4', '#a9d8f0', '#5eb3e4', '#5fc9c2', '#5eb3e4', '#a9d8f0', '#f6a58f'],
+    ['#fff4ec', '#f7936f', '#ffc9a3', '#f7936f', '#ffd36e', '#f7936f', '#ffc9a3', '#ef8fa0'],
+    ['#eef8ec', '#7cc47a', '#bfe3ab', '#7cc47a', '#d6e36b', '#66c6a8', '#7cc47a', '#bfe3ab'],
+    ['#f5f0fb', '#a78bd0', '#cdbce8', '#a78bd0', '#e6a3cf', '#a78bd0', '#cdbce8', '#8fa0e0'],
+    ['#fffaf0', '#ffc857', '#ffe0a3', '#ffc857', '#ff9f68', '#ffc857', '#ffe0a3', '#9fd67a'],
+    ['#fff0f6', '#f78fb3', '#ffc2d6', '#f78fb3', '#c39be0', '#f78fb3', '#ffc2d6', '#ffb391'],
 ];
 
 let sharedAudioContext = null;
