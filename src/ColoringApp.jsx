@@ -879,6 +879,49 @@ export default function ColoringApp({
                     )}
                 </div>
 
+                <div className="flex shrink-0 items-center justify-center gap-3 border-t border-[#e2e8f0] bg-white px-1.5 py-1">
+                    <button
+                        type="button"
+                        onClick={undo}
+                        disabled={!isCurrentUnlocked || !canUndo}
+                        title="Hoàn tác"
+                        aria-label="Hoàn tác"
+                        className="grid h-8 w-8 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        <Undo2 size={18} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={redo}
+                        disabled={!isCurrentUnlocked || !canRedo}
+                        title="Làm lại"
+                        aria-label="Làm lại"
+                        className="grid h-8 w-8 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        <Redo2 size={18} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsEraserActive(previous => !previous)}
+                        disabled={!isCurrentUnlocked}
+                        title="Cục tẩy"
+                        aria-label="Cục tẩy"
+                        className={`grid h-8 w-8 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
+                    >
+                        <Eraser size={18} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={clearCanvas}
+                        disabled={!isCurrentUnlocked}
+                        title="Vẽ lại"
+                        aria-label="Vẽ lại"
+                        className="grid h-8 w-8 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        <RotateCcw size={18} />
+                    </button>
+                </div>
+
                 <div className="flex shrink-0 flex-col gap-0.5 border-t border-[#e2e8f0] bg-white px-1.5 py-0.5">
                     <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1">
                         {Object.keys(colorThemes).map(theme => (
@@ -929,7 +972,7 @@ export default function ColoringApp({
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-9 gap-0.5">
+                    <div className="grid grid-cols-5 gap-0.5">
                         <button
                             type="button"
                             onClick={() => setShowSamplePreview(true)}
@@ -978,46 +1021,6 @@ export default function ColoringApp({
                             className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Plus size={17} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={undo}
-                            disabled={!isCurrentUnlocked || !canUndo}
-                            title="Hoàn tác"
-                            aria-label="Hoàn tác"
-                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <Undo2 size={17} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={redo}
-                            disabled={!isCurrentUnlocked || !canRedo}
-                            title="Làm lại"
-                            aria-label="Làm lại"
-                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <Redo2 size={17} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsEraserActive(previous => !previous)}
-                            disabled={!isCurrentUnlocked}
-                            title="Cục tẩy"
-                            aria-label="Cục tẩy"
-                            className={`grid h-7 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
-                        >
-                            <Eraser size={17} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={clearCanvas}
-                            disabled={!isCurrentUnlocked}
-                            title="Vẽ lại"
-                            aria-label="Vẽ lại"
-                            className="grid h-7 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <RotateCcw size={17} />
                         </button>
                     </div>
                 </div>
