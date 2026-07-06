@@ -10,8 +10,8 @@ export const pokemonNames = [
   'Chikorita Cỏ', 'Dragonite Rồng', 'Clefairy Tiên', 'Togepi Trứng', 'Poliwhirl Nòng Nọc', 'Diglett Chũi', 'Caterpie Sâu', 'Zubat Dơi', 'Hitmonchan Đấm Bốc', 'Staryu Sao Biển',
   'Sylveon Tiên', 'Vulpix Cáo Lửa', 'Lapras Biển', 'Slowpoke Chậm Chạp', 'Cubone Xương', 'Magikarp Cá Chép', 'Ekans Rắn', 'Leafeon Lá', 'Rattata Chuột', 'Totodile Cá Sấu'
 ];
-export const animeEmojis = ['👧', '🥷', '🧙'];
-export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ'];
+export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝'];
+export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí'];
 
 export const colorThemes = {
     nature: ["#2ecc71", "#27ae60", "#3498db", "#2980b9", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#8e44ad", "#34495e", "#fdfdfd", "#f3e9d2"],
@@ -1543,5 +1543,161 @@ export const coloringSVGs = {
             <path class="colorable" d="M190,258 Q200,268 210,258" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
             <!-- Áo choàng -->
             <path class="colorable" d="M162,300 C178,296 222,296 238,300 L268,362 L132,362 Z" fill="#ffffff"/>
+        </svg>`,
+  64: `<svg id="svg-64" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M122,150 L138,94 L160,134 L182,84 L200,130 L218,84 L240,134 L262,94 L278,150 C258,118 142,118 122,150 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="205" rx="74" ry="76" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="208" rx="19" ry="24" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="208" rx="19" ry="24" fill="#ffffff"/>
+            <circle cx="168" cy="213" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="213" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="150" cy="238" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="250" cy="238" r="10" fill="#ffffff"/>
+            <path class="colorable" d="M186,248 Q200,258 214,248" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M156,302 C172,298 228,298 244,302 L274,362 L126,362 Z" fill="#ffffff"/>
+            <path class="colorable" d="M186,302 L200,330 L214,302 Z" fill="#ffffff"/>
+        </svg>`,
+  65: `<svg id="svg-65" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M128,150 L116,86 L178,126 Z" fill="#ffffff"/>
+            <path class="colorable" d="M272,150 L284,86 L222,126 Z" fill="#ffffff"/>
+            <path class="colorable" d="M140,140 L133,106 L166,126 Z" fill="#ffffff"/>
+            <path class="colorable" d="M260,140 L267,106 L234,126 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="210" rx="78" ry="74" fill="#ffffff"/>
+            <ellipse class="colorable" cx="166" cy="205" rx="19" ry="24" fill="#ffffff"/>
+            <ellipse class="colorable" cx="234" cy="205" rx="19" ry="24" fill="#ffffff"/>
+            <circle cx="166" cy="210" r="8" fill="#1a202c"/>
+            <circle cx="234" cy="210" r="8" fill="#1a202c"/>
+            <path class="colorable" d="M193,230 L207,230 L200,239 Z" fill="#ffffff"/>
+            <line x1="118" y1="230" x2="156" y2="234" stroke="#1a202c" stroke-width="3"/>
+            <line x1="118" y1="246" x2="156" y2="242" stroke="#1a202c" stroke-width="3"/>
+            <line x1="282" y1="230" x2="244" y2="234" stroke="#1a202c" stroke-width="3"/>
+            <line x1="282" y1="246" x2="244" y2="242" stroke="#1a202c" stroke-width="3"/>
+            <path class="colorable" d="M182,246 Q200,262 218,246" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M156,300 C172,296 228,296 244,300 L274,362 L126,362 Z" fill="#ffffff"/>
+        </svg>`,
+  66: `<svg id="svg-66" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <ellipse class="colorable" cx="112" cy="235" rx="30" ry="58" fill="#ffffff"/>
+            <ellipse class="colorable" cx="288" cy="235" rx="30" ry="58" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="200" rx="74" ry="78" fill="#ffffff"/>
+            <path class="colorable" d="M128,168 C134,110 184,96 200,132 C216,96 266,110 272,168 C263,142 240,152 230,140 C220,160 180,160 170,140 C160,152 137,142 128,168 Z" fill="#ffffff"/>
+            <path class="colorable" d="M248,118 L254,132 L269,132 L257,141 L262,156 L248,147 L234,156 L239,141 L227,132 L242,132 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="205" rx="19" ry="26" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="205" rx="19" ry="26" fill="#ffffff"/>
+            <circle cx="168" cy="211" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="211" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="148" cy="235" r="11" fill="#ffffff"/>
+            <circle class="colorable" cx="252" cy="235" r="11" fill="#ffffff"/>
+            <path class="colorable" d="M188,246 Q200,257 212,246" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M156,300 C172,296 228,296 244,300 L274,362 L126,362 Z" fill="#ffffff"/>
+        </svg>`,
+  67: `<svg id="svg-67" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M132,120 C124,190 128,300 150,340 C142,290 146,230 158,200 Z" fill="#ffffff"/>
+            <path class="colorable" d="M268,120 C276,190 272,300 250,340 C258,290 254,230 242,200 Z" fill="#ffffff"/>
+            <path class="colorable" d="M138,122 L138,72 L165,104 L200,62 L235,104 L262,72 L262,122 Z" fill="#ffffff"/>
+            <circle class="colorable" cx="200" cy="80" r="8" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="205" rx="72" ry="76" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="208" rx="19" ry="25" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="208" rx="19" ry="25" fill="#ffffff"/>
+            <circle cx="168" cy="213" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="213" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="150" cy="238" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="250" cy="238" r="10" fill="#ffffff"/>
+            <path class="colorable" d="M188,248 Q200,258 212,248" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M154,302 C172,296 228,296 246,302 L282,362 L118,362 Z" fill="#ffffff"/>
+        </svg>`,
+  68: `<svg id="svg-68" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M124,158 C132,104 200,92 276,158 C258,122 142,122 124,158 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="205" rx="74" ry="76" fill="#ffffff"/>
+            <path class="colorable" d="M132,196 C155,178 245,178 268,196 C260,220 234,224 200,220 C166,224 140,220 132,196 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="200" rx="17" ry="20" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="200" rx="17" ry="20" fill="#ffffff"/>
+            <circle cx="168" cy="205" r="7" fill="#1a202c"/>
+            <circle cx="232" cy="205" r="7" fill="#1a202c"/>
+            <path class="colorable" d="M188,250 Q200,260 212,250" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M150,300 C170,296 230,296 250,300 L278,362 L122,362 Z" fill="#ffffff"/>
+            <path class="colorable" d="M196,312 L184,334 L199,334 L189,356 L216,328 L200,328 L211,312 Z" fill="#ffffff"/>
+        </svg>`,
+  69: `<svg id="svg-69" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M126,150 L104,80 L172,122 Z" fill="#ffffff"/>
+            <path class="colorable" d="M274,150 L296,80 L228,122 Z" fill="#ffffff"/>
+            <path class="colorable" d="M138,138 L124,98 L162,122 Z" fill="#ffffff"/>
+            <path class="colorable" d="M262,138 L276,98 L238,122 Z" fill="#ffffff"/>
+            <path class="colorable" d="M130,190 C122,260 138,315 152,338 C143,290 148,235 160,210 Z" fill="#ffffff"/>
+            <path class="colorable" d="M270,190 C278,260 262,315 248,338 C257,290 252,235 240,210 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="212" rx="74" ry="72" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="208" rx="19" ry="24" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="208" rx="19" ry="24" fill="#ffffff"/>
+            <circle cx="168" cy="213" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="213" r="8" fill="#1a202c"/>
+            <path class="colorable" d="M193,232 L207,232 L200,241 Z" fill="#ffffff"/>
+            <path class="colorable" d="M186,252 Q200,262 214,252" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M156,302 C172,298 228,298 244,302 L274,362 L126,362 Z" fill="#ffffff"/>
+        </svg>`,
+  70: `<svg id="svg-70" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <ellipse class="colorable" cx="200" cy="70" rx="52" ry="15" fill="#ffffff"/>
+            <path class="colorable" d="M150,296 C108,272 92,308 118,342 C132,320 148,318 160,320 Z" fill="#ffffff"/>
+            <path class="colorable" d="M250,296 C292,272 308,308 282,342 C268,320 252,318 240,320 Z" fill="#ffffff"/>
+            <path class="colorable" d="M124,160 C132,108 200,98 276,160 C258,124 142,124 124,160 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="208" rx="72" ry="76" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="210" rx="19" ry="25" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="210" rx="19" ry="25" fill="#ffffff"/>
+            <circle cx="168" cy="215" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="215" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="150" cy="240" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="250" cy="240" r="10" fill="#ffffff"/>
+            <path class="colorable" d="M188,250 Q200,260 212,250" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M160,304 C174,300 226,300 240,304 L266,362 L134,362 Z" fill="#ffffff"/>
+        </svg>`,
+  71: `<svg id="svg-71" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <line x1="200" y1="130" x2="200" y2="98" stroke="#1a202c" stroke-width="5"/>
+            <circle class="colorable" cx="200" cy="92" r="14" fill="#ffffff"/>
+            <rect class="colorable" x="126" y="130" width="148" height="132" rx="26" fill="#ffffff"/>
+            <rect class="colorable" x="104" y="170" width="22" height="44" rx="8" fill="#ffffff"/>
+            <rect class="colorable" x="274" y="170" width="22" height="44" rx="8" fill="#ffffff"/>
+            <circle class="colorable" cx="170" cy="185" r="20" fill="#ffffff"/>
+            <circle class="colorable" cx="230" cy="185" r="20" fill="#ffffff"/>
+            <circle cx="170" cy="185" r="8" fill="#1a202c"/>
+            <circle cx="230" cy="185" r="8" fill="#1a202c"/>
+            <rect class="colorable" x="164" y="225" width="72" height="20" rx="8" fill="#ffffff"/>
+            <rect class="colorable" x="150" y="286" width="100" height="76" rx="16" fill="#ffffff"/>
+            <circle class="colorable" cx="200" cy="322" r="16" fill="#ffffff"/>
+        </svg>`,
+  72: `<svg id="svg-72" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M142,150 C118,150 112,110 144,106 C142,78 258,78 256,106 C288,110 282,150 258,150 Z" fill="#ffffff"/>
+            <rect class="colorable" x="142" y="146" width="116" height="22" rx="6" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="215" rx="72" ry="72" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="212" rx="19" ry="24" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="212" rx="19" ry="24" fill="#ffffff"/>
+            <circle cx="168" cy="217" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="217" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="150" cy="242" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="250" cy="242" r="10" fill="#ffffff"/>
+            <path class="colorable" d="M188,252 Q200,262 212,252" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M156,305 C172,300 228,300 244,305 L274,362 L126,362 Z" fill="#ffffff"/>
+        </svg>`,
+  73: `<svg id="svg-73" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M126,210 L92,178 L130,186 Z" fill="#ffffff"/>
+            <path class="colorable" d="M274,210 L308,178 L270,186 Z" fill="#ffffff"/>
+            <path class="colorable" d="M126,158 C134,104 200,92 276,158 C258,120 142,120 126,158 Z" fill="#ffffff"/>
+            <path class="colorable" d="M232,120 L250,96 L256,120 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="208" rx="74" ry="76" fill="#ffffff"/>
+            <ellipse class="colorable" cx="168" cy="210" rx="19" ry="25" fill="#ffffff"/>
+            <ellipse class="colorable" cx="232" cy="210" rx="19" ry="25" fill="#ffffff"/>
+            <circle cx="168" cy="215" r="8" fill="#1a202c"/>
+            <circle cx="232" cy="215" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="150" cy="240" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="250" cy="240" r="10" fill="#ffffff"/>
+            <path class="colorable" d="M188,250 Q200,260 212,250" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M156,302 C172,298 228,298 244,302 L274,362 L126,362 Z" fill="#ffffff"/>
         </svg>`,
 };
