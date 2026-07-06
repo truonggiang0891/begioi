@@ -913,7 +913,7 @@ export default function ColoringApp({
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-10 justify-items-center gap-0.5">
+                    <div className="grid grid-cols-6 justify-items-center gap-0.5">
                         {colorThemes[activeTheme].map((color, index) => (
                             <button
                                 type="button"
@@ -923,7 +923,7 @@ export default function ColoringApp({
                                     setIsEraserActive(false);
                                 }}
                                 style={{ backgroundColor: color }}
-                                className={`aspect-square w-full cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-white'}`}
+                                className={`h-9 w-9 cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-10 md:w-10 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-[#cbd5e0]'}`}
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
