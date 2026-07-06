@@ -18,7 +18,7 @@ export const colorThemes = {
 };
 
 export const coloringSVGs = {
-  1: `<svg id="svg-1" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  1: `<svg id="svg-1" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Vòi nước -->
             <path class="colorable" d="M140,80 Q100,40 60,60 M140,80 Q140,30 150,20 M140,80 Q180,40 220,60" stroke="#1a202c" stroke-width="6" fill="none" stroke-linecap="round"/>
@@ -35,7 +35,7 @@ export const coloringSVGs = {
             <circle class="colorable" cx="320" cy="100" r="10" fill="#ffffff"/>
             <circle cx="280" cy="170" r="8" fill="#1a202c"/>
         </svg>`,
-  2: `<svg id="svg-2" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  2: `<svg id="svg-2" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân gấu -->
             <path class="colorable" d="M130,160 C120,320 280,320 270,160 Z" fill="#ffffff"/>
@@ -60,7 +60,7 @@ export const coloringSVGs = {
             <circle cx="200" cy="160" r="10" fill="#1a202c"/>
             <path d="M200,170 L200,185 M185,185 Q200,200 215,185" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  3: `<svg id="svg-3" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  3: `<svg id="svg-3" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Đuôi mèo uốn lượn -->
             <path class="colorable" d="M250,290 C350,290 350,150 300,150 C280,150 280,180 300,180 C320,180 310,250 260,250" stroke="#1a202c" stroke-width="20" fill="none" stroke-linecap="round"/>
@@ -84,7 +84,7 @@ export const coloringSVGs = {
             <line x1="300" y1="150" x2="260" y2="160" stroke="#1a202c" stroke-width="4" stroke-linecap="round"/>
             <line x1="300" y1="170" x2="260" y2="170" stroke="#1a202c" stroke-width="4" stroke-linecap="round"/>
         </svg>`,
-  4: `<svg id="svg-4" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  4: `<svg id="svg-4" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân chó -->
             <path class="colorable" d="M130,160 C110,320 290,320 270,160 Z" fill="#ffffff"/>
@@ -106,7 +106,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="200" cy="165" rx="45" ry="30" fill="#ffffff"/>
             <path d="M200,150 Q180,175 200,180 Q220,175 200,150 Z" fill="#1a202c"/>
         </svg>`,
-  5: `<svg id="svg-5" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  5: `<svg id="svg-5" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tai dài -->
             <ellipse class="colorable" cx="150" cy="80" rx="25" ry="80" fill="#ffffff"/>
@@ -131,7 +131,7 @@ export const coloringSVGs = {
             <line x1="200" y1="190" x2="200" y2="210" stroke="#1a202c" stroke-width="4"/>
             <circle cx="200" cy="170" r="6" fill="#1a202c"/>
         </svg>`,
-  6: `<svg id="svg-6" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  6: `<svg id="svg-6" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân tròn -->
             <circle class="colorable" cx="200" cy="240" r="90" fill="#ffffff"/>
@@ -151,7 +151,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="200" cy="170" rx="45" ry="30" fill="#ffffff"/>
             <circle cx="185" cy="170" r="6" fill="#1a202c"/><circle cx="215" cy="170" r="6" fill="#1a202c"/>
         </svg>`,
-  7: `<svg id="svg-7" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  7: `<svg id="svg-7" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Lá sen -->
             <ellipse class="colorable" cx="200" cy="340" rx="160" ry="40" fill="#ffffff"/>
@@ -176,7 +176,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="200" cy="140" rx="90" ry="60" fill="#ffffff"/>
             <path class="colorable" d="M140,160 Q200,200 260,160" fill="#ffffff"/>
         </svg>`,
-  8: `<svg id="svg-8" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  8: `<svg id="svg-8" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Cánh -->
             <ellipse class="colorable" cx="100" cy="200" rx="25" ry="90" transform="rotate(25 100 200)" fill="#ffffff"/>
@@ -195,7 +195,7 @@ export const coloringSVGs = {
             <!-- Mỏ -->
             <polygon class="colorable" points="180,160 220,160 200,195" fill="#ffffff"/>
         </svg>`,
-  9: `<svg id="svg-9" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  9: `<svg id="svg-9" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Cành cây -->
             <path class="colorable" d="M20,300 Q200,340 380,280 L380,320 Q200,380 20,340 Z" fill="#ffffff"/>
@@ -220,7 +220,7 @@ export const coloringSVGs = {
             <polygon class="colorable" points="130,90 100,40 170,80" fill="#ffffff"/>
             <polygon class="colorable" points="270,90 300,40 230,80" fill="#ffffff"/>
         </svg>`,
-  10: `<svg id="svg-10" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  10: `<svg id="svg-10" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Bong bóng -->
             <circle class="colorable" cx="80" cy="120" r="15" fill="#ffffff"/><circle class="colorable" cx="60" cy="80" r="10" fill="#ffffff"/><circle class="colorable" cx="100" cy="50" r="20" fill="#ffffff"/>
@@ -241,7 +241,7 @@ export const coloringSVGs = {
             <!-- Vảy cá -->
             <path d="M150,170 Q170,190 150,210 M180,160 Q200,180 180,200 M210,180 Q230,200 210,220" stroke="#1a202c" stroke-width="4" fill="none"/>
         </svg>`,
-  11: `<svg id="svg-11" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  11: `<svg id="svg-11" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Bốn chân -->
             <ellipse class="colorable" cx="110" cy="280" rx="25" ry="35" transform="rotate(30 110 280)" fill="#ffffff"/>
@@ -259,7 +259,7 @@ export const coloringSVGs = {
             <path d="M200,130 L200,160 M200,280 L200,310 M130,220 L100,220 M270,220 L300,220" stroke="#1a202c" stroke-width="4"/>
             <polygon class="colorable" points="200,160 240,190 240,250 200,280 160,250 160,190" fill="#ffffff"/>
         </svg>`,
-  12: `<svg id="svg-12" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  12: `<svg id="svg-12" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- 6 Chân nhện -->
             <path class="colorable" d="M120,200 L60,180 L40,240 M110,230 L50,230 L30,290 M130,260 L80,280 L70,340" stroke="#1a202c" stroke-width="10" fill="none" stroke-linejoin="round"/>
@@ -276,7 +276,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="200" cy="220" rx="100" ry="70" fill="#ffffff"/>
             <path d="M170,240 Q200,260 230,240" stroke="#1a202c" stroke-width="4" fill="none"/>
         </svg>`,
-  13: `<svg id="svg-13" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  13: `<svg id="svg-13" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Đuôi -->
             <path class="colorable" d="M260,280 C340,280 340,360 260,360 C240,360 240,340 260,340 C280,340 280,300 260,300" stroke="#1a202c" stroke-width="8" fill="none" stroke-linecap="round"/>
@@ -303,7 +303,7 @@ export const coloringSVGs = {
             <line x1="180" y1="190" x2="130" y2="180" stroke="#1a202c" stroke-width="4"/><line x1="180" y1="200" x2="130" y2="210" stroke="#1a202c" stroke-width="4"/>
             <line x1="220" y1="190" x2="270" y2="180" stroke="#1a202c" stroke-width="4"/><line x1="220" y1="200" x2="270" y2="210" stroke="#1a202c" stroke-width="4"/>
         </svg>`,
-  14: `<svg id="svg-14" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  14: `<svg id="svg-14" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Đuôi bồng bềnh -->
             <path class="colorable" d="M240,280 C320,340 380,240 320,160 C280,180 280,240 260,260 Z" fill="#ffffff"/>
@@ -322,7 +322,7 @@ export const coloringSVGs = {
             <circle cx="160" cy="130" r="6" fill="#1a202c"/><circle cx="240" cy="130" r="6" fill="#1a202c"/>
             <circle class="colorable" cx="200" cy="210" r="10" fill="#1a202c"/>
         </svg>`,
-  15: `<svg id="svg-15" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  15: `<svg id="svg-15" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân -->
             <path class="colorable" d="M140,200 C120,320 280,320 260,200 Z" fill="#ffffff"/>
@@ -343,7 +343,7 @@ export const coloringSVGs = {
             <polygon class="colorable" points="190,140 210,140 200,160" fill="#ffffff"/>
             <path d="M200,160 Q180,180 160,160 M200,160 Q220,180 240,160" stroke="#1a202c" stroke-width="4" fill="none"/>
         </svg>`,
-  16: `<svg id="svg-16" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  16: `<svg id="svg-16" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Đuôi -->
             <path class="colorable" d="M260,280 C340,300 360,200 320,150" stroke="#1a202c" stroke-width="15" fill="none" stroke-linecap="round"/>
@@ -371,7 +371,7 @@ export const coloringSVGs = {
             <polygon points="190,160 210,160 200,175" fill="#1a202c"/>
             <path d="M200,175 L200,190 M185,190 Q200,205 215,190" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  17: `<svg id="svg-17" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  17: `<svg id="svg-17" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tai khổng lồ -->
             <ellipse class="colorable" cx="80" cy="160" rx="60" ry="100" transform="rotate(-15 80 160)" fill="#ffffff"/>
@@ -393,7 +393,7 @@ export const coloringSVGs = {
             <!-- Vòi voi -->
             <path class="colorable" d="M170,160 C170,300 280,260 250,200 C230,200 230,230 200,230 C190,230 190,160 230,160 Z" fill="#ffffff"/>
         </svg>`,
-  18: `<svg id="svg-18" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  18: `<svg id="svg-18" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân mập -->
             <ellipse class="colorable" cx="200" cy="240" rx="110" ry="100" fill="#ffffff"/>
@@ -414,7 +414,7 @@ export const coloringSVGs = {
             <circle cx="150" cy="150" r="10" fill="#1a202c"/><circle cx="250" cy="150" r="10" fill="#1a202c"/>
             <path d="M160,180 Q200,200 240,180" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  19: `<svg id="svg-19" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  19: `<svg id="svg-19" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Đuôi dài cuộn -->
             <path class="colorable" d="M260,260 C360,260 360,160 310,160 C280,160 280,200 310,200" stroke="#1a202c" stroke-width="12" fill="none" stroke-linecap="round"/>
@@ -440,7 +440,7 @@ export const coloringSVGs = {
             <circle cx="170" cy="130" r="8" fill="#1a202c"/><circle cx="230" cy="130" r="8" fill="#1a202c"/>
             <path d="M180,160 Q200,170 220,160" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  20: `<svg id="svg-20" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  20: `<svg id="svg-20" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân béo -->
             <ellipse class="colorable" cx="200" cy="240" rx="90" ry="100" fill="#ffffff"/>
@@ -467,7 +467,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="200" cy="165" rx="15" ry="10" fill="#1a202c"/>
             <path d="M185,180 Q200,195 215,180" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  21: `<svg id="svg-21" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  21: `<svg id="svg-21" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Gốc cây/Cành cây -->
             <path class="colorable" d="M40,300 Q200,340 360,260 L360,300 Q200,380 40,340 Z" fill="#ffffff"/>
@@ -495,7 +495,7 @@ export const coloringSVGs = {
             <!-- Miệng mỉm cười xíu xiu -->
             <path d="M190,220 Q200,230 210,220" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  22: `<svg id="svg-22" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  22: `<svg id="svg-22" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Bốn chân gầy -->
             <rect class="colorable" x="140" y="280" width="15" height="50" rx="5" fill="#ffffff"/>
@@ -513,7 +513,7 @@ export const coloringSVGs = {
             <!-- Lông xù trên đầu -->
             <path class="colorable" d="M100,110 A20,20 0 0,1 120,90 A25,25 0 0,1 160,110 A20,20 0 0,1 100,110 Z" fill="#ffffff"/>
         </svg>`,
-  23: `<svg id="svg-23" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  23: `<svg id="svg-23" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân vuông vức béo -->
             <rect class="colorable" x="100" y="180" width="200" height="120" rx="40" fill="#ffffff"/>
@@ -539,7 +539,7 @@ export const coloringSVGs = {
             <circle cx="170" cy="120" r="8" fill="#1a202c"/><circle cx="230" cy="120" r="8" fill="#1a202c"/>
             <circle cx="170" cy="170" r="6" fill="#1a202c"/><circle cx="230" cy="170" r="6" fill="#1a202c"/>
         </svg>`,
-  24: `<svg id="svg-24" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  24: `<svg id="svg-24" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân -->
             <ellipse class="colorable" cx="200" cy="240" rx="90" ry="70" fill="#ffffff"/>
@@ -562,7 +562,7 @@ export const coloringSVGs = {
             <circle cx="100" cy="80" r="4" fill="#1a202c"/>
             <path d="M80,90 Q100,110 110,100" stroke="#1a202c" stroke-width="4" fill="none"/>
         </svg>`,
-  25: `<svg id="svg-25" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  25: `<svg id="svg-25" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Gạc hươu hùng vĩ -->
             <path class="colorable" d="M170,110 L140,50 L100,70 M140,50 L120,20" stroke="#1a202c" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -584,7 +584,7 @@ export const coloringSVGs = {
             <circle cx="170" cy="130" r="8" fill="#1a202c"/><circle cx="230" cy="130" r="8" fill="#1a202c"/>
             <ellipse class="colorable" cx="200" cy="190" rx="20" ry="15" fill="#1a202c"/>
         </svg>`,
-  26: `<svg id="svg-26" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  26: `<svg id="svg-26" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Cánh dơi dang rộng -->
             <path class="colorable" d="M150,180 Q80,80 20,140 Q60,220 80,180 Q100,260 160,220 Z" fill="#ffffff"/>
@@ -604,7 +604,7 @@ export const coloringSVGs = {
             <polygon points="190,170 195,185 200,170" fill="#ffffff" stroke="#1a202c" stroke-width="2"/>
             <polygon points="210,170 205,185 200,170" fill="#ffffff" stroke="#1a202c" stroke-width="2"/>
         </svg>`,
-  27: `<svg id="svg-27" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  27: `<svg id="svg-27" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Cánh trên -->
             <ellipse class="colorable" cx="120" cy="140" rx="80" ry="90" transform="rotate(-30 120 140)" fill="#ffffff"/>
@@ -626,7 +626,7 @@ export const coloringSVGs = {
             <circle cx="190" cy="75" r="4" fill="#1a202c"/><circle cx="210" cy="75" r="4" fill="#1a202c"/>
             <path d="M195,85 Q200,90 205,85" stroke="#1a202c" stroke-width="2" fill="none"/>
         </svg>`,
-  28: `<svg id="svg-28" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  28: `<svg id="svg-28" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- 6 Chân -->
             <path d="M100,160 L50,140 M100,220 L40,220 M100,280 L60,320" stroke="#1a202c" stroke-width="8" stroke-linecap="round"/>
@@ -648,7 +648,7 @@ export const coloringSVGs = {
             <circle class="colorable" cx="200" cy="80" r="40" fill="#ffffff"/>
             <circle cx="185" cy="70" r="6" fill="#1a202c"/><circle cx="215" cy="70" r="6" fill="#1a202c"/>
         </svg>`,
-  29: `<svg id="svg-29" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  29: `<svg id="svg-29" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Cánh ong -->
             <ellipse class="colorable" cx="160" cy="110" rx="40" ry="80" transform="rotate(-45 160 110)" fill="#ffffff"/>
@@ -666,7 +666,7 @@ export const coloringSVGs = {
             <circle cx="85" cy="190" r="8" fill="#1a202c"/><circle cx="115" cy="190" r="8" fill="#1a202c"/>
             <path d="M90,220 Q100,230 110,220" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  30: `<svg id="svg-30" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  30: `<svg id="svg-30" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Thân mềm trườn -->
             <path class="colorable" d="M60,260 L320,260 C350,260 350,300 320,300 L60,300 C30,300 30,260 60,260 Z" fill="#ffffff"/>
@@ -682,7 +682,7 @@ export const coloringSVGs = {
             <circle class="colorable" cx="220" cy="170" r="100" fill="#ffffff"/>
             <path d="M220,70 A100,100 0 0,1 320,170 A100,100 0 0,1 220,270 A80,80 0 0,1 140,190 A60,60 0 0,1 200,130 A40,40 0 0,1 240,170 A20,20 0 0,1 220,190" stroke="#1a202c" stroke-width="8" fill="none" stroke-linecap="round"/>
         </svg>`,
-  31: `<svg id="svg-31" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  31: `<svg id="svg-31" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M260,260 L320,260 L300,200 L360,200 L340,140 L280,160 Z" fill="#ffffff" stroke="#1a202c" stroke-width="4" stroke-linejoin="round"/>
@@ -710,7 +710,7 @@ export const coloringSVGs = {
             <circle cx="200" cy="155" r="3" fill="#1a202c"/>
             <path d="M185,165 Q200,175 200,165 Q200,175 215,165" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  32: `<svg id="svg-32" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  32: `<svg id="svg-32" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Bulb -->
             <path class="colorable" d="M130,160 C100,80 200,40 200,100 C200,40 300,80 270,160 C290,120 330,150 270,200 C200,220 130,200 130,160 Z" fill="#ffffff"/>
@@ -734,7 +734,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="240" cy="180" rx="10" ry="15" transform="rotate(-15 240 180)" fill="#ffffff"/>
             <path d="M185,210 Q200,205 215,210" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  33: `<svg id="svg-33" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  33: `<svg id="svg-33" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M260,260 Q320,280 340,200 Q320,240 280,240 Z" fill="#ffffff"/>
@@ -758,7 +758,7 @@ export const coloringSVGs = {
             <ellipse cx="235" cy="140" rx="6" ry="10" fill="#1a202c"/>
             <path d="M185,170 Q200,185 215,170" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  34: `<svg id="svg-34" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  34: `<svg id="svg-34" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M260,260 C320,280 350,220 310,180 C280,150 250,200 280,220 C300,230 320,210 310,190" stroke="#1a202c" stroke-width="4" fill="#ffffff"/>
@@ -781,7 +781,7 @@ export const coloringSVGs = {
             <ellipse cx="220" cy="130" rx="8" ry="12" fill="#1a202c"/>
             <path d="M180,160 Q190,170 200,160" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  35: `<svg id="svg-35" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  35: `<svg id="svg-35" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Body -->
             <circle class="colorable" cx="200" cy="200" r="100" fill="#ffffff"/>
@@ -807,7 +807,7 @@ export const coloringSVGs = {
             <!-- Mouth -->
             <path d="M190,210 Q200,230 210,210" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  36: `<svg id="svg-36" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  36: `<svg id="svg-36" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Body -->
             <ellipse class="colorable" cx="200" cy="240" rx="120" ry="110" fill="#ffffff"/>
@@ -834,7 +834,7 @@ export const coloringSVGs = {
             <!-- Mouth -->
             <path d="M190,150 L210,150" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  37: `<svg id="svg-37" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  37: `<svg id="svg-37" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M240,260 C320,320 380,240 340,180 C300,140 260,200 250,230" fill="#ffffff"/>
@@ -861,7 +861,7 @@ export const coloringSVGs = {
             <circle cx="200" cy="145" r="3" fill="#1a202c"/>
             <path d="M190,155 Q200,165 210,155" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  38: `<svg id="svg-38" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  38: `<svg id="svg-38" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Back Spikes -->
             <polygon class="colorable" points="160,100 130,40 200,80" fill="#ffffff"/>
@@ -882,7 +882,7 @@ export const coloringSVGs = {
             <path class="colorable" d="M130,220 C160,260 240,260 270,220 C240,240 160,240 130,220 Z" fill="#ffffff"/>
             <path d="M150,225 L150,240 M180,232 L180,245 M220,232 L220,245 M250,225 L250,240" stroke="#1a202c" stroke-width="4" fill="none"/>
         </svg>`,
-  39: `<svg id="svg-39" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  39: `<svg id="svg-39" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Body -->
             <ellipse class="colorable" cx="200" cy="260" rx="80" ry="90" fill="#ffffff"/>
@@ -906,7 +906,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="120" cy="160" rx="15" ry="40" transform="rotate(30 120 160)" fill="#ffffff"/>
             <ellipse class="colorable" cx="280" cy="160" rx="15" ry="40" transform="rotate(-30 280 160)" fill="#ffffff"/>
         </svg>`,
-  40: `<svg id="svg-40" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  40: `<svg id="svg-40" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M240,280 C300,280 320,200 280,180 C260,170 260,190 270,200" stroke="#1a202c" stroke-width="10" fill="none" stroke-linecap="round"/>
@@ -940,7 +940,7 @@ export const coloringSVGs = {
             <!-- Mouth -->
             <path d="M185,160 Q200,175 215,160" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  41: `<svg id="svg-41" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  41: `<svg id="svg-41" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Leaves -->
             <path class="colorable" d="M200,160 C180,60 120,40 100,80 C120,120 160,140 200,160 Z" fill="#ffffff"/>
@@ -960,7 +960,7 @@ export const coloringSVGs = {
             <circle cx="232" cy="228" r="2" fill="#ffffff"/>
             <path d="M190,250 Q200,260 210,250" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  42: `<svg id="svg-42" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  42: `<svg id="svg-42" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Wings -->
             <path class="colorable" d="M150,180 Q100,120 60,140 Q100,160 80,200 Q120,190 150,180 Z" fill="#ffffff"/>
@@ -990,7 +990,7 @@ export const coloringSVGs = {
             <ellipse class="colorable" cx="200" cy="150" rx="30" ry="20" fill="#ffffff"/>
             <circle cx="190" cy="145" r="2" fill="#1a202c"/><circle cx="210" cy="145" r="2" fill="#1a202c"/>
         </svg>`,
-  43: `<svg id="svg-43" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  43: `<svg id="svg-43" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Wings Top -->
             <path class="colorable" d="M180,180 C100,60 20,80 40,160 C60,220 160,200 180,180 Z" fill="#ffffff"/>
@@ -1020,7 +1020,7 @@ export const coloringSVGs = {
             <circle cx="170" cy="120" r="5" fill="#1a202c"/><circle cx="230" cy="120" r="5" fill="#1a202c"/>
             <path d="M195,145 Q200,150 205,145" stroke="#1a202c" stroke-width="3" fill="none" stroke-linecap="round"/>
         </svg>`,
-  44: `<svg id="svg-44" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  44: `<svg id="svg-44" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Body/Head -->
             <circle class="colorable" cx="200" cy="180" r="70" fill="#ffffff"/>
@@ -1044,7 +1044,7 @@ export const coloringSVGs = {
             <circle cx="230" cy="160" r="6" fill="#1a202c"/>
             <path d="M195,175 Q200,185 205,175" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  45: `<svg id="svg-45" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  45: `<svg id="svg-45" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M260,260 C340,300 380,220 340,160 C320,130 300,160 320,180" fill="#ffffff"/>
@@ -1067,7 +1067,7 @@ export const coloringSVGs = {
             <circle cx="145" cy="120" r="6" fill="#1a202c"/>
             <circle cx="255" cy="120" r="6" fill="#1a202c"/>
         </svg>`,
-  46: `<svg id="svg-46" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  46: `<svg id="svg-46" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Dirt base -->
             <ellipse class="colorable" cx="200" cy="320" rx="140" ry="40" fill="#ffffff"/>
@@ -1086,7 +1086,7 @@ export const coloringSVGs = {
             <ellipse cx="240" cy="150" rx="5" ry="15" fill="#1a202c"/>
             <circle cx="160" cy="142" r="2" fill="#ffffff"/><circle cx="240" cy="142" r="2" fill="#ffffff"/>
         </svg>`,
-  47: `<svg id="svg-47" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  47: `<svg id="svg-47" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Body Segments (from back to front) -->
             <circle class="colorable" cx="300" cy="260" r="30" fill="#ffffff"/>
@@ -1114,7 +1114,7 @@ export const coloringSVGs = {
             <!-- Mouth -->
             <path d="M130,180 Q140,190 150,180" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  48: `<svg id="svg-48" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  48: `<svg id="svg-48" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Wings Left -->
             <path class="colorable" d="M150,200 L40,120 L40,200 L100,260 L80,320 L160,250 Z" fill="#ffffff" stroke="#1a202c" stroke-width="4" stroke-linejoin="round"/>
@@ -1141,7 +1141,7 @@ export const coloringSVGs = {
             <polygon points="170,180 175,195 180,180" fill="#ffffff" stroke="#1a202c" stroke-width="2"/>
             <polygon points="220,180 225,195 230,180" fill="#ffffff" stroke="#1a202c" stroke-width="2"/>
         </svg>`,
-  49: `<svg id="svg-49" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  49: `<svg id="svg-49" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail (Black with eyes) -->
             <path class="colorable" d="M260,260 L320,240 L300,280 L340,300 L260,320 Z" fill="#ffffff" stroke="#1a202c" stroke-width="4"/>
@@ -1163,7 +1163,7 @@ export const coloringSVGs = {
             <!-- Mouth (Zigzag) -->
             <path d="M180,180 L190,170 L200,180 L210,170 L220,180" stroke="#1a202c" stroke-width="4" fill="none" stroke-linejoin="round"/>
         </svg>`,
-  50: `<svg id="svg-50" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  50: `<svg id="svg-50" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Long floating tail -->
             <path class="colorable" d="M230,270 C280,360 380,300 320,200 C300,150 280,180 340,160" stroke="#1a202c" stroke-width="8" fill="none" stroke-linecap="round"/>
@@ -1191,7 +1191,7 @@ export const coloringSVGs = {
             <!-- Tiny muzzle -->
             <path d="M195,155 Q200,160 205,155" stroke="#1a202c" stroke-width="3" fill="none" stroke-linecap="round"/>
         </svg>`,
-  51: `<svg id="svg-51" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  51: `<svg id="svg-51" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Wings -->
             <path class="colorable" d="M120,200 C80,180 60,220 80,240 C60,260 80,300 120,260 Z" fill="#ffffff"/>
@@ -1222,7 +1222,7 @@ export const coloringSVGs = {
             <path d="M190,200 L210,200" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
             <polygon points="195,200 200,210 205,200" fill="#ffffff" stroke="#1a202c" stroke-width="2"/>
         </svg>`,
-  52: `<svg id="svg-52" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  52: `<svg id="svg-52" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- 6 Tails -->
             <path class="colorable" d="M220,260 C300,320 380,260 320,160 C280,140 250,180 240,240" stroke="#1a202c" stroke-width="4" fill="#ffffff"/>
@@ -1251,7 +1251,7 @@ export const coloringSVGs = {
             <ellipse cx="230" cy="160" rx="6" ry="10" fill="#1a202c"/>
             <circle cx="200" cy="175" r="4" fill="#1a202c"/>
         </svg>`,
-  53: `<svg id="svg-53" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  53: `<svg id="svg-53" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Shell -->
             <path class="colorable" d="M220,240 C280,240 320,200 300,160 C270,110 190,160 220,240" fill="#ffffff"/>
@@ -1275,7 +1275,7 @@ export const coloringSVGs = {
             <ellipse cx="195" cy="120" rx="4" ry="8" fill="#1a202c"/>
             <path d="M175,135 Q180,140 185,135" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  54: `<svg id="svg-54" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  54: `<svg id="svg-54" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M260,260 C360,280 380,180 340,140 C320,120 300,160 320,180" stroke="#1a202c" stroke-width="25" fill="none" stroke-linecap="round"/>
@@ -1302,7 +1302,7 @@ export const coloringSVGs = {
             <circle cx="130" cy="175" r="2" fill="#1a202c"/>
             <path d="M100,190 Q120,205 140,190" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  55: `<svg id="svg-55" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  55: `<svg id="svg-55" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Body -->
             <ellipse class="colorable" cx="200" cy="260" rx="55" ry="70" fill="#ffffff"/>
@@ -1339,7 +1339,7 @@ export const coloringSVGs = {
             <!-- Cracks -->
             <path d="M190,90 L200,110 L180,120" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  56: `<svg id="svg-56" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  56: `<svg id="svg-56" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail Fin -->
             <path class="colorable" d="M260,200 L350,130 L320,200 L350,270 Z" fill="#ffffff"/>
@@ -1364,7 +1364,7 @@ export const coloringSVGs = {
             <!-- Scales -->
             <path d="M220,160 Q240,180 220,200 M240,170 Q260,190 240,210 M200,180 Q220,200 200,220" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  57: `<svg id="svg-57" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  57: `<svg id="svg-57" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Coiled Body -->
             <path class="colorable" d="M170,220 C100,220 100,320 180,340 C260,360 340,320 280,240 C240,180 160,260 220,280 C260,290 280,260 260,240" stroke="#1a202c" stroke-width="40" fill="none" stroke-linecap="round"/>
@@ -1387,7 +1387,7 @@ export const coloringSVGs = {
             <circle cx="192" cy="105" r="4" fill="#ffffff"/>
             <circle cx="232" cy="105" r="4" fill="#ffffff"/>
         </svg>`,
-  58: `<svg id="svg-58" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  58: `<svg id="svg-58" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Leaf -->
             <path class="colorable" d="M200,120 C200,40 280,20 340,60 C300,80 260,140 200,120 Z" fill="#ffffff"/>
@@ -1418,7 +1418,7 @@ export const coloringSVGs = {
             <!-- Mouth -->
             <path d="M185,180 Q200,195 215,180" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
         </svg>`,
-  59: `<svg id="svg-59" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  59: `<svg id="svg-59" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Fire -->
             <path class="colorable" d="M120,240 L40,160 L140,180 L100,80 L180,140 L220,60 L240,140 Z" fill="#ffffff"/>
@@ -1434,7 +1434,7 @@ export const coloringSVGs = {
             <!-- Eyes -->
             <path d="M260,160 L280,170 M300,160 L280,170" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`,
-  60: `<svg id="svg-60" class="artwork-svg w-full h-full max-h-[350px] object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  60: `<svg id="svg-60" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <!-- Tail -->
             <path class="colorable" d="M240,280 C320,320 360,300 360,260 C360,220 300,240 260,240" fill="#ffffff"/>

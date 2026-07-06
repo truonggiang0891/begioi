@@ -9,6 +9,7 @@ const THEME_LABELS = {
     magic: 'Kỳ Ảo',
 };
 const MIN_ZOOM = 0.75;
+const DEFAULT_ZOOM = 1.04;
 const MAX_ZOOM = 1.75;
 const ZOOM_STEP = 0.15;
 const THREE_PREVIEW_READY_PROGRESS = 100;
@@ -183,7 +184,7 @@ export default function ColoringApp({
     const [activeTheme, setActiveTheme] = useState('nature');
     const [activeColor, setActiveColor] = useState(colorThemes.nature[0]);
     const [isEraserActive, setIsEraserActive] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState(1);
+    const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
     const [showSamplePreview, setShowSamplePreview] = useState(false);
     const [showThreeDPreview, setShowThreeDPreview] = useState(false);
     const [threeDArtworkSvg, setThreeDArtworkSvg] = useState('');
@@ -682,7 +683,7 @@ export default function ColoringApp({
     };
 
     const resetZoom = () => {
-        setZoomLevel(1);
+        setZoomLevel(DEFAULT_ZOOM);
     };
 
     const openThreeDPreview = () => {
