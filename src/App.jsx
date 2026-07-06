@@ -3481,11 +3481,43 @@ export default function App() {
 
     const questionOptions = options || {};
     const selectedPracticeMode = questionOptions.practiceMode || practiceMode;
-    const playablePool = questionOptions.activePool || activePoolRef.current;
-    const reviewQuestions = questionOptions.activeReviewList || activeReviewListRef.current;
+    const isNewLearningSession = !sessionStartedAtRef.current;
+    let sessionActivePool = questionOptions.activePool;
+    let sessionActiveReviewList = questionOptions.activeReviewList;
+    let sessionActiveUnseenList = questionOptions.activeUnseenList;
+
+    if (isNewLearningSession && stagedLearningEnabled) {
+      const resetStagedStatus = getStagedLearningStatus(
+        fullActivePool,
+        {},
+        stagedRememberTarget,
+        stagedStages
+      );
+
+      if (resetStagedStatus.eligiblePool.length > 0) {
+        sessionActivePool = resetStagedStatus.currentPool;
+
+        const reviewByKey = new Map(reviewList.map(question => [getQuestionKey(question), question]));
+        sessionActiveReviewList = sessionActivePool
+          .filter(question => reviewByKey.has(question.id))
+          .map(question => ({
+            ...question,
+            correctCount: clampNumber(reviewByKey.get(question.id)?.correctCount, 0, 0, 2),
+          }));
+
+        const unseenKeys = new Set(unseenList.map(getQuestionKey));
+        sessionActiveUnseenList = sessionActivePool.filter(question => unseenKeys.has(question.id));
+
+        setStagedProgress({});
+        stageRecentQuestionKeysRef.current = [];
+      }
+    }
+
+    const playablePool = sessionActivePool || activePoolRef.current;
+    const reviewQuestions = sessionActiveReviewList || activeReviewListRef.current;
     const unseenQuestions = selectedPracticeMode === 'review'
       ? []
-      : questionOptions.activeUnseenList || activeUnseenListRef.current;
+      : sessionActiveUnseenList || activeUnseenListRef.current;
     const recentQuestionKeys = new Set(stageRecentQuestionKeysRef.current);
     const avoidRecentQuestions = (questions) => {
       if (!isStagedLearningActive || questions.length <= 1) return questions;
@@ -3554,7 +3586,17 @@ export default function App() {
     setSelectedAns(null);
     setShowFlashcardAnswer(false);
     setGameState('playing');
-  }, [isStagedLearningActive, practiceMode, settings.timeLimit]);
+  }, [
+    fullActivePool,
+    isStagedLearningActive,
+    practiceMode,
+    reviewList,
+    settings.timeLimit,
+    stagedLearningEnabled,
+    stagedRememberTarget,
+    stagedStages,
+    unseenList,
+  ]);
 
   // --- XỬ LÝ TRẢ LỜI ---
   function updateScreenTime(amount) {
@@ -3812,7 +3854,7 @@ export default function App() {
         nextScreenTime = clampNumber(screenTime - END_SESSION_PENALTY_SEC, MIN_TIME, MIN_TIME, MAX_TIME);
         endSessionPenaltyApplied = true;
         setScreenTime(nextScreenTime);
-        endSessionNotice = `Con đã bấm kết thúc phiên ${nextGuard.count} lần trong 1 giờ. Bị trừ ${formatTime(END_SESSION_PENALTY_SEC)} xem điện thoại.`;
+        endSessionNotice = `Con đã bấm kết thúc phiên ${nextGuard.count} lần trong 1 giờ. Giờ xem điện thoại: ${formatTime(screenTime)} - ${formatTime(END_SESSION_PENALTY_SEC)} = ${formatTime(nextScreenTime)}.`;
       } else if (freeAttemptsLeft === 0) {
         endSessionNotice = `Con đã dùng đủ ${END_SESSION_FREE_LIMIT}/${END_SESSION_FREE_LIMIT} lượt kết thúc miễn phí trong 1 giờ. Lần sau sẽ bị trừ ${formatTime(END_SESSION_PENALTY_SEC)}.`;
       } else {
@@ -3891,6 +3933,8 @@ export default function App() {
     setCorrectTotal(0);
     setWrongTotal(0);
     setTimeoutTotal(0);
+    setStagedProgress({});
+    stageRecentQuestionKeysRef.current = [];
     setCurrentQ(null);
     setPausedQuestion(null);
     setSelectedAns(null);
@@ -4070,6 +4114,7 @@ export default function App() {
     setCorrectTotal(0);
     setWrongTotal(0);
     setTimeoutTotal(0);
+    setStagedProgress({});
     setCurrentQ(null);
     setPausedQuestion(null);
     setSelectedAns(null);

@@ -12,6 +12,7 @@ const MIN_ZOOM = 0.75;
 const MAX_ZOOM = 1.75;
 const ZOOM_STEP = 0.15;
 const THREE_PREVIEW_READY_PROGRESS = 100;
+const BACKGROUND_CONFIRM_MS = 2200;
 const SAMPLE_PALETTES = [
     ['#dff6ff', '#36a2eb', '#1f78b4', '#ffd166', '#f97316', '#8b5cf6', '#22c55e', '#f43f5e'],
     ['#fff7ed', '#fb7185', '#f97316', '#facc15', '#34d399', '#38bdf8', '#6366f1', '#a855f7'],
@@ -94,6 +95,37 @@ const playTadaSound = () => {
 
 const normalizeFill = (fill) => (fill || '').trim().toLowerCase();
 const isFilledColor = (fill) => !EMPTY_FILL_VALUES.has(normalizeFill(fill));
+const parseSvgNumber = (value) => {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getSvgViewBoxArea = (svgElement) => {
+    const viewBox = svgElement?.getAttribute('viewBox');
+    if (!viewBox) return null;
+
+    const values = viewBox.split(/[\s,]+/).map(part => Number.parseFloat(part));
+    if (values.length < 4 || values.some(value => !Number.isFinite(value))) return null;
+
+    return Math.abs(values[2] * values[3]);
+};
+
+const isLikelyBackgroundElement = (element, svgElement, index) => {
+    const tagName = element.tagName.toLowerCase();
+    if (tagName !== 'rect') return false;
+
+    const width = parseSvgNumber(element.getAttribute('width'));
+    const height = parseSvgNumber(element.getAttribute('height'));
+    if (!width || !height) return index === 0;
+
+    const elementArea = Math.abs(width * height);
+    const viewBoxArea = getSvgViewBoxArea(svgElement);
+
+    if (!viewBoxArea) return index === 0;
+    return elementArea >= viewBoxArea * 0.65;
+};
+
+const getBackgroundConfirmKey = (level, index) => `${level}:${index}`;
 
 const buildSampleSvg = (level) => {
     const sourceSvg = coloringSVGs[level];
@@ -158,6 +190,7 @@ export default function ColoringApp({
     const [progress, setProgress] = useState(0);
     const [historyStatus, setHistoryStatus] = useState({ canUndo: false, canRedo: false });
     const [unlockNotice, setUnlockNotice] = useState('');
+    const [backgroundConfirm, setBackgroundConfirm] = useState(null);
     const svgContainerRef = useRef(null);
     const threeDContainerRef = useRef(null);
     const currentLevelRef = useRef(currentLevel);
@@ -195,12 +228,17 @@ export default function ColoringApp({
         if (!svgContainerRef.current) return;
 
         svgContainerRef.current.querySelectorAll('.svg-wrapper').forEach(wrapper => {
+            const svgElement = wrapper.querySelector('svg');
+
             wrapper.querySelectorAll('.colorable').forEach((element, index) => {
                 const initialFill = element.getAttribute('fill') || '#ffffff';
                 const tagName = element.tagName.toLowerCase();
 
                 element.dataset.colorIndex = String(index);
                 element.dataset.initialFill = initialFill;
+                element.dataset.backgroundColorable = isLikelyBackgroundElement(element, svgElement, index)
+                    ? 'true'
+                    : 'false';
                 element.dataset.progressIgnore = normalizeFill(initialFill) === 'none' || tagName === 'line'
                     ? 'true'
                     : 'false';
@@ -270,9 +308,27 @@ export default function ColoringApp({
 
     useEffect(() => {
         setUnlockNotice('');
+        setBackgroundConfirm(null);
         setShowSamplePreview(false);
         setShowThreeDPreview(false);
     }, [currentLevel, isCurrentUnlocked]);
+
+    useEffect(() => {
+        setBackgroundConfirm(null);
+    }, [activeColor, isEraserActive]);
+
+    useEffect(() => {
+        if (!backgroundConfirm) return undefined;
+
+        const delay = Math.max(0, backgroundConfirm.expiresAt - Date.now());
+        const timeoutId = window.setTimeout(() => {
+            setBackgroundConfirm(previous => (
+                previous?.key === backgroundConfirm.key ? null : previous
+            ));
+        }, delay);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [backgroundConfirm]);
 
     useEffect(() => {
         if (progress < THREE_PREVIEW_READY_PROGRESS) {
@@ -484,6 +540,7 @@ export default function ColoringApp({
 
     const undo = () => {
         if (!isCurrentUnlocked) return;
+        setBackgroundConfirm(null);
 
         const level = currentLevelRef.current;
         const undoStack = undoStacksRef.current[level] || [];
@@ -499,6 +556,7 @@ export default function ColoringApp({
 
     const redo = () => {
         if (!isCurrentUnlocked) return;
+        setBackgroundConfirm(null);
 
         const level = currentLevelRef.current;
         const redoStack = redoStacksRef.current[level] || [];
@@ -514,6 +572,7 @@ export default function ColoringApp({
 
     const handleCategorySwitch = (category) => {
         const nextLevel = category === 'animal' ? 1 : 31;
+        setBackgroundConfirm(null);
         currentLevelRef.current = nextLevel;
         setCurrentCategory(category);
         setCurrentLevel(nextLevel);
@@ -521,6 +580,7 @@ export default function ColoringApp({
     };
 
     const handleLevelSelect = (id, event) => {
+        setBackgroundConfirm(null);
         currentLevelRef.current = id;
         setCurrentLevel(id);
         syncHistoryStatus(id);
@@ -539,27 +599,49 @@ export default function ColoringApp({
         const className = target?.getAttribute?.('class') || '';
         if (!className.includes('colorable') || (!isEraserActive && !activeColor)) return;
 
+        const level = currentLevelRef.current;
+        const index = Number(target.dataset.colorIndex);
+        if (!Number.isFinite(index)) return;
+
+        if (target.dataset.backgroundColorable === 'true') {
+            const confirmKey = getBackgroundConfirmKey(level, index);
+            const isConfirmedTap = backgroundConfirm?.key === confirmKey
+                && backgroundConfirm.expiresAt > Date.now();
+
+            if (!isConfirmedTap) {
+                setBackgroundConfirm({
+                    key: confirmKey,
+                    level,
+                    index,
+                    expiresAt: Date.now() + BACKGROUND_CONFIRM_MS,
+                });
+                return;
+            }
+
+            setBackgroundConfirm(null);
+        } else if (backgroundConfirm) {
+            setBackgroundConfirm(null);
+        }
+
         const previousFill = target.getAttribute('fill') || target.dataset.initialFill || '#ffffff';
         const nextFill = isEraserActive ? (target.dataset.initialFill || '#ffffff') : activeColor;
         if (normalizeFill(previousFill) === normalizeFill(nextFill)) return;
 
-        const index = Number(target.dataset.colorIndex);
-        if (!Number.isFinite(index)) return;
-
         target.setAttribute('fill', nextFill);
         pushHistoryEntry({
             type: 'fill',
-            level: currentLevelRef.current,
+            level,
             index,
             before: previousFill,
             after: nextFill,
         });
         playPopSound();
-        updateProgress(currentLevelRef.current, { celebrate: !isEraserActive });
+        updateProgress(level, { celebrate: !isEraserActive });
     };
 
     const clearCanvas = () => {
         if (!isCurrentUnlocked) return;
+        setBackgroundConfirm(null);
 
         const level = currentLevelRef.current;
         const currentSvgContainer = getCurrentSvgContainer(level);
@@ -626,47 +708,47 @@ export default function ColoringApp({
 
     return (
         <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
-            <div className="relative flex h-full min-h-0 w-full max-w-[430px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[85vh] md:max-h-[765px] md:rounded-[32px] md:border-8 md:border-[#1a202c]">
+            <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] text-center">
-                    <div className="flex h-9 items-center justify-between gap-2 px-3 pt-1">
+                    <div className="flex h-8 items-center justify-between gap-1.5 px-2.5 pt-0.5">
                         <button
                             type="button"
                             onClick={onBack}
-                            className="h-7 shrink-0 rounded-lg bg-[#e2e8f0] px-2 text-xs font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
+                            className="h-6 shrink-0 rounded-lg bg-[#e2e8f0] px-2 text-[11px] font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
                         >
                             Trở lại
                         </button>
-                        <h1 className="m-0 min-w-0 flex-1 truncate text-sm font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
+                        <h1 className="m-0 min-w-0 flex-1 truncate text-xs font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
                         <div className="flex shrink-0 items-center gap-1">
-                            <div className="flex h-7 items-center gap-1 rounded-full bg-emerald-100 px-2 text-xs font-black text-emerald-700">
-                                <Clock size={13} />
+                            <div className="flex h-6 items-center gap-1 rounded-full bg-emerald-100 px-1.5 text-[11px] font-black text-emerald-700">
+                                <Clock size={12} />
                                 {displayTimeLeft}
                             </div>
-                            <div className="flex h-7 items-center gap-1 rounded-full bg-yellow-100 px-2 text-xs font-black text-yellow-700">
-                                <Gem size={13} className="fill-yellow-200" />
+                            <div className="flex h-6 items-center gap-1 rounded-full bg-yellow-100 px-1.5 text-[11px] font-black text-yellow-700">
+                                <Gem size={12} className="fill-yellow-200" />
                                 {robuxBalance}
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 px-3 py-1">
+                    <div className="grid grid-cols-2 gap-1.5 px-2.5 py-0.5">
                         <button
                             type="button"
-                            className={`min-h-8 rounded-full border-none px-2 text-xs font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-7 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`min-h-8 rounded-full border-none px-2 text-xs font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-7 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
                         </button>
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto px-3 pb-2 pt-1 scroll-smooth scrollbar-none">
+                    <div className="flex gap-1.5 overflow-x-auto px-2.5 pb-1 pt-0.5 scroll-smooth scrollbar-none">
                         {list.map((emoji, index) => {
                             const id = startIndex + index;
                             const isUnlocked = unlockedLevelSet.has(id);
@@ -675,7 +757,7 @@ export default function ColoringApp({
                                     type="button"
                                     key={id}
                                     onClick={(event) => handleLevelSelect(id, event)}
-                                    className={`relative flex h-10 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-xl text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
+                                    className={`relative flex h-9 min-w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-lg text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
                                 >
                                     <span className={!isUnlocked ? 'opacity-55' : ''} style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                         {emoji || '?'}
@@ -691,7 +773,7 @@ export default function ColoringApp({
                     </div>
                 </header>
 
-                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] p-1.5">
+                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] p-0.5">
                     <div
                         className={`flex h-full w-full items-center justify-center transition ${isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
@@ -702,6 +784,12 @@ export default function ColoringApp({
                     {isCurrentUnlocked && (
                         <div className="pointer-events-none absolute right-2 top-2 z-[12] rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-black text-[#334155] shadow-sm backdrop-blur">
                             {progress}%
+                        </div>
+                    )}
+
+                    {isCurrentUnlocked && backgroundConfirm && (
+                        <div className="pointer-events-none absolute left-1/2 top-2 z-[13] -translate-x-1/2 rounded-full border-2 border-yellow-200 bg-yellow-50 px-3 py-1.5 text-center text-xs font-black text-yellow-700 shadow-lg">
+                            Bấm lần nữa để tô nền
                         </div>
                     )}
 
@@ -790,7 +878,7 @@ export default function ColoringApp({
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-1.5 border-t border-[#e2e8f0] bg-white px-2 py-1.5">
+                <div className="flex shrink-0 flex-col gap-1 border-t border-[#e2e8f0] bg-white px-1.5 py-1">
                     <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1">
                         {Object.keys(colorThemes).map(theme => (
                             <button
@@ -801,13 +889,13 @@ export default function ColoringApp({
                                     setActiveColor(colorThemes[theme][0]);
                                     setIsEraserActive(false);
                                 }}
-                                className={`min-h-7 rounded-lg border-none px-1 text-xs font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
+                                className={`h-6 rounded-lg border-none px-1 text-[11px] font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
                             >
                                 {THEME_LABELS[theme] || theme}
                             </button>
                         ))}
                         <label
-                            className="relative grid h-7 w-9 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
+                            className="relative grid h-6 w-8 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
                             title="Chọn màu tự do"
                             aria-label="Chọn màu tự do"
                         >
@@ -818,13 +906,13 @@ export default function ColoringApp({
                                     setActiveColor(event.target.value);
                                     setIsEraserActive(false);
                                 }}
-                                className="h-5 w-6 cursor-pointer rounded-md border-0 bg-transparent p-0"
+                                className="h-4 w-5 cursor-pointer rounded-md border-0 bg-transparent p-0"
                                 aria-label="Chọn màu tự do"
                             />
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-5 justify-items-center gap-1">
+                    <div className="grid grid-cols-5 justify-items-center gap-0.5">
                         {colorThemes[activeTheme].map((color, index) => (
                             <button
                                 type="button"
@@ -834,20 +922,20 @@ export default function ColoringApp({
                                     setIsEraserActive(false);
                                 }}
                                 style={{ backgroundColor: color }}
-                                className={`h-10 w-10 cursor-pointer rounded-full border-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-11 md:w-11 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-white'}`}
+                                className={`h-9 w-9 cursor-pointer rounded-full border-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-11 md:w-11 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-white'}`}
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-9 gap-1">
+                    <div className="grid grid-cols-9 gap-0.5">
                         <button
                             type="button"
                             onClick={() => setShowSamplePreview(true)}
                             disabled={!isCurrentUnlocked}
                             title="Xem mẫu phối màu"
                             aria-label="Xem mẫu phối màu"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Sparkles size={17} />
                         </button>
@@ -857,7 +945,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS}
                             title="Xem 3D"
                             aria-label="Xem 3D"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Cuboid size={17} />
                         </button>
@@ -867,7 +955,7 @@ export default function ColoringApp({
                             disabled={zoomLevel <= MIN_ZOOM}
                             title="Thu nhỏ"
                             aria-label="Thu nhỏ"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Minus size={17} />
                         </button>
@@ -876,7 +964,7 @@ export default function ColoringApp({
                             onClick={resetZoom}
                             title="Vừa khung"
                             aria-label="Vừa khung"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#3182ce] transition"
+                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#3182ce] transition"
                         >
                             <Square size={16} />
                         </button>
@@ -886,7 +974,7 @@ export default function ColoringApp({
                             disabled={zoomLevel >= MAX_ZOOM}
                             title="Phóng to"
                             aria-label="Phóng to"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#6b46c1] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Plus size={17} />
                         </button>
@@ -896,7 +984,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canUndo}
                             title="Hoàn tác"
                             aria-label="Hoàn tác"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Undo2 size={17} />
                         </button>
@@ -906,7 +994,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canRedo}
                             title="Làm lại"
                             aria-label="Làm lại"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Redo2 size={17} />
                         </button>
@@ -916,7 +1004,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Cục tẩy"
                             aria-label="Cục tẩy"
-                            className={`grid min-h-8 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
+                            className={`grid h-7 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
                         >
                             <Eraser size={17} />
                         </button>
@@ -926,7 +1014,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Vẽ lại"
                             aria-label="Vẽ lại"
-                            className="grid min-h-8 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-7 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <RotateCcw size={17} />
                         </button>
