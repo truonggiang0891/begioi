@@ -774,7 +774,7 @@ export default function ColoringApp({
                     </div>
                 </header>
 
-                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-3 py-0.5">
+                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-2 py-0.5">
                     <div
                         className={`flex h-full w-full items-center justify-center transition ${isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
@@ -913,7 +913,7 @@ export default function ColoringApp({
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-5 justify-items-center gap-0.5">
+                    <div className="grid grid-cols-10 justify-items-center gap-0.5">
                         {colorThemes[activeTheme].map((color, index) => (
                             <button
                                 type="button"
@@ -923,7 +923,7 @@ export default function ColoringApp({
                                     setIsEraserActive(false);
                                 }}
                                 style={{ backgroundColor: color }}
-                                className={`h-9 w-9 cursor-pointer rounded-full border-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-11 md:w-11 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-white'}`}
+                                className={`aspect-square w-full cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-white'}`}
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
