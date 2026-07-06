@@ -10,8 +10,8 @@ export const pokemonNames = [
   'Chikorita Cỏ', 'Dragonite Rồng', 'Clefairy Tiên', 'Togepi Trứng', 'Poliwhirl Nòng Nọc', 'Diglett Chũi', 'Caterpie Sâu', 'Zubat Dơi', 'Hitmonchan Đấm Bốc', 'Staryu Sao Biển',
   'Sylveon Tiên', 'Vulpix Cáo Lửa', 'Lapras Biển', 'Slowpoke Chậm Chạp', 'Cubone Xương', 'Magikarp Cá Chép', 'Ekans Rắn', 'Leafeon Lá', 'Rattata Chuột', 'Totodile Cá Sấu'
 ];
-export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝', '🏴‍☠️', '🦔'];
-export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí', 'Bé Hải Tặc', 'Nhím Gai'];
+export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝', '🏴‍☠️', '🦔', '💨'];
+export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí', 'Bé Hải Tặc', 'Nhím Gai', 'Nhím Tốc Độ'];
 
 export const colorThemes = {
     nature: ["#2ecc71", "#27ae60", "#3498db", "#2980b9", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#8e44ad", "#34495e", "#fdfdfd", "#f3e9d2"],
@@ -1733,5 +1733,29 @@ export const coloringSVGs = {
             <path class="colorable" d="M178,256 Q200,272 222,256" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
             <ellipse class="colorable" cx="162" cy="318" rx="28" ry="17" fill="#ffffff"/>
             <ellipse class="colorable" cx="238" cy="318" rx="28" ry="17" fill="#ffffff"/>
+        </svg>`,
+  76: `<svg id="svg-76" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M250,120 L322,92 L286,138 L338,142 L288,176 L262,166 Z" fill="#ffffff"/>
+            <path class="colorable" d="M148,118 L162,58 L186,104 L204,52 L226,104 L250,62 L264,118 C240,98 172,98 148,118 Z" fill="#ffffff"/>
+            <path class="colorable" d="M160,120 L150,86 L182,112 Z" fill="#ffffff"/>
+            <path class="colorable" d="M240,120 L250,86 L218,112 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="160" rx="72" ry="66" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="185" rx="40" ry="30" fill="#ffffff"/>
+            <ellipse class="colorable" cx="180" cy="150" rx="20" ry="26" fill="#ffffff"/>
+            <ellipse class="colorable" cx="220" cy="150" rx="20" ry="26" fill="#ffffff"/>
+            <circle cx="184" cy="156" r="9" fill="#1a202c"/>
+            <circle cx="216" cy="156" r="9" fill="#1a202c"/>
+            <ellipse cx="200" cy="180" rx="9" ry="7" fill="#1a202c"/>
+            <path class="colorable" d="M180,196 Q200,212 224,194" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M172,230 C172,215 228,215 228,230 L236,300 L164,300 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="150" cy="265" rx="16" ry="30" transform="rotate(18 150 265)" fill="#ffffff"/>
+            <ellipse class="colorable" cx="250" cy="265" rx="16" ry="30" transform="rotate(-18 250 265)" fill="#ffffff"/>
+            <circle class="colorable" cx="140" cy="298" r="18" fill="#ffffff"/>
+            <circle class="colorable" cx="260" cy="298" r="18" fill="#ffffff"/>
+            <rect class="colorable" x="176" y="298" width="18" height="45" rx="8" fill="#ffffff"/>
+            <rect class="colorable" x="206" y="298" width="18" height="45" rx="8" fill="#ffffff"/>
+            <path class="colorable" d="M160,340 C160,328 200,328 200,340 L200,357 L158,357 Z" fill="#ffffff"/>
+            <path class="colorable" d="M200,340 C200,328 240,328 240,340 L242,357 L200,357 Z" fill="#ffffff"/>
         </svg>`,
 };

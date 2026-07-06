@@ -787,7 +787,7 @@ export default function ColoringApp({
                             className={`h-9 whitespace-nowrap rounded-full border-none px-1 text-xs font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('anime')}
                         >
-                            Anime (15)
+                            Anime (16)
                         </button>
                     </div>
 
