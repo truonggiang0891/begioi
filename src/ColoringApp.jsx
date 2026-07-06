@@ -699,6 +699,12 @@ export default function ColoringApp({
                         style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center', transition: 'transform 0.16s ease' }}
                     />
 
+                    {isCurrentUnlocked && (
+                        <div className="pointer-events-none absolute right-2 top-2 z-[12] rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-black text-[#334155] shadow-sm backdrop-blur">
+                            {progress}%
+                        </div>
+                    )}
+
                     {!isCurrentUnlocked && (
                         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#e6ebf2] px-5 text-center">
                             <div className="w-full max-w-[280px] rounded-2xl border-2 border-white/80 bg-white/95 px-4 py-4 shadow-xl">
@@ -832,14 +838,6 @@ export default function ColoringApp({
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg bg-[#f8fafc] px-2 py-1 text-xs font-black text-[#718096]">
-                        <span>Tiến độ</span>
-                        <div className="mx-2 h-2 flex-1 overflow-hidden rounded-full bg-[#e2e8f0]">
-                            <div className="h-full bg-[#48bb78] transition-all duration-300" style={{ width: `${progress}%` }} />
-                        </div>
-                        <span>{progress}%</span>
                     </div>
 
                     <div className="grid grid-cols-9 gap-1">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ColoringApp from './ColoringApp';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -64,6 +64,8 @@ const STAGED_PROGRESS_KEY = 'math_stagedProgress';
 const STAGED_REMEMBER_TARGET_KEY = 'math_stagedRememberTarget';
 const STAGED_STAGES_KEY = 'math_stagedStages';
 const SESSION_HISTORY_KEY = 'math_sessionHistory';
+const CURRENT_SESSION_STARTED_AT_KEY = 'math_currentSessionStartedAt';
+const END_SESSION_GUARD_KEY = 'math_endSessionGuard';
 const READING_PROGRESS_KEY = 'reading_progress';
 const READING_HISTORY_KEY = 'reading_history';
 const ROBUX_BALANCE_KEY = 'math_robuxBalance';
@@ -80,6 +82,10 @@ const COLORING_TIME_EXCHANGE_SECONDS = 60;
 const MIN_COLORING_PURCHASE_MINUTES = 1;
 const MAX_COLORING_PURCHASE_MINUTES = 180;
 const MAX_COLORING_TIME_LEFT = 24 * 60 * 60;
+const LEARNING_SESSION_WINDOW_MS = 60 * 60 * 1000;
+const END_SESSION_WINDOW_MS = 60 * 60 * 1000;
+const END_SESSION_FREE_LIMIT = 5;
+const END_SESSION_PENALTY_SEC = 5 * 60;
 const DEFAULT_COLORING_UNLOCK_COST = 5;
 const MIN_ROBUX_REWARD = 1;
 const MAX_ROBUX_REWARD = 100;
@@ -1971,6 +1977,75 @@ const loadSessionHistory = () => {
   }
 };
 
+const loadCurrentSessionStartedAt = () => {
+  try {
+    const startedAt = Number(localStorage.getItem(CURRENT_SESSION_STARTED_AT_KEY));
+    return Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
+  } catch {
+    return null;
+  }
+};
+
+const isLearningSessionExpired = (startedAt, now = Date.now()) => (
+  Number.isFinite(Number(startedAt))
+  && Number(startedAt) > 0
+  && now - Number(startedAt) >= LEARNING_SESSION_WINDOW_MS
+);
+
+const saveCurrentSessionStartedAt = (startedAt) => {
+  try {
+    if (startedAt) {
+      localStorage.setItem(CURRENT_SESSION_STARTED_AT_KEY, String(startedAt));
+    } else {
+      localStorage.removeItem(CURRENT_SESSION_STARTED_AT_KEY);
+    }
+  } catch {
+    console.log("Cannot save current session start");
+  }
+};
+
+const createEndSessionGuard = (now = Date.now()) => ({
+  windowStartedAt: now,
+  count: 0,
+});
+
+const normalizeEndSessionGuard = (guard, now = Date.now()) => {
+  if (!guard || typeof guard !== 'object' || Array.isArray(guard)) {
+    return createEndSessionGuard(now);
+  }
+
+  const windowStartedAt = Number(guard.windowStartedAt);
+  const isWindowValid = Number.isFinite(windowStartedAt)
+    && windowStartedAt > 0
+    && now - windowStartedAt < END_SESSION_WINDOW_MS;
+
+  if (!isWindowValid) {
+    return createEndSessionGuard(now);
+  }
+
+  return {
+    windowStartedAt,
+    count: clampNumber(guard.count, 0, 0, 999),
+  };
+};
+
+const loadEndSessionGuard = () => {
+  try {
+    const savedGuard = localStorage.getItem(END_SESSION_GUARD_KEY);
+    return savedGuard ? normalizeEndSessionGuard(JSON.parse(savedGuard)) : createEndSessionGuard();
+  } catch {
+    return createEndSessionGuard();
+  }
+};
+
+const saveEndSessionGuard = (guard) => {
+  try {
+    localStorage.setItem(END_SESSION_GUARD_KEY, JSON.stringify(guard));
+  } catch {
+    console.log("Cannot save end session guard");
+  }
+};
+
 const normalizeRobuxBalance = (value) => clampNumber(value, 0, 0, 999999);
 
 const loadRobuxBalance = () => {
@@ -2518,6 +2593,11 @@ const stripQuestionForStorage = (question, correctCount = 0) => {
 export default function App() {
   // --- STATE ---
   const initialSettings = useMemo(() => loadSettings(), []);
+  const initialSessionStartedAt = useMemo(() => loadCurrentSessionStartedAt(), []);
+  const initialSessionExpired = useMemo(
+    () => isLearningSessionExpired(initialSessionStartedAt),
+    [initialSessionStartedAt]
+  );
   const [screenTime, setScreenTime] = useState(() => {
     const savedTime = localStorage.getItem('math_screenTime');
     return savedTime ? parseInt(savedTime, 10) : 0;
@@ -2532,17 +2612,18 @@ export default function App() {
   });
   const [correctTotal, setCorrectTotal] = useState(() => {
     const savedCorrect = localStorage.getItem('math_correctTotal');
-    return savedCorrect ? parseInt(savedCorrect, 10) : 0;
+    return !initialSessionExpired && savedCorrect ? parseInt(savedCorrect, 10) : 0;
   });
   const [wrongTotal, setWrongTotal] = useState(() => {
     const savedWrong = localStorage.getItem('math_wrongTotal');
-    return savedWrong ? parseInt(savedWrong, 10) : 0;
+    return !initialSessionExpired && savedWrong ? parseInt(savedWrong, 10) : 0;
   });
   const [timeoutTotal, setTimeoutTotal] = useState(() => {
     const savedTimeout = localStorage.getItem('math_timeoutTotal');
-    return savedTimeout ? parseInt(savedTimeout, 10) : 0;
+    return !initialSessionExpired && savedTimeout ? parseInt(savedTimeout, 10) : 0;
   });
   const [sessionHistory, setSessionHistory] = useState(() => loadSessionHistory());
+  const [endSessionGuard, setEndSessionGuard] = useState(() => loadEndSessionGuard());
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem(USER_AVATAR_KEY) || '');
@@ -2595,7 +2676,7 @@ export default function App() {
   const timerRef = useRef(null);
   const nextQuestionTimeoutRef = useRef(null);
   const congratsTimeoutRef = useRef(null);
-  const sessionStartedAtRef = useRef(null);
+  const sessionStartedAtRef = useRef(initialSessionExpired ? null : initialSessionStartedAt);
   const hasShownCongratsThisSessionRef = useRef(false);
   const readingContentRef = useRef(null);
   const readingSaveTimeoutRef = useRef(null);
@@ -3235,6 +3316,12 @@ export default function App() {
 
   // --- LƯU DỮ LIỆU ---
   useEffect(() => {
+    if (initialSessionExpired) {
+      saveCurrentSessionStartedAt(null);
+    }
+  }, [initialSessionExpired]);
+
+  useEffect(() => {
     try {
       localStorage.setItem('math_screenTime', screenTime.toString());
       localStorage.setItem('math_reviewList', JSON.stringify(reviewList));
@@ -3433,7 +3520,9 @@ export default function App() {
     }
 
     if (!sessionStartedAtRef.current) {
-      sessionStartedAtRef.current = Date.now();
+      const startedAt = Date.now();
+      sessionStartedAtRef.current = startedAt;
+      saveCurrentSessionStartedAt(startedAt);
     }
     
     if (!canPullReview && !canPullUnseen) {
@@ -3692,6 +3781,7 @@ export default function App() {
     clearInterval(timerRef.current);
     clearPendingTransitions();
     rememberCurrentReadingPosition();
+    const endedAt = Date.now();
     const unfinishedQuestion = gameState === 'playing' && currentQ
       ? {
           question: currentQ,
@@ -3701,6 +3791,34 @@ export default function App() {
           showFlashcardAnswer,
         }
       : null;
+    let nextScreenTime = screenTime;
+    let endSessionNotice = '';
+    let endSessionPenaltyApplied = false;
+    let endSessionAttemptCount = 0;
+
+    if (unfinishedQuestion) {
+      const currentGuard = normalizeEndSessionGuard(endSessionGuard, endedAt);
+      const nextGuard = {
+        windowStartedAt: currentGuard.windowStartedAt,
+        count: currentGuard.count + 1,
+      };
+      const freeAttemptsLeft = Math.max(0, END_SESSION_FREE_LIMIT - nextGuard.count);
+
+      endSessionAttemptCount = nextGuard.count;
+      setEndSessionGuard(nextGuard);
+      saveEndSessionGuard(nextGuard);
+
+      if (nextGuard.count > END_SESSION_FREE_LIMIT) {
+        nextScreenTime = clampNumber(screenTime - END_SESSION_PENALTY_SEC, MIN_TIME, MIN_TIME, MAX_TIME);
+        endSessionPenaltyApplied = true;
+        setScreenTime(nextScreenTime);
+        endSessionNotice = `Con đã bấm kết thúc phiên ${nextGuard.count} lần trong 1 giờ. Bị trừ ${formatTime(END_SESSION_PENALTY_SEC)} xem điện thoại.`;
+      } else if (freeAttemptsLeft === 0) {
+        endSessionNotice = `Con đã dùng đủ ${END_SESSION_FREE_LIMIT}/${END_SESSION_FREE_LIMIT} lượt kết thúc miễn phí trong 1 giờ. Lần sau sẽ bị trừ ${formatTime(END_SESSION_PENALTY_SEC)}.`;
+      } else {
+        endSessionNotice = `Con đã dùng ${nextGuard.count}/${END_SESSION_FREE_LIMIT} lượt kết thúc miễn phí trong 1 giờ. Còn ${freeAttemptsLeft} lượt.`;
+      }
+    }
 
     setPausedQuestion(unfinishedQuestion);
     setShowParentConfirm(false);
@@ -3713,16 +3831,19 @@ export default function App() {
     setShowColoringPanel(false);
     setShowColoringAccessPanel(false);
     setShowFlashcardAnswer(false);
-    const endedAt = Date.now();
     const startedAt = sessionStartedAtRef.current || endedAt;
     const nextSummary = {
       correctTotal,
       wrongTotal,
       timeoutTotal,
       reviewCount: activeReviewList.length,
-      screenTime,
+      screenTime: nextScreenTime,
       robuxBalance,
       rewardMode,
+      endSessionNotice,
+      endSessionPenaltyApplied,
+      endSessionAttemptCount,
+      startedAt,
       durationSec: Math.max(0, Math.round((endedAt - startedAt) / 1000)),
       endedAt,
       studentName: displayName,
@@ -3747,6 +3868,7 @@ export default function App() {
     currentQ,
     currentLessonLabel,
     displayName,
+    endSessionGuard,
     gameState,
     practiceMode,
     rememberCurrentReadingPosition,
@@ -3760,7 +3882,44 @@ export default function App() {
     wrongTotal,
   ]);
 
+  const resetExpiredLearningSession = () => {
+    clearInterval(timerRef.current);
+    clearPendingTransitions();
+    sessionStartedAtRef.current = null;
+    hasShownCongratsThisSessionRef.current = false;
+    saveCurrentSessionStartedAt(null);
+    setCorrectTotal(0);
+    setWrongTotal(0);
+    setTimeoutTotal(0);
+    setCurrentQ(null);
+    setPausedQuestion(null);
+    setSelectedAns(null);
+    setSummaryStats(null);
+    setShowFlashcardAnswer(false);
+    setPracticeMode('normal');
+  };
+
+  const handleGoHomeFromSummary = () => {
+    clearInterval(timerRef.current);
+    clearPendingTransitions();
+    setSummaryStats(null);
+    setPausedQuestion(null);
+    setCurrentQ(null);
+    setSelectedAns(null);
+    setShowFlashcardAnswer(false);
+    setShowParentConfirm(false);
+    setPracticeMode('normal');
+    setGameState('idle');
+  };
+
   const handleContinueLearning = () => {
+    const summaryStartedAt = summaryStats?.startedAt || sessionStartedAtRef.current;
+    if (isLearningSessionExpired(summaryStartedAt)) {
+      resetExpiredLearningSession();
+      generateQuestion({ practiceMode: 'normal' });
+      return;
+    }
+
     clearInterval(timerRef.current);
     clearPendingTransitions();
     setSummaryStats(null);
@@ -3785,6 +3944,9 @@ export default function App() {
   const startPracticeSession = (nextRewardMode = 'screenTime') => {
     clearInterval(timerRef.current);
     clearPendingTransitions();
+    if (isLearningSessionExpired(sessionStartedAtRef.current)) {
+      resetExpiredLearningSession();
+    }
     if (!sessionStartedAtRef.current) {
       hasShownCongratsThisSessionRef.current = false;
     }
@@ -3898,6 +4060,10 @@ export default function App() {
     stageRecentQuestionKeysRef.current = [];
     hasShownCongratsThisSessionRef.current = false;
     sessionStartedAtRef.current = null;
+    saveCurrentSessionStartedAt(null);
+    const freshEndSessionGuard = createEndSessionGuard();
+    setEndSessionGuard(freshEndSessionGuard);
+    saveEndSessionGuard(freshEndSessionGuard);
     setScreenTime(0);
     setReviewList([]);
     setUnseenList(freshPool);
@@ -3955,6 +4121,8 @@ export default function App() {
     localStorage.removeItem(STAGED_PROGRESS_KEY);
     localStorage.removeItem(STAGED_STAGES_KEY);
     localStorage.removeItem(SESSION_HISTORY_KEY);
+    localStorage.removeItem(CURRENT_SESSION_STARTED_AT_KEY);
+    localStorage.removeItem(END_SESSION_GUARD_KEY);
     localStorage.removeItem(READING_PROGRESS_KEY);
     localStorage.removeItem(READING_HISTORY_KEY);
     localStorage.removeItem(ROBUX_BALANCE_KEY);
@@ -4000,6 +4168,10 @@ export default function App() {
     screenTime,
     robuxBalance,
     rewardMode,
+    endSessionNotice: '',
+    endSessionPenaltyApplied: false,
+    endSessionAttemptCount: 0,
+    startedAt: sessionStartedAtRef.current,
     durationSec: 0,
     endedAt: null,
     studentName: displayName,
@@ -4017,7 +4189,7 @@ export default function App() {
     }`}>
       {/* ROLE LOGIN */}
       {!isSummary && (
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
         <div className="grid grid-cols-4 gap-1.5 md:gap-2">
           <button
             type="button"
@@ -4983,7 +5155,7 @@ export default function App() {
 
       {/* HEADER */}
       {!isSummary && (
-      <div className="w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4">
         <div className="bg-blue-500 text-white text-center py-1.5 md:py-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
@@ -5131,6 +5303,16 @@ export default function App() {
                 </div>
               </div>
 
+              {visibleSummary.endSessionNotice && (
+                <div className={`mb-2 rounded-xl border-2 px-3 py-2 text-center text-xs font-black md:mb-3 md:text-base ${
+                  visibleSummary.endSessionPenaltyApplied
+                    ? 'border-rose-200 bg-rose-50 text-rose-600'
+                    : 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                }`}>
+                  {visibleSummary.endSessionNotice}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-1.5 md:gap-3 text-left">
                 <div className="rounded-xl border-2 border-green-100 bg-green-50 px-3 py-2 md:p-3">
                   <div className="flex items-center gap-1.5 text-sm md:text-lg font-extrabold text-gray-700">
@@ -5201,23 +5383,31 @@ export default function App() {
                 <Play fill="white" size={22} className="md:w-6 md:h-6" />
                 Tiếp tục học
               </button>
-              <div className={`grid gap-2 ${visibleSummary.reviewCount > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <div className={`grid gap-2 ${visibleSummary.reviewCount > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 {visibleSummary.reviewCount > 0 && (
                   <button
                     type="button"
                     onClick={handleReviewPractice}
-                    className="flex items-center justify-center gap-1.5 rounded-full bg-amber-500 px-3 py-2.5 md:py-3.5 text-base md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(180,83,9)] active:translate-y-1 active:shadow-none transition-all"
+                    className="flex items-center justify-center gap-1.5 rounded-full bg-amber-500 px-2 py-2.5 text-sm font-extrabold text-white shadow-[0_4px_0_rgb(180,83,9)] transition-all active:translate-y-1 active:shadow-none md:px-3 md:py-3.5 md:text-2xl"
                   >
-                    <BookOpen size={20} className="md:w-6 md:h-6" />
-                    Ôn câu sai
+                    <BookOpen size={18} className="shrink-0 md:w-6 md:h-6" />
+                    <span className="truncate">Ôn câu sai</span>
                   </button>
                 )}
                 <button
                   type="button"
-                  onClick={handleRestartLearning}
-                  className="bg-blue-500 hover:bg-blue-600 active:transform active:scale-95 text-white text-base md:text-3xl font-bold py-2.5 px-3 md:py-3.5 md:px-10 rounded-full shadow-[0_4px_0_rgb(29,78,216)] md:shadow-[0_6px_0_rgb(29,78,216)] transition-all mx-auto w-full"
+                  onClick={handleGoHomeFromSummary}
+                  className="flex items-center justify-center gap-1.5 rounded-full bg-slate-500 px-2 py-2.5 text-sm font-extrabold text-white shadow-[0_4px_0_rgb(71,85,105)] transition-all active:translate-y-1 active:shadow-none md:px-3 md:py-3.5 md:text-2xl"
                 >
-                  Học lại từ đầu
+                  <Home size={18} className="shrink-0 md:w-6 md:h-6" />
+                  <span className="truncate">Trang chủ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRestartLearning}
+                  className="flex w-full items-center justify-center rounded-full bg-blue-500 px-2 py-2.5 text-sm font-bold text-white shadow-[0_4px_0_rgb(29,78,216)] transition-all active:translate-y-1 active:shadow-none hover:bg-blue-600 md:px-3 md:py-3.5 md:text-2xl md:shadow-[0_6px_0_rgb(29,78,216)]"
+                >
+                  <span className="truncate">Học lại</span>
                 </button>
               </div>
             </div>
