@@ -895,8 +895,8 @@ export default function ColoringApp({
                     )}
 
                     {showThreeDPreview && isCurrentUnlocked && (
-                        <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/55 px-3 text-center">
-                            <div className="relative flex h-[94%] w-full max-w-[360px] flex-col rounded-2xl border-2 border-white bg-white p-3 shadow-2xl">
+                        <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/55 px-2 text-center">
+                            <div className="relative flex h-[92%] w-full max-w-[440px] flex-col rounded-2xl border-2 border-white bg-white p-2 shadow-2xl">
                                 <button
                                     type="button"
                                     onClick={() => setShowThreeDPreview(false)}
