@@ -9,7 +9,7 @@ const THEME_LABELS = {
     magic: 'Kỳ Ảo',
 };
 const MIN_ZOOM = 0.75;
-const DEFAULT_ZOOM = 1.04;
+const DEFAULT_ZOOM = 1;
 const MAX_ZOOM = 1.75;
 const ZOOM_STEP = 0.15;
 const THREE_PREVIEW_READY_PROGRESS = 100;
@@ -774,7 +774,7 @@ export default function ColoringApp({
                     </div>
                 </header>
 
-                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] p-0.5">
+                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-3 py-0.5">
                     <div
                         className={`flex h-full w-full items-center justify-center transition ${isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
