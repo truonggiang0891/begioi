@@ -158,7 +158,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                                     onPointerLeave={handlePointerUp}
                                 >
                                     <rect x="4" y="4" width="292" height="292" rx="16" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
-                                    <g stroke="#e5e9f0" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: shapesUpTo(lesson.steps, lesson.steps.length) }} />
+                                    <g opacity="0.72" dangerouslySetInnerHTML={{ __html: lesson.finished || '' }} />
                                     {strokes.map((stroke, index) => (
                                         <polyline key={index} points={strokeToPoints(stroke)} stroke={stroke.color} strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                                     ))}
