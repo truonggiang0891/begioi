@@ -711,7 +711,7 @@ export default function ColoringApp({
         <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
             <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] text-center">
-                    <div className="flex h-8 items-center justify-between gap-1.5 px-2.5 pt-0.5">
+                    <div className="flex h-7 items-center justify-between gap-1.5 px-2.5 pt-0.5">
                         <button
                             type="button"
                             onClick={onBack}
@@ -735,21 +735,21 @@ export default function ColoringApp({
                     <div className="grid grid-cols-2 gap-1.5 px-2.5 py-0.5">
                         <button
                             type="button"
-                            className={`h-7 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-6 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-7 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-6 rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
                         </button>
                     </div>
 
-                    <div className="flex gap-1.5 overflow-x-auto px-2.5 pb-1 pt-0.5 scroll-smooth scrollbar-none">
+                    <div className="flex gap-1.5 overflow-x-auto px-2.5 pb-0.5 pt-0.5 scroll-smooth scrollbar-none">
                         {list.map((emoji, index) => {
                             const id = startIndex + index;
                             const isUnlocked = unlockedLevelSet.has(id);
@@ -758,7 +758,7 @@ export default function ColoringApp({
                                     type="button"
                                     key={id}
                                     onClick={(event) => handleLevelSelect(id, event)}
-                                    className={`relative flex h-9 min-w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-lg text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
+                                    className={`relative flex h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-lg text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
                                 >
                                     <span className={!isUnlocked ? 'opacity-55' : ''} style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                         {emoji || '?'}
@@ -774,7 +774,7 @@ export default function ColoringApp({
                     </div>
                 </header>
 
-                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-2 py-0.5">
+                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-1 py-0.5">
                     <div
                         className={`flex h-full w-full items-center justify-center transition ${isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
@@ -879,7 +879,7 @@ export default function ColoringApp({
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-1 border-t border-[#e2e8f0] bg-white px-1.5 py-1">
+                <div className="flex shrink-0 flex-col gap-0.5 border-t border-[#e2e8f0] bg-white px-1.5 py-0.5">
                     <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1">
                         {Object.keys(colorThemes).map(theme => (
                             <button
