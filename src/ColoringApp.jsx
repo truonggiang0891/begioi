@@ -972,7 +972,7 @@ export default function ColoringApp({
                     <div className="grid grid-cols-6 gap-0.5">
                         <button
                             type="button"
-                            onClick={() => setShowSamplePreview(true)}
+                            onClick={() => { setShowThreeDPreview(false); setShowSamplePreview(prev => !prev); }}
                             disabled={!isCurrentUnlocked}
                             title="Xem mẫu phối màu"
                             aria-label="Xem mẫu phối màu"
@@ -982,7 +982,7 @@ export default function ColoringApp({
                         </button>
                         <button
                             type="button"
-                            onClick={openThreeDPreview}
+                            onClick={() => (showThreeDPreview ? setShowThreeDPreview(false) : openThreeDPreview())}
                             disabled={!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS}
                             title="Xem 3D"
                             aria-label="Xem 3D"
