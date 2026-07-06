@@ -211,9 +211,22 @@ export default function ColoringApp({
     const [showThreeDPreview, setShowThreeDPreview] = useState(false);
     const [threeDArtworkSvg, setThreeDArtworkSvg] = useState('');
     const [progress, setProgress] = useState(0);
+    const [showFireworks, setShowFireworks] = useState(false);
     const [historyStatus, setHistoryStatus] = useState({ canUndo: false, canRedo: false });
     const [unlockNotice, setUnlockNotice] = useState('');
     const [backgroundConfirm, setBackgroundConfirm] = useState(null);
+
+    // Pháo hoa chỉ chạy 5 giây khi vừa hoàn thành 100%
+    useEffect(() => {
+        if (progress !== 100) {
+            setShowFireworks(false);
+            return undefined;
+        }
+        setShowFireworks(true);
+        const timer = setTimeout(() => setShowFireworks(false), 5000);
+        return () => clearTimeout(timer);
+    }, [progress]);
+
     const svgContainerRef = useRef(null);
     const threeDContainerRef = useRef(null);
     const currentLevelRef = useRef(currentLevel);
@@ -811,7 +824,7 @@ export default function ColoringApp({
                         </div>
                     )}
 
-                    {isCurrentUnlocked && progress === 100 && (
+                    {isCurrentUnlocked && showFireworks && (
                         <div className="pointer-events-none absolute inset-0 z-[11] overflow-hidden">
                             {FIREWORK_BURSTS.map((burst, burstIndex) => (
                                 <div key={burstIndex} className="cf-firework" style={{ left: burst.left, top: burst.top }}>
