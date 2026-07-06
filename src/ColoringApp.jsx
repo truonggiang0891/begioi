@@ -1052,12 +1052,19 @@ export default function ColoringApp({
 
                 .artwork-svg {
                     width: 100% !important;
-                    height: auto !important;
+                    height: 100% !important;
                     max-width: 100% !important;
-                    aspect-ratio: 1 / 1;
+                    max-height: 100% !important;
                     object-fit: contain;
                     display: block;
                     animation: fadeIn 0.25s ease;
+                }
+
+                /* Chỉ khóa full-width cho khung tô chính; ảnh mẫu/3D vẫn vừa khung */
+                .svg-wrapper .artwork-svg {
+                    height: auto !important;
+                    max-height: none !important;
+                    aspect-ratio: 1 / 1;
                 }
 
                 @keyframes fadeIn {
