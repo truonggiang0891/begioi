@@ -9,7 +9,7 @@ const shapesUpTo = (steps, index) => steps.slice(0, index).map(step => step.shap
 
 const emojiFont = { fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' };
 
-export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSec = 0 }) {
+export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSec = 0, unlimitedTime = false }) {
     const [selectedLessonId, setSelectedLessonId] = useState(null);
     const [stepIndex, setStepIndex] = useState(0);
     const [mode, setMode] = useState('guide'); // 'guide' | 'draw'
@@ -21,7 +21,9 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
     const svgRef = useRef(null);
 
     const lesson = useMemo(() => drawingLessons.find(item => item.id === selectedLessonId) || null, [selectedLessonId]);
-    const timeLabel = `${Math.floor(Math.max(0, drawingTimeLeftSec) / 60)}:${String(Math.max(0, drawingTimeLeftSec) % 60).padStart(2, '0')}`;
+    const timeLabel = unlimitedTime
+        ? '∞'
+        : `${Math.floor(Math.max(0, drawingTimeLeftSec) / 60)}:${String(Math.max(0, drawingTimeLeftSec) % 60).padStart(2, '0')}`;
     const isLastStep = lesson && stepIndex >= lesson.steps.length - 1;
 
     const openLesson = (id) => {

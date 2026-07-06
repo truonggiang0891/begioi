@@ -9,7 +9,6 @@ const THEME_LABELS = {
     magic: 'Kỳ Ảo',
 };
 const MIN_ZOOM = 0.75;
-const DEFAULT_ZOOM = 1;
 const MAX_ZOOM = 1.75;
 const ZOOM_STEP = 0.15;
 const THREE_PREVIEW_READY_PROGRESS = 100;
@@ -198,6 +197,7 @@ export default function ColoringApp({
     robuxBalance = 0,
     unlockCost = 5,
     coloringTimeLeftSec = 0,
+    unlimitedTime = false,
     unlockedLevels = [],
     onUnlockLevel,
 }) {
@@ -206,7 +206,7 @@ export default function ColoringApp({
     const [activeTheme, setActiveTheme] = useState('nature');
     const [activeColor, setActiveColor] = useState(colorThemes.nature[0]);
     const [isEraserActive, setIsEraserActive] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
+    const [zoomLevel, setZoomLevel] = useState(1);
     const [showSamplePreview, setShowSamplePreview] = useState(false);
     const [showThreeDPreview, setShowThreeDPreview] = useState(false);
     const [threeDArtworkSvg, setThreeDArtworkSvg] = useState('');
@@ -239,7 +239,9 @@ export default function ColoringApp({
     );
     const isCurrentUnlocked = unlockedLevelSet.has(currentLevel);
     const hasEnoughRobux = robuxBalance >= unlockCost;
-    const displayTimeLeft = `${Math.floor(Math.max(0, coloringTimeLeftSec) / 60)}:${String(Math.max(0, coloringTimeLeftSec) % 60).padStart(2, '0')}`;
+    const displayTimeLeft = unlimitedTime
+        ? '∞'
+        : `${Math.floor(Math.max(0, coloringTimeLeftSec) / 60)}:${String(Math.max(0, coloringTimeLeftSec) % 60).padStart(2, '0')}`;
     const sampleSvg = useMemo(() => buildSampleSvg(currentLevel), [currentLevel]);
 
     const syncHistoryStatus = useCallback((level = currentLevelRef.current) => {
@@ -718,7 +720,7 @@ export default function ColoringApp({
     };
 
     const resetZoom = () => {
-        setZoomLevel(DEFAULT_ZOOM);
+        setZoomLevel(1);
     };
 
     const openThreeDPreview = () => {

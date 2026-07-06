@@ -91,7 +91,7 @@ const END_SESSION_PENALTY_SEC = 5 * 60;
 const DEFAULT_COLORING_UNLOCK_COST = 5;
 const MIN_ROBUX_REWARD = 1;
 const MAX_ROBUX_REWARD = 100;
-const MIN_TIME_EXCHANGE_COST = 1;
+const MIN_TIME_EXCHANGE_COST = 0;
 const MAX_TIME_EXCHANGE_COST = 999;
 const MIN_COLORING_UNLOCK_COST = 1;
 const MAX_COLORING_UNLOCK_COST = 999;
@@ -2803,10 +2803,12 @@ export default function App() {
     MIN_TIME_EXCHANGE_COST,
     MAX_TIME_EXCHANGE_COST
   );
-  const maxAffordableColoringMinutes = Math.max(
-    MIN_COLORING_PURCHASE_MINUTES,
-    Math.floor(robuxBalance / coloringTimeExchangeCost)
-  );
+  const maxAffordableColoringMinutes = coloringTimeExchangeCost > 0
+    ? Math.max(
+        MIN_COLORING_PURCHASE_MINUTES,
+        Math.floor(robuxBalance / coloringTimeExchangeCost)
+      )
+    : MAX_COLORING_PURCHASE_MINUTES;
   const maxAllowedColoringPurchaseMinutes = Math.max(
     MIN_COLORING_PURCHASE_MINUTES,
     Math.min(
@@ -2829,10 +2831,12 @@ export default function App() {
     MIN_TIME_EXCHANGE_COST,
     MAX_TIME_EXCHANGE_COST
   );
-  const maxAffordableDrawingMinutes = Math.max(
-    MIN_COLORING_PURCHASE_MINUTES,
-    Math.floor(robuxBalance / drawingTimeExchangeCost)
-  );
+  const maxAffordableDrawingMinutes = drawingTimeExchangeCost > 0
+    ? Math.max(
+        MIN_COLORING_PURCHASE_MINUTES,
+        Math.floor(robuxBalance / drawingTimeExchangeCost)
+      )
+    : MAX_COLORING_PURCHASE_MINUTES;
   const maxAllowedDrawingPurchaseMinutes = Math.max(
     MIN_COLORING_PURCHASE_MINUTES,
     Math.min(
@@ -3422,14 +3426,14 @@ export default function App() {
   }, [unlockedColoringLevels]);
 
   useEffect(() => {
-    if (!showColoringPanel) return undefined;
+    if (!showColoringPanel || coloringTimeExchangeCost <= 0) return undefined;
 
     const intervalId = setInterval(() => {
       setColoringTimeLeftSec(prev => normalizeColoringTimeLeft(prev - 1));
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [showColoringPanel]);
+  }, [showColoringPanel, coloringTimeExchangeCost]);
 
   useEffect(() => {
     try {
@@ -3440,28 +3444,28 @@ export default function App() {
   }, [drawingTimeLeftSec]);
 
   useEffect(() => {
-    if (!showDrawingPanel) return undefined;
+    if (!showDrawingPanel || drawingTimeExchangeCost <= 0) return undefined;
 
     const intervalId = setInterval(() => {
       setDrawingTimeLeftSec(prev => normalizeColoringTimeLeft(prev - 1));
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [showDrawingPanel]);
+  }, [showDrawingPanel, drawingTimeExchangeCost]);
 
   useEffect(() => {
-    if (showDrawingPanel && drawingTimeLeftSec <= 0) {
+    if (showDrawingPanel && drawingTimeLeftSec <= 0 && drawingTimeExchangeCost > 0) {
       setShowDrawingPanel(false);
       setShowDrawingAccessPanel(true);
     }
-  }, [drawingTimeLeftSec, showDrawingPanel]);
+  }, [drawingTimeLeftSec, showDrawingPanel, drawingTimeExchangeCost]);
 
   useEffect(() => {
-    if (showColoringPanel && coloringTimeLeftSec <= 0) {
+    if (showColoringPanel && coloringTimeLeftSec <= 0 && coloringTimeExchangeCost > 0) {
       setShowColoringPanel(false);
       setShowColoringAccessPanel(true);
     }
-  }, [coloringTimeLeftSec, showColoringPanel]);
+  }, [coloringTimeLeftSec, showColoringPanel, coloringTimeExchangeCost]);
 
   useEffect(() => {
     try {
@@ -4122,7 +4126,7 @@ export default function App() {
     setShowDrawingPanel(false);
     setShowDrawingAccessPanel(false);
 
-    if (coloringTimeLeftSec > 0) {
+    if (coloringTimeLeftSec > 0 || coloringTimeExchangeCost <= 0) {
       setShowColoringAccessPanel(false);
       setShowColoringPanel(true);
       return;
@@ -4167,7 +4171,7 @@ export default function App() {
     setExpandedReadingSeriesId(null);
     setShowHistoryPanel(false);
 
-    if (drawingTimeLeftSec > 0) {
+    if (drawingTimeLeftSec > 0 || drawingTimeExchangeCost <= 0) {
       setShowDrawingAccessPanel(false);
       setShowDrawingPanel(true);
       return;
@@ -5964,6 +5968,7 @@ export default function App() {
           robuxBalance={robuxBalance}
           unlockCost={settings.coloringUnlockCost}
           coloringTimeLeftSec={coloringTimeLeftSec}
+          unlimitedTime={coloringTimeExchangeCost <= 0}
           unlockedLevels={unlockedColoringLevels}
           onUnlockLevel={handleUnlockColoringLevel}
         />
@@ -5974,6 +5979,7 @@ export default function App() {
           onBack={() => setShowDrawingPanel(false)}
           robuxBalance={robuxBalance}
           drawingTimeLeftSec={drawingTimeLeftSec}
+          unlimitedTime={drawingTimeExchangeCost <= 0}
         />
       )}
 
