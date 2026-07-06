@@ -607,7 +607,7 @@ export default function ColoringApp({
     };
 
     const handleCategorySwitch = (category) => {
-        const nextLevel = category === 'pokemon' ? 31 : category === 'anime' ? 61 : category === 'landscape' ? 77 : 1;
+        const nextLevel = category === 'pokemon' ? 31 : category === 'anime' ? 61 : category === 'landscape' ? 101 : 1;
         setBackgroundConfirm(null);
         currentLevelRef.current = nextLevel;
         setCurrentCategory(category);
@@ -736,7 +736,7 @@ export default function ColoringApp({
 
     const list = currentCategory === 'animal' ? animalEmojis : currentCategory === 'pokemon' ? pokemonEmojis : currentCategory === 'anime' ? animeEmojis : landscapeEmojis;
     const nameList = currentCategory === 'animal' ? animalNames : currentCategory === 'pokemon' ? pokemonNames : currentCategory === 'anime' ? animeNames : landscapeNames;
-    const startIndex = currentCategory === 'pokemon' ? 31 : currentCategory === 'anime' ? 61 : currentCategory === 'landscape' ? 77 : 1;
+    const startIndex = currentCategory === 'pokemon' ? 31 : currentCategory === 'anime' ? 61 : currentCategory === 'landscape' ? 101 : 1;
     const currentListIndex = currentLevel - startIndex;
     const currentEmoji = list[currentListIndex] || '?';
     const currentCharacterName = nameList[currentListIndex] || 'Nhân vật';
@@ -787,7 +787,7 @@ export default function ColoringApp({
                             className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('anime')}
                         >
-                            Anime (16)
+                            Anime (17)
                         </button>
                         <button
                             type="button"

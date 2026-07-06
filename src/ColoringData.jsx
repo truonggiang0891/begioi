@@ -10,8 +10,8 @@ export const pokemonNames = [
   'Chikorita Cỏ', 'Dragonite Rồng', 'Clefairy Tiên', 'Togepi Trứng', 'Poliwhirl Nòng Nọc', 'Diglett Chũi', 'Caterpie Sâu', 'Zubat Dơi', 'Hitmonchan Đấm Bốc', 'Staryu Sao Biển',
   'Sylveon Tiên', 'Vulpix Cáo Lửa', 'Lapras Biển', 'Slowpoke Chậm Chạp', 'Cubone Xương', 'Magikarp Cá Chép', 'Ekans Rắn', 'Leafeon Lá', 'Rattata Chuột', 'Totodile Cá Sấu'
 ];
-export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝', '🏴‍☠️', '🦔', '💨'];
-export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí', 'Bé Hải Tặc', 'Nhím Gai', 'Nhím Tốc Độ'];
+export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝', '🏴‍☠️', '🦔', '💨', '⚔️'];
+export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí', 'Bé Hải Tặc', 'Nhím Gai', 'Nhím Tốc Độ', 'Anh Hùng Nhí'];
 export const landscapeEmojis = ['🏔️', '🏡', '🏖️'];
 export const landscapeNames = ['Núi & Mặt Trời', 'Ngôi Nhà Nhỏ', 'Bãi Biển'];
 
@@ -1762,6 +1762,25 @@ export const coloringSVGs = {
         </svg>`,
   77: `<svg id="svg-77" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <path class="colorable" d="M120,145 L134,86 L158,130 L178,78 L200,126 L222,78 L242,130 L266,86 L280,145 C258,116 142,116 120,145 Z" fill="#ffffff"/>
+            <rect class="colorable" x="118" y="140" width="164" height="20" rx="6" fill="#ffffff"/>
+            <path class="colorable" d="M200,138 L206,150 L219,150 L209,158 L213,171 L200,163 L187,171 L191,158 L181,150 L194,150 Z" fill="#ffffff"/>
+            <path class="colorable" d="M282,150 L326,160 L320,188 L280,168 Z" fill="#ffffff"/>
+            <path class="colorable" d="M282,166 L322,192 L304,214 L278,180 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="200" cy="208" rx="74" ry="72" fill="#ffffff"/>
+            <ellipse class="colorable" cx="170" cy="204" rx="18" ry="23" fill="#ffffff"/>
+            <ellipse class="colorable" cx="230" cy="204" rx="18" ry="23" fill="#ffffff"/>
+            <circle cx="170" cy="209" r="8" fill="#1a202c"/>
+            <circle cx="230" cy="209" r="8" fill="#1a202c"/>
+            <circle class="colorable" cx="150" cy="234" r="9" fill="#ffffff"/>
+            <circle class="colorable" cx="250" cy="234" r="9" fill="#ffffff"/>
+            <path class="colorable" d="M176,242 Q200,260 224,242" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="colorable" d="M150,302 C170,296 230,296 250,302 L278,362 L122,362 Z" fill="#ffffff"/>
+            <path class="colorable" d="M174,302 L200,340 L226,302 L226,316 L200,352 L174,316 Z" fill="#ffffff"/>
+            <rect class="colorable" x="150" y="332" width="100" height="16" rx="3" fill="#ffffff"/>
+        </svg>`,
+  101: `<svg id="svg-101" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <circle class="colorable" cx="305" cy="105" r="40" fill="#ffffff"/>
             <line x1="305" y1="45" x2="305" y2="26" stroke="#1a202c" stroke-width="4"/>
             <line x1="360" y1="105" x2="380" y2="105" stroke="#1a202c" stroke-width="4"/>
@@ -1776,7 +1795,7 @@ export const coloringSVGs = {
             <path class="colorable" d="M258,210 L285,165 L312,210 C295,200 275,200 258,210 Z" fill="#ffffff"/>
             <path class="colorable" d="M10,300 L390,300 L390,374 Q390,390 374,390 L26,390 Q10,390 10,374 Z" fill="#ffffff"/>
         </svg>`,
-  78: `<svg id="svg-78" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  102: `<svg id="svg-102" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <circle class="colorable" cx="72" cy="80" r="34" fill="#ffffff"/>
             <line x1="72" y1="30" x2="72" y2="14" stroke="#1a202c" stroke-width="4"/>
@@ -1795,7 +1814,7 @@ export const coloringSVGs = {
             <rect class="colorable" x="146" y="222" width="32" height="32" fill="#ffffff"/>
             <rect class="colorable" x="222" y="222" width="32" height="32" fill="#ffffff"/>
         </svg>`,
-  79: `<svg id="svg-79" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  103: `<svg id="svg-103" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
             <circle class="colorable" cx="312" cy="88" r="36" fill="#ffffff"/>
             <ellipse class="colorable" cx="92" cy="78" rx="42" ry="20" fill="#ffffff"/>
