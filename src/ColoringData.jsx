@@ -10,6 +10,8 @@ export const pokemonNames = [
   'Chikorita Cỏ', 'Dragonite Rồng', 'Clefairy Tiên', 'Togepi Trứng', 'Poliwhirl Nòng Nọc', 'Diglett Chũi', 'Caterpie Sâu', 'Zubat Dơi', 'Hitmonchan Đấm Bốc', 'Staryu Sao Biển',
   'Sylveon Tiên', 'Vulpix Cáo Lửa', 'Lapras Biển', 'Slowpoke Chậm Chạp', 'Cubone Xương', 'Magikarp Cá Chép', 'Ekans Rắn', 'Leafeon Lá', 'Rattata Chuột', 'Totodile Cá Sấu'
 ];
+export const animeEmojis = ['👧', '🥷', '🧙'];
+export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ'];
 
 export const colorThemes = {
     nature: ["#2ecc71", "#27ae60", "#3498db", "#2980b9", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#8e44ad", "#34495e", "#fdfdfd", "#f3e9d2"],
@@ -1470,5 +1472,76 @@ export const coloringSVGs = {
             <circle cx="230" cy="130" r="6" fill="#1a202c"/>
             <path d="M150,110 A30,30 0 0,0 150,150" stroke="#1a202c" stroke-width="4" fill="none"/>
             <path d="M250,110 A30,30 0 0,1 250,150" stroke="#1a202c" stroke-width="4" fill="none"/>
+        </svg>`,
+  61: `<svg id="svg-61" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <!-- Tóc sau -->
+            <path class="colorable" d="M112,175 C112,85 288,85 288,175 C300,245 292,315 276,340 C270,300 264,255 258,225 C246,255 154,255 142,225 C136,255 130,300 124,340 C108,315 100,245 112,175 Z" fill="#ffffff"/>
+            <!-- Mặt -->
+            <ellipse class="colorable" cx="200" cy="195" rx="76" ry="80" fill="#ffffff"/>
+            <!-- Tóc mái -->
+            <path class="colorable" d="M126,158 C132,104 182,90 200,126 C218,90 268,104 274,158 C266,180 248,152 236,138 C226,160 174,160 164,138 C152,152 134,180 126,158 Z" fill="#ffffff"/>
+            <!-- Nơ -->
+            <path class="colorable" d="M244,96 L292,78 L292,126 L244,108 Z" fill="#ffffff"/>
+            <circle class="colorable" cx="248" cy="102" r="10" fill="#ffffff"/>
+            <!-- Mắt -->
+            <ellipse class="colorable" cx="166" cy="200" rx="20" ry="27" fill="#ffffff"/>
+            <ellipse class="colorable" cx="234" cy="200" rx="20" ry="27" fill="#ffffff"/>
+            <circle cx="166" cy="206" r="8" fill="#1a202c"/>
+            <circle cx="234" cy="206" r="8" fill="#1a202c"/>
+            <!-- Má hồng -->
+            <circle class="colorable" cx="146" cy="232" r="12" fill="#ffffff"/>
+            <circle class="colorable" cx="254" cy="232" r="12" fill="#ffffff"/>
+            <!-- Miệng -->
+            <path class="colorable" d="M188,242 Q200,254 212,242" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- Áo -->
+            <path class="colorable" d="M156,300 C172,296 228,296 244,300 L276,362 L124,362 Z" fill="#ffffff"/>
+        </svg>`,
+  62: `<svg id="svg-62" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <!-- Đầu trùm -->
+            <path class="colorable" d="M112,185 C112,112 288,112 288,185 C288,258 246,306 200,306 C154,306 112,258 112,185 Z" fill="#ffffff"/>
+            <!-- Băng đô -->
+            <rect class="colorable" x="104" y="152" width="192" height="36" rx="8" fill="#ffffff"/>
+            <!-- Huy hiệu -->
+            <circle class="colorable" cx="200" cy="170" r="13" fill="#ffffff"/>
+            <!-- Đuôi băng -->
+            <path class="colorable" d="M288,158 L346,138 L352,176 L292,184 Z" fill="#ffffff"/>
+            <path class="colorable" d="M288,178 L344,190 L334,222 L290,196 Z" fill="#ffffff"/>
+            <!-- Khăn che mặt -->
+            <path class="colorable" d="M126,214 C138,296 262,296 274,214 C244,240 156,240 126,214 Z" fill="#ffffff"/>
+            <!-- Mắt -->
+            <ellipse class="colorable" cx="166" cy="205" rx="20" ry="14" fill="#ffffff"/>
+            <ellipse class="colorable" cx="234" cy="205" rx="20" ry="14" fill="#ffffff"/>
+            <circle cx="166" cy="205" r="7" fill="#1a202c"/>
+            <circle cx="234" cy="205" r="7" fill="#1a202c"/>
+            <!-- Thân -->
+            <path class="colorable" d="M150,304 C170,314 230,314 250,304 L272,362 L128,362 Z" fill="#ffffff"/>
+        </svg>`,
+  63: `<svg id="svg-63" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <!-- Nón -->
+            <path class="colorable" d="M200,46 C210,80 240,150 258,166 L142,166 C160,150 190,80 200,46 Z" fill="#ffffff"/>
+            <!-- Vành nón -->
+            <ellipse class="colorable" cx="200" cy="168" rx="98" ry="22" fill="#ffffff"/>
+            <!-- Ngôi sao -->
+            <path class="colorable" d="M200,92 L208,112 L229,112 L212,125 L219,146 L200,133 L181,146 L188,125 L171,112 L192,112 Z" fill="#ffffff"/>
+            <!-- Tóc -->
+            <path class="colorable" d="M138,200 C130,260 148,306 162,330 C150,290 156,244 168,222 Z" fill="#ffffff"/>
+            <path class="colorable" d="M262,200 C270,260 252,306 238,330 C250,290 244,244 232,222 Z" fill="#ffffff"/>
+            <!-- Mặt -->
+            <ellipse class="colorable" cx="200" cy="228" rx="64" ry="60" fill="#ffffff"/>
+            <!-- Mắt -->
+            <ellipse class="colorable" cx="177" cy="228" rx="16" ry="21" fill="#ffffff"/>
+            <ellipse class="colorable" cx="223" cy="228" rx="16" ry="21" fill="#ffffff"/>
+            <circle cx="177" cy="233" r="7" fill="#1a202c"/>
+            <circle cx="223" cy="233" r="7" fill="#1a202c"/>
+            <!-- Má -->
+            <circle class="colorable" cx="160" cy="252" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="240" cy="252" r="10" fill="#ffffff"/>
+            <!-- Miệng -->
+            <path class="colorable" d="M190,258 Q200,268 210,258" stroke="#1a202c" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- Áo choàng -->
+            <path class="colorable" d="M162,300 C178,296 222,296 238,300 L268,362 L132,362 Z" fill="#ffffff"/>
         </svg>`,
 };

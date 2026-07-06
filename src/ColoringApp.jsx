@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Clock, Cuboid, Eraser, Gem, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Undo2, X } from 'lucide-react';
-import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, colorThemes, coloringSVGs } from './ColoringData';
+import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, animeEmojis, animeNames, colorThemes, coloringSVGs } from './ColoringData';
 
 const EMPTY_FILL_VALUES = new Set(['', '#ffffff', '#fff', 'white', 'none']);
 const THEME_LABELS = {
@@ -607,7 +607,7 @@ export default function ColoringApp({
     };
 
     const handleCategorySwitch = (category) => {
-        const nextLevel = category === 'animal' ? 1 : 31;
+        const nextLevel = category === 'pokemon' ? 31 : category === 'anime' ? 61 : 1;
         setBackgroundConfirm(null);
         currentLevelRef.current = nextLevel;
         setCurrentCategory(category);
@@ -734,9 +734,9 @@ export default function ColoringApp({
         setShowThreeDPreview(true);
     };
 
-    const list = currentCategory === 'animal' ? animalEmojis : pokemonEmojis;
-    const nameList = currentCategory === 'animal' ? animalNames : pokemonNames;
-    const startIndex = currentCategory === 'animal' ? 1 : 31;
+    const list = currentCategory === 'animal' ? animalEmojis : currentCategory === 'pokemon' ? pokemonEmojis : animeEmojis;
+    const nameList = currentCategory === 'animal' ? animalNames : currentCategory === 'pokemon' ? pokemonNames : animeNames;
+    const startIndex = currentCategory === 'pokemon' ? 31 : currentCategory === 'anime' ? 61 : 1;
     const currentListIndex = currentLevel - startIndex;
     const currentEmoji = list[currentListIndex] || '?';
     const currentCharacterName = nameList[currentListIndex] || 'Nhân vật';
@@ -767,20 +767,27 @@ export default function ColoringApp({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 px-2.5 py-1">
+                    <div className="grid grid-cols-3 gap-1.5 px-2.5 py-1">
                         <button
                             type="button"
-                            className={`h-9 rounded-full border-none px-2 text-sm font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-9 whitespace-nowrap rounded-full border-none px-1 text-xs font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-9 rounded-full border-none px-2 text-sm font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-9 whitespace-nowrap rounded-full border-none px-1 text-xs font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
+                        </button>
+                        <button
+                            type="button"
+                            className={`h-9 whitespace-nowrap rounded-full border-none px-1 text-xs font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            onClick={() => handleCategorySwitch('anime')}
+                        >
+                            Anime (3)
                         </button>
                     </div>
 
