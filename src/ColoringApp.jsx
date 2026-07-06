@@ -24,6 +24,15 @@ const SAMPLE_PALETTES = [
     ['#fff0f6', '#f78fb3', '#ffc2d6', '#f78fb3', '#c39be0', '#f78fb3', '#ffc2d6', '#ffb391'],
 ];
 
+// Vị trí, độ trễ và màu của các chùm pháo hoa khi bé hoàn thành 100%
+const FIREWORK_BURSTS = [
+    { left: '22%', top: '26%', delay: 0, colors: ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6'] },
+    { left: '74%', top: '22%', delay: 0.4, colors: ['#a855f7', '#ec4899', '#38bdf8', '#facc15'] },
+    { left: '50%', top: '46%', delay: 0.8, colors: ['#22c55e', '#f97316', '#e11d48', '#8b5cf6'] },
+    { left: '30%', top: '68%', delay: 1.1, colors: ['#facc15', '#06b6d4', '#f43f5e', '#84cc16'] },
+    { left: '70%', top: '64%', delay: 0.6, colors: ['#3b82f6', '#f59e0b', '#ec4899', '#10b981'] },
+];
+
 let sharedAudioContext = null;
 
 const getAudioContext = () => {
@@ -786,8 +795,29 @@ export default function ColoringApp({
                     />
 
                     {isCurrentUnlocked && (
-                        <div className="pointer-events-none absolute right-2 top-2 z-[12] rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-black text-[#334155] shadow-sm backdrop-blur">
-                            {progress}%
+                        <div className={`pointer-events-none absolute right-2 top-2 z-[12] flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black shadow-sm backdrop-blur transition-colors ${progress === 100 ? 'animate-[cf-badge-pop_0.5s_ease] border-white bg-gradient-to-r from-amber-400 to-pink-500 text-white' : 'border-white/80 bg-white/90 text-[#334155]'}`}>
+                            <span className="truncate">{currentCharacterName}</span>
+                            <span className="shrink-0">{progress === 100 ? '🎉 100%' : `${progress}%`}</span>
+                        </div>
+                    )}
+
+                    {isCurrentUnlocked && progress === 100 && (
+                        <div className="pointer-events-none absolute inset-0 z-[11] overflow-hidden">
+                            {FIREWORK_BURSTS.map((burst, burstIndex) => (
+                                <div key={burstIndex} className="cf-firework" style={{ left: burst.left, top: burst.top }}>
+                                    {Array.from({ length: 12 }).map((_, sparkIndex) => (
+                                        <span
+                                            key={sparkIndex}
+                                            className="cf-spark"
+                                            style={{
+                                                '--cf-angle': `${sparkIndex * 30}deg`,
+                                                '--cf-color': burst.colors[sparkIndex % burst.colors.length],
+                                                animationDelay: `${burst.delay}s`,
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            ))}
                         </div>
                     )}
 
@@ -1022,6 +1052,30 @@ export default function ColoringApp({
                     stroke-linecap: round;
                     stroke-linejoin: round;
                     transition: fill 0.18s ease;
+                }
+
+                .cf-firework { position: absolute; width: 0; height: 0; }
+                .cf-spark {
+                    position: absolute;
+                    left: 0; top: 0;
+                    width: 8px; height: 8px;
+                    margin: -4px 0 0 -4px;
+                    border-radius: 9999px;
+                    background: var(--cf-color);
+                    opacity: 0;
+                    box-shadow: 0 0 6px var(--cf-color);
+                    transform: rotate(var(--cf-angle)) translateX(0) scale(0.4);
+                    animation: cf-burst 1.3s ease-out infinite;
+                }
+                @keyframes cf-burst {
+                    0% { opacity: 0; transform: rotate(var(--cf-angle)) translateX(0) scale(0.4); }
+                    12% { opacity: 1; }
+                    100% { opacity: 0; transform: rotate(var(--cf-angle)) translateX(66px) scale(1); }
+                }
+                @keyframes cf-badge-pop {
+                    0% { transform: scale(0.7); }
+                    60% { transform: scale(1.15); }
+                    100% { transform: scale(1); }
                 }
             `}} />
         </div>

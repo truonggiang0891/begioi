@@ -1,14 +1,14 @@
 export const animalEmojis = ['🐳','🐻','🐱','🐶','🐰','🐷','🐸','🐧','🦉','🐟','🐢','🦀','🐭','🦊','🦁','🐯','🐘','🦛','🐵','🐼','🐨','🐑','🐮','🐴','🦌','🦇','🦋','🐞','🐝','🐌'];
 export const pokemonEmojis = ['⚡','🌱','🔥','💧','🎤','💤','🐾','👻','🦆','🪙','🌿','🐉','🌸','🥚','🌀','🕳️','🐛','🦇','🥊','🌟','🧚','🦊','🦕','🦥','🦴','🐟','🐍','🍃','🐭','🐊'];
 export const animalNames = [
-  'Cá voi', 'Gấu', 'Mèo', 'Chó', 'Thỏ', 'Heo', 'Ếch', 'Chim cánh cụt', 'Cú mèo', 'Cá',
-  'Rùa', 'Cua', 'Chuột', 'Cáo', 'Sư tử', 'Hổ', 'Voi', 'Hà mã', 'Khỉ', 'Gấu trúc',
-  'Gấu túi', 'Cừu', 'Bò', 'Ngựa', 'Hươu', 'Dơi', 'Bướm', 'Bọ rùa', 'Ong', 'Ốc sên'
+  'Bé Cá Voi', 'Gấu Nâu', 'Mèo Con', 'Cún Con', 'Thỏ Bông', 'Heo Con', 'Ếch Xanh', 'Chim Cánh Cụt', 'Cú Mèo', 'Cá Vàng',
+  'Rùa Con', 'Cua Càng Đỏ', 'Chuột Nhắt', 'Cáo Đỏ', 'Sư Tử Con', 'Hổ Vằn', 'Voi Con', 'Hà Mã', 'Khỉ Con', 'Gấu Trúc',
+  'Gấu Koala', 'Cừu Bông', 'Bò Sữa', 'Ngựa Con', 'Hươu Sao', 'Dơi Nhỏ', 'Bướm Xinh', 'Bọ Rùa', 'Ong Vàng', 'Ốc Sên'
 ];
 export const pokemonNames = [
-  'Pikachu', 'Bulbasaur', 'Charmander', 'Squirtle', 'Jigglypuff', 'Snorlax', 'Eevee', 'Gengar', 'Psyduck', 'Meowth',
-  'Chikorita', 'Dragonite', 'Clefairy', 'Togepi', 'Poliwhirl', 'Diglett', 'Caterpie', 'Zubat', 'Hitmonchan', 'Staryu',
-  'Sylveon', 'Vulpix', 'Lapras', 'Slowpoke', 'Cubone', 'Magikarp', 'Ekans', 'Leafeon', 'Rattata', 'Totodile'
+  'Pikachu Điện', 'Bulbasaur Cỏ', 'Charmander Lửa', 'Squirtle Nước', 'Jigglypuff Ca Hát', 'Snorlax Buồn Ngủ', 'Eevee Dễ Thương', 'Gengar Ma', 'Psyduck Vịt Vàng', 'Meowth Mèo Vàng',
+  'Chikorita Cỏ', 'Dragonite Rồng', 'Clefairy Tiên', 'Togepi Trứng', 'Poliwhirl Nòng Nọc', 'Diglett Chũi', 'Caterpie Sâu', 'Zubat Dơi', 'Hitmonchan Đấm Bốc', 'Staryu Sao Biển',
+  'Sylveon Tiên', 'Vulpix Cáo Lửa', 'Lapras Biển', 'Slowpoke Chậm Chạp', 'Cubone Xương', 'Magikarp Cá Chép', 'Ekans Rắn', 'Leafeon Lá', 'Rattata Chuột', 'Totodile Cá Sấu'
 ];
 
 export const colorThemes = {
