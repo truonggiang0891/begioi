@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Clock, Cuboid, Eraser, Gem, Heart, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Trash2, Undo2, X } from 'lucide-react';
-import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, animeEmojis, animeNames, landscapeEmojis, landscapeNames, colorThemes, coloringSVGs } from './ColoringData';
+import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, animeEmojis, animeNames, landscapeEmojis, landscapeNames, brainrotEmojis, brainrotIds, brainrotNames, BRAINROT_START_LEVEL, tonghopEmojis, tonghopIds, tonghopNames, TONGHOP_START_LEVEL, colorThemes, coloringSVGs } from './ColoringData';
 
 const EMPTY_FILL_VALUES = new Set(['', '#ffffff', '#fff', 'white', 'none']);
 const THEME_LABELS = {
@@ -28,10 +28,15 @@ const CATEGORY_RANGES = [
     { key: 'pokemon', start: 31, emojis: pokemonEmojis, names: pokemonNames },
     { key: 'anime', start: 61, emojis: animeEmojis, names: animeNames },
     { key: 'landscape', start: 101, emojis: landscapeEmojis, names: landscapeNames },
+    { key: 'brainrot', start: BRAINROT_START_LEVEL, ids: brainrotIds, emojis: brainrotEmojis, names: brainrotNames },
+    { key: 'tonghop', start: TONGHOP_START_LEVEL, ids: tonghopIds, emojis: tonghopEmojis, names: tonghopNames },
 ];
+const getRangeItemId = (range, index) => range.ids?.[index] ?? range.start + index;
+const getRangeItemIndex = (range, id) => range.ids ? range.ids.indexOf(id) : id - range.start;
+const AVAILABLE_COLORING_IDS = new Set(CATEGORY_RANGES.flatMap(range => range.emojis.map((_, index) => getRangeItemId(range, index))));
 const getItemMeta = (id) => {
     for (const range of CATEGORY_RANGES) {
-        const index = id - range.start;
+        const index = getRangeItemIndex(range, id);
         if (index >= 0 && index < range.emojis.length) {
             return { emoji: range.emojis[index] || '?', name: range.names[index] || 'Nhân vật', category: range.key };
         }
@@ -241,7 +246,7 @@ export default function ColoringApp({
     const [historyStatus, setHistoryStatus] = useState({ canUndo: false, canRedo: false });
     const [unlockNotice, setUnlockNotice] = useState('');
     const [backgroundConfirm, setBackgroundConfirm] = useState(null);
-    const [favorites, setFavorites] = useState(loadFavorites);
+    const [favorites, setFavorites] = useState(() => loadFavorites().filter(id => AVAILABLE_COLORING_IDS.has(id)));
     const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
     const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
@@ -647,9 +652,10 @@ export default function ColoringApp({
     };
 
     const handleCategorySwitch = (category) => {
+        const categoryRange = CATEGORY_RANGES.find(range => range.key === category);
         const nextLevel = category === 'favorite'
             ? (favorites.length > 0 ? favorites[0] : currentLevelRef.current)
-            : category === 'pokemon' ? 31 : category === 'anime' ? 61 : category === 'landscape' ? 101 : 1;
+            : (categoryRange?.emojis.length ? getRangeItemId(categoryRange, 0) : currentLevelRef.current);
         setBackgroundConfirm(null);
         currentLevelRef.current = nextLevel;
         setCurrentCategory(category);
@@ -801,17 +807,17 @@ export default function ColoringApp({
         setShowThreeDPreview(true);
     };
 
-    const list = currentCategory === 'animal' ? animalEmojis : currentCategory === 'pokemon' ? pokemonEmojis : currentCategory === 'anime' ? animeEmojis : landscapeEmojis;
-    const nameList = currentCategory === 'animal' ? animalNames : currentCategory === 'pokemon' ? pokemonNames : currentCategory === 'anime' ? animeNames : landscapeNames;
-    const startIndex = currentCategory === 'pokemon' ? 31 : currentCategory === 'anime' ? 61 : currentCategory === 'landscape' ? 101 : 1;
+    const activeCategoryRange = CATEGORY_RANGES.find(range => range.key === currentCategory) || CATEGORY_RANGES[0];
+    const list = activeCategoryRange.emojis;
     const currentMeta = getItemMeta(currentLevel);
     const currentEmoji = currentMeta.emoji;
     const currentCharacterName = currentMeta.name;
+    const categoryEmpty = currentCategory !== 'favorite' && list.length === 0;
     const favoritesEmpty = currentCategory === 'favorite' && favorites.length === 0;
     const orderedItems = currentCategory === 'favorite'
-        ? favorites.map(id => ({ emoji: getItemMeta(id).emoji, id }))
+        ? favorites.filter(id => AVAILABLE_COLORING_IDS.has(id)).map(id => ({ emoji: getItemMeta(id).emoji, id }))
         : list
-            .map((emoji, index) => ({ emoji, id: startIndex + index }))
+            .map((emoji, index) => ({ emoji, id: getRangeItemId(activeCategoryRange, index) }))
             .sort((a, b) => (favoriteSet.has(b.id) ? 1 : 0) - (favoriteSet.has(a.id) ? 1 : 0));
     const isCurrentFavorite = favoriteSet.has(currentLevel);
     const { canUndo, canRedo } = historyStatus;
@@ -850,10 +856,10 @@ export default function ColoringApp({
                         </div>
                     </div>
 
-                    <div className="flex gap-1.5 overflow-x-auto px-2.5 py-1 scrollbar-none">
+                    <div className="grid grid-cols-3 gap-1.5 px-2.5 py-1">
                         <button
                             type="button"
-                            className={`flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
+                            className={`flex h-8 min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
                             onClick={() => handleCategorySwitch('favorite')}
                         >
                             <Heart size={13} className={currentCategory === 'favorite' ? 'fill-white' : 'fill-rose-500'} />
@@ -861,28 +867,42 @@ export default function ColoringApp({
                         </button>
                         <button
                             type="button"
-                            className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('anime')}
                         >
-                            Anime (20)
+                            Anime ({animeEmojis.length})
                         </button>
                         <button
                             type="button"
-                            className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'landscape' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'brainrot' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            onClick={() => handleCategorySwitch('brainrot')}
+                        >
+                            Brainrot ({brainrotEmojis.length})
+                        </button>
+                        <button
+                            type="button"
+                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'tonghop' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            onClick={() => handleCategorySwitch('tonghop')}
+                        >
+                            Tổng hợp ({tonghopEmojis.length})
+                        </button>
+                        <button
+                            type="button"
+                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'landscape' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('landscape')}
                         >
                             Phong Cảnh (3)
@@ -894,6 +914,11 @@ export default function ColoringApp({
                             <div className="flex h-10 items-center gap-1.5 px-1 text-xs font-bold text-slate-400">
                                 <Heart size={14} className="text-rose-300" />
                                 Chưa có nhân vật yêu thích — chạm nút tim để thêm nhé!
+                            </div>
+                        )}
+                        {categoryEmpty && (
+                            <div className="flex h-10 items-center px-1 text-xs font-bold text-slate-400">
+                                Mục này đang rỗng
                             </div>
                         )}
                         {orderedItems.map(({ emoji, id }) => {
@@ -957,11 +982,25 @@ export default function ColoringApp({
 
                 <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-1 py-0.5">
                     <div
-                        className={`flex h-full w-full items-center justify-center transition ${!favoritesEmpty && isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
+                        className={`flex h-full w-full items-center justify-center transition ${!favoritesEmpty && !categoryEmpty && isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
                         onClick={handleSvgClick}
                         style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center', transition: 'transform 0.16s ease' }}
                     />
+
+                    {categoryEmpty && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#f1f5f9] px-6 text-center">
+                            <div className="w-full max-w-[280px] rounded-2xl border-2 border-slate-100 bg-white/95 px-4 py-5 shadow-xl">
+                                <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-slate-400 shadow">
+                                    <Square size={28} />
+                                </div>
+                                <div className="text-lg font-black text-slate-800">Mục Anime đang rỗng</div>
+                                <div className="mt-1 text-sm font-bold text-slate-500">
+                                    Chưa có tranh nào trong mục này.
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {favoritesEmpty && (
                         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#f1f5f9] px-6 text-center">
@@ -977,14 +1016,14 @@ export default function ColoringApp({
                         </div>
                     )}
 
-                    {!favoritesEmpty && isCurrentUnlocked && (
+                    {!favoritesEmpty && !categoryEmpty && isCurrentUnlocked && (
                         <div className={`pointer-events-none absolute right-2 top-2 z-[12] flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black shadow-sm backdrop-blur transition-colors ${progress === 100 ? 'animate-[cf-badge-pop_0.5s_ease] border-white bg-gradient-to-r from-amber-400 to-pink-500 text-white' : 'border-white/80 bg-white/90 text-[#334155]'}`}>
                             <span className="truncate">{currentCharacterName}</span>
                             <span className="shrink-0">{progress === 100 ? '🎉 100%' : `${progress}%`}</span>
                         </div>
                     )}
 
-                    {!favoritesEmpty && isCurrentUnlocked && (
+                    {!favoritesEmpty && !categoryEmpty && isCurrentUnlocked && (
                         <button
                             type="button"
                             onClick={() => toggleFavorite(currentLevel)}
@@ -1022,7 +1061,7 @@ export default function ColoringApp({
                         </div>
                     )}
 
-                    {!favoritesEmpty && !isCurrentUnlocked && (
+                    {!favoritesEmpty && !categoryEmpty && !isCurrentUnlocked && (
                         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#e6ebf2] px-5 text-center">
                             <div className="w-full max-w-[280px] rounded-2xl border-2 border-white/80 bg-white/95 px-4 py-4 shadow-xl">
                                 <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-full bg-slate-800 text-white shadow">
@@ -1251,6 +1290,12 @@ export default function ColoringApp({
                     stroke-linecap: round;
                     stroke-linejoin: round;
                     transition: fill 0.18s ease;
+                }
+
+                .brainrot-artwork .colorable,
+                .tonghop-artwork .colorable {
+                    stroke: none;
+                    stroke-width: 0;
                 }
 
                 .cf-firework { position: absolute; width: 0; height: 0; }

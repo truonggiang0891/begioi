@@ -95,7 +95,12 @@ const MIN_TIME_EXCHANGE_COST = 0;
 const MAX_TIME_EXCHANGE_COST = 999;
 const MIN_COLORING_UNLOCK_COST = 1;
 const MAX_COLORING_UNLOCK_COST = 999;
-const COLORING_LEVEL_IDS = Array.from({ length: 103 }, (_, index) => index + 1);
+const COLORING_LEVEL_IDS = [
+  ...Array.from({ length: 60 }, (_, index) => index + 1),
+  ...Array.from({ length: 3 }, (_, index) => 101 + index),
+  ...Array.from({ length: 23 }, (_, index) => 201 + index).filter(id => id !== 220),
+  ...Array.from({ length: 51 }, (_, index) => 301 + index),
+];
 const ACCEPTED_AVATAR_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const ALL_ADDITION_TABLES = Array.from({ length: 10 }, (_, index) => index + 1);
 const LESSON_TYPES = [
