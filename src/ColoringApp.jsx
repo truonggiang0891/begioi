@@ -1298,6 +1298,15 @@ export default function ColoringApp({
                     stroke-width: 0;
                 }
 
+                /* Brainrot/Tổng hợp không có ô nền -> thêm khung trắng bo góc trực tiếp lên SVG */
+                .svg-wrapper .brainrot-artwork,
+                .svg-wrapper .tonghop-artwork {
+                    background: #ffffff;
+                    border: 4px solid #1a202c;
+                    border-radius: 16px;
+                    padding: 6px;
+                }
+
                 .cf-firework { position: absolute; width: 0; height: 0; }
                 .cf-spark {
                     position: absolute;
