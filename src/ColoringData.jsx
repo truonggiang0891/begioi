@@ -10,8 +10,8 @@ export const pokemonNames = [
   'Chikorita Cỏ', 'Dragonite Rồng', 'Clefairy Tiên', 'Togepi Trứng', 'Poliwhirl Nòng Nọc', 'Diglett Chũi', 'Caterpie Sâu', 'Zubat Dơi', 'Hitmonchan Đấm Bốc', 'Staryu Sao Biển',
   'Sylveon Tiên', 'Vulpix Cáo Lửa', 'Lapras Biển', 'Slowpoke Chậm Chạp', 'Cubone Xương', 'Magikarp Cá Chép', 'Ekans Rắn', 'Leafeon Lá', 'Rattata Chuột', 'Totodile Cá Sấu'
 ];
-export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝', '🏴‍☠️', '🦔', '💨', '⚔️', '🧸'];
-export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí', 'Bé Hải Tặc', 'Nhím Gai', 'Nhím Tốc Độ', 'Anh Hùng Nhí', 'Chibi Gấu'];
+export const animeEmojis = ['👧', '🥷', '🧙', '👦', '😺', '🌟', '👸', '🦸', '🦊', '👼', '🤖', '🧑‍🍳', '🧝', '🏴‍☠️', '🦔', '💨', '⚔️', '🧸', '🦈', '⚡'];
+export const animeNames = ['Cô Gái Anime', 'Ninja Nhí', 'Phù Thủy Nhỏ', 'Cậu Bé Anime', 'Mèo Cô Nương', 'Chiến Binh Sao', 'Công Chúa Nhí', 'Siêu Nhân Nhí', 'Hồ Ly Nương', 'Thiên Thần Nhỏ', 'Robot Nhí', 'Đầu Bếp Nhí', 'Tiên Rừng Nhí', 'Bé Hải Tặc', 'Nhím Gai', 'Nhím Tốc Độ', 'Anh Hùng Nhí', 'Chibi Gấu', 'Cá Mập Giày Thể Thao', 'Nhím Xanh'];
 export const landscapeEmojis = ['🏔️', '🏡', '🏖️'];
 export const landscapeNames = ['Núi & Mặt Trời', 'Ngôi Nhà Nhỏ', 'Bãi Biển'];
 
@@ -1798,6 +1798,95 @@ export const coloringSVGs = {
             <circle class="colorable" cx="138" cy="318" r="20" fill="#ffffff"/>
             <circle class="colorable" cx="262" cy="318" r="20" fill="#ffffff"/>
             <path class="colorable" d="M172,322 L228,322 L222,350 L178,350 Z" fill="#ffffff"/>
+        </svg>`,
+  79: `<svg id="svg-79" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>
+            <!-- Vây lưng -->
+            <path class="colorable" d="M168,68 L210,12 L246,80 Z" fill="#ffffff"/>
+            <!-- Thân cá mập -->
+            <path class="colorable" d="M200,58 C286,58 316,134 313,206 C310,276 266,316 200,316 C134,316 90,276 87,206 C84,134 114,58 200,58 Z" fill="#ffffff"/>
+            <!-- Vây tay -->
+            <path class="colorable" d="M92,196 C50,188 28,222 44,254 C69,247 88,226 106,206 Z" fill="#ffffff"/>
+            <path class="colorable" d="M308,196 C350,188 372,222 356,254 C331,247 312,226 294,206 Z" fill="#ffffff"/>
+            <!-- Bụng -->
+            <path class="colorable" d="M200,150 C250,150 271,200 269,242 C267,286 236,306 200,306 C164,306 133,286 131,242 C129,200 150,150 200,150 Z" fill="#ffffff"/>
+            <!-- Mang -->
+            <path d="M118,170 q-7,16 0,32 M134,166 q-7,18 0,36 M150,164 q-7,19 0,38" stroke="#1a202c" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <!-- Chân -->
+            <path class="colorable" d="M166,306 L166,332 L192,332 L192,306 Z" fill="#ffffff"/>
+            <path class="colorable" d="M208,306 L208,332 L234,332 L234,306 Z" fill="#ffffff"/>
+            <!-- Giày trái -->
+            <path class="colorable" d="M196,330 L110,330 C86,330 70,344 70,356 L196,356 Z" fill="#ffffff"/>
+            <path class="colorable" d="M64,356 L200,356 L200,378 L84,378 C73,378 62,369 64,356 Z" fill="#ffffff"/>
+            <!-- Giày phải -->
+            <path class="colorable" d="M204,330 L290,330 C314,330 330,344 330,356 L204,356 Z" fill="#ffffff"/>
+            <path class="colorable" d="M336,356 L200,356 L200,378 L316,378 C327,378 338,369 336,356 Z" fill="#ffffff"/>
+            <!-- Dây giày -->
+            <path d="M118,340 L150,352 M116,350 L150,362" stroke="#1a202c" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M282,340 L250,352 M284,350 L250,362" stroke="#1a202c" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <!-- Mắt -->
+            <ellipse class="colorable" cx="164" cy="168" rx="28" ry="32" fill="#ffffff"/>
+            <ellipse class="colorable" cx="236" cy="168" rx="28" ry="32" fill="#ffffff"/>
+            <circle cx="170" cy="176" r="11" fill="#1a202c"/>
+            <circle cx="230" cy="176" r="11" fill="#1a202c"/>
+            <circle cx="175" cy="170" r="4.5" fill="#ffffff"/>
+            <circle cx="235" cy="170" r="4.5" fill="#ffffff"/>
+            <!-- Miệng -->
+            <path class="colorable" d="M126,204 Q200,226 274,204 Q262,268 200,272 Q138,268 126,204 Z" fill="#ffffff"/>
+            <!-- Răng -->
+            <path d="M134,206 Q200,226 266,206 L256,222 L242,208 L228,224 L214,210 L200,226 L186,210 L172,224 L158,208 L144,222 Z" fill="#ffffff" stroke="#1a202c" stroke-width="3" stroke-linejoin="round"/>
+        </svg>`,
+  80: `<svg id="svg-80" class="artwork-svg w-full h-full object-contain" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+            <rect class="colorable" x="7" y="7" width="286" height="286" fill="#ffffff" rx="12"/>
+            <g transform="translate(150,150) scale(0.85) translate(-155,-180)">
+            <!-- GAI LƯNG (SPIKES) -->
+            <path class="colorable" d="M 120 100 C 65 110, 50 165, 75 185 C 90 145, 100 120, 120 110 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 185 90 C 235 90, 255 110, 270 125 C 245 120, 215 115, 195 105 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 195 115 C 255 130, 285 165, 290 200 C 255 175, 220 150, 195 130 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 190 135 C 240 165, 270 215, 260 235 C 235 210, 215 175, 185 150 Z" fill="#ffffff"/>
+            <!-- TAI (EARS) -->
+            <path class="colorable" d="M 105 35 L 130 65 L 95 60 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 109 40 L 125 61 L 100 57 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 195 35 L 170 65 L 205 60 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 191 40 L 175 61 L 200 57 Z" fill="#ffffff"/>
+            <!-- TAY (ARMS) -->
+            <path class="colorable" d="M 125 170 L 90 200 L 85 190 L 120 160 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 175 170 L 205 200 L 210 190 L 180 160 Z" fill="#ffffff"/>
+            <!-- CHÂN (LEGS) -->
+            <path class="colorable" d="M 135 200 L 115 250 L 105 250 L 125 200 Z" fill="#ffffff"/>
+            <path class="colorable" d="M 165 200 L 185 250 L 195 250 L 175 200 Z" fill="#ffffff"/>
+            <!-- THÂN BỤNG (BODY) -->
+            <circle class="colorable" cx="150" cy="175" r="32" fill="#ffffff"/>
+            <circle class="colorable" cx="150" cy="180" r="23" fill="#ffffff"/>
+            <!-- KHUÔN MẶT CHÍNH (HEAD) -->
+            <circle class="colorable" cx="150" cy="105" r="55" fill="#ffffff"/>
+            <!-- VÙNG MẮT TRẮNG (EYE MASK) -->
+            <path class="colorable" d="M 105 105 C 95 50, 150 60, 150 90 C 150 60, 205 50, 195 105 C 190 135, 160 140, 150 115 C 140 140, 110 135, 105 105 Z" fill="#ffffff"/>
+            <!-- CON NGƯƠI (PUPILS) -->
+            <ellipse cx="132" cy="98" rx="4" ry="11" fill="#2c3e50"/>
+            <ellipse cx="132" cy="92" rx="1.5" ry="3" fill="#ffffff"/>
+            <ellipse cx="168" cy="98" rx="4" ry="11" fill="#2c3e50"/>
+            <ellipse cx="168" cy="92" rx="1.5" ry="3" fill="#ffffff"/>
+            <!-- MIỆNG / MÕM (MUZZLE) -->
+            <path class="colorable" d="M 95 110 C 85 155, 130 165, 150 165 C 170 165, 215 155, 205 110 C 185 120, 115 120, 95 110 Z" fill="#ffffff"/>
+            <ellipse cx="150" cy="120" rx="6" ry="4" fill="#2c3e50"/>
+            <path d="M 165 135 C 180 140, 190 135, 195 130" fill="none" stroke="#2c3e50" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- BÀN TAY (HANDS) -->
+            <circle class="colorable" cx="80" cy="195" r="10" fill="#ffffff"/>
+            <circle class="colorable" cx="60" cy="210" r="14" fill="#ffffff"/>
+            <circle class="colorable" cx="215" cy="195" r="13" fill="#ffffff"/>
+            <path class="colorable" d="M 215 185 L 140 193 A 6 6 0 0 0 140 205 L 215 197 Z" fill="#ffffff"/>
+            <circle class="colorable" cx="205" cy="182" r="6" fill="#ffffff"/>
+            <!-- GIÀY (SHOES) -->
+            <ellipse class="colorable" cx="110" cy="250" rx="20" ry="10" fill="#ffffff"/>
+            <path class="colorable" d="M 90 255 C 40 255, 20 295, 55 315 C 90 325, 145 310, 130 255 Z" fill="#ffffff"/>
+            <path d="M 65 260 C 80 280, 85 300, 75 318" fill="none" stroke="#2c3e50" stroke-width="4"/>
+            <path class="colorable" d="M 115 260 L 125 265 L 120 280 L 110 275 Z" fill="#ffffff"/>
+            <ellipse class="colorable" cx="190" cy="250" rx="20" ry="10" fill="#ffffff"/>
+            <path class="colorable" d="M 210 255 C 260 255, 280 295, 245 315 C 210 325, 155 310, 170 255 Z" fill="#ffffff"/>
+            <path d="M 235 260 C 220 280, 215 300, 225 318" fill="none" stroke="#2c3e50" stroke-width="4"/>
+            <path class="colorable" d="M 185 260 L 175 265 L 180 280 L 190 275 Z" fill="#ffffff"/>
+            </g>
         </svg>`,
   101: `<svg id="svg-101" class="artwork-svg w-full h-full object-contain" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <rect class="colorable" x="10" y="10" width="380" height="380" fill="#ffffff" rx="16"/>

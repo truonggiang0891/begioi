@@ -2650,6 +2650,7 @@ export default function App() {
   const [draftSettings, setDraftSettings] = useState(initialSettings);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUserNameForm, setShowUserNameForm] = useState(false);
+  const [showAccountButtons, setShowAccountButtons] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [adminError, setAdminError] = useState('');
@@ -4351,47 +4352,7 @@ export default function App() {
       {/* ROLE LOGIN */}
       {!isSummary && (
       <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
-        <div className="grid grid-cols-4 gap-1.5 md:gap-2">
-          <button
-            type="button"
-            onClick={toggleUserNameForm}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
-              showUserNameForm
-                ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
-                : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
-            }`}
-          >
-            <UserRound size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Người dùng</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (isAdmin) return;
-              setShowUserNameForm(false);
-              setAvatarError('');
-              setShowAdminLogin(prev => !prev);
-              setAdminError('');
-              setSettingsSaved(false);
-              setShowHistoryPanel(false);
-              rememberCurrentReadingPosition();
-              setReadingSummary(null);
-              readingSessionStartedAtRef.current = null;
-              setShowReadingPanel(false);
-              setSelectedReadingId(null);
-              setExpandedReadingSeriesId(null);
-              setShowColoringPanel(false);
-              setShowColoringAccessPanel(false);
-            }}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
-              isAdmin
-                ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
-                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
-            }`}
-          >
-            <ShieldCheck size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Admin</span>
-          </button>
-
+        <div className="grid grid-cols-3 gap-1.5 md:gap-2">
           <button
             type="button"
             onClick={toggleReadingPanel}
@@ -4431,13 +4392,11 @@ export default function App() {
           >
             <BarChart size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
           </button>
-        </div>
 
-        <div className="mt-1.5 grid grid-cols-4 gap-1.5 md:mt-2 md:gap-2">
           <button
             type="button"
             onClick={handleColoringMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-[11px] font-extrabold transition-all sm:text-xs md:text-base ${
               showColoringPanel || showColoringAccessPanel
                 ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(217,119,6)]'
                 : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100'
@@ -4445,11 +4404,13 @@ export default function App() {
           >
             <PencilLine size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Tô màu</span>
           </button>
+        </div>
 
+        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
           <button
             type="button"
             onClick={handleDrawingMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-[11px] font-extrabold transition-all sm:text-xs md:text-base ${
               showDrawingPanel || showDrawingAccessPanel
                 ? 'bg-pink-500 text-white shadow-[0_4px_0_rgb(190,24,93)]'
                 : 'border-2 border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100'
@@ -4460,15 +4421,15 @@ export default function App() {
 
           <button
             type="button"
-            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 px-1 py-2 text-[11px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-xs md:px-2 md:text-base"
+            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 py-2 px-1 md:px-2 text-[11px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-xs md:text-base"
           >
-            <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Trò chơi</span>
+            <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Game</span>
           </button>
 
           <button
             type="button"
             onClick={toggleRobuxMode}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl px-1 py-2 text-[11px] font-extrabold transition-all sm:text-xs md:px-2 md:text-base ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-[11px] font-extrabold transition-all sm:text-xs md:text-base ${
               rewardMode === 'robux'
                 ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
                 : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
@@ -4477,6 +4438,60 @@ export default function App() {
             <Gem size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">{rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}</span>
           </button>
         </div>
+
+        {showAccountButtons && (
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5 md:mt-2 md:gap-2">
+            <button
+              type="button"
+              onClick={toggleUserNameForm}
+              className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+                showUserNameForm
+                  ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
+                  : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
+              }`}
+            >
+              <UserRound size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Người dùng</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (isAdmin) return;
+                setShowUserNameForm(false);
+                setAvatarError('');
+                setShowAdminLogin(prev => !prev);
+                setAdminError('');
+                setSettingsSaved(false);
+                setShowHistoryPanel(false);
+                rememberCurrentReadingPosition();
+                setReadingSummary(null);
+                readingSessionStartedAtRef.current = null;
+                setShowReadingPanel(false);
+                setSelectedReadingId(null);
+                setExpandedReadingSeriesId(null);
+                setShowColoringPanel(false);
+                setShowColoringAccessPanel(false);
+              }}
+              className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+                isAdmin
+                  ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
+                  : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
+              }`}
+            >
+              <ShieldCheck size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Admin</span>
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setShowAccountButtons(prev => !prev)}
+          aria-label={showAccountButtons ? 'Thu gọn nút Người dùng và Admin' : 'Hiện nút Người dùng và Admin'}
+          className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-xl bg-slate-100 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-200 md:mt-2 md:text-xs"
+        >
+          <ChevronDown size={15} className={`transition-transform ${showAccountButtons ? 'rotate-180' : ''}`} />
+          <span>{showAccountButtons ? 'Thu gọn' : 'Người dùng · Admin'}</span>
+        </button>
 
         {showUserNameForm && (
           <form onSubmit={saveUserName} className="mt-2 rounded-xl border-2 border-blue-100 bg-blue-50 p-2">

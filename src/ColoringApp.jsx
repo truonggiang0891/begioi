@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
-import { Clock, Cuboid, Eraser, Gem, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Undo2, X } from 'lucide-react';
+import { Clock, Cuboid, Eraser, Gem, Heart, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Trash2, Undo2, X } from 'lucide-react';
 import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, animeEmojis, animeNames, landscapeEmojis, landscapeNames, colorThemes, coloringSVGs } from './ColoringData';
 
 const EMPTY_FILL_VALUES = new Set(['', '#ffffff', '#fff', 'white', 'none']);
@@ -12,6 +12,32 @@ const MIN_ZOOM = 0.75;
 const MAX_ZOOM = 1.75;
 const ZOOM_STEP = 0.15;
 const THREE_PREVIEW_READY_PROGRESS = 100;
+const FAVORITES_KEY = 'coloring_favorites';
+const loadFavorites = () => {
+    try {
+        const raw = localStorage.getItem(FAVORITES_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isFinite) : [];
+    } catch {
+        return [];
+    }
+};
+// Tra cứu emoji + tên cho bất kỳ level id nào (dùng cho mục Yêu thích gộp mọi nhóm).
+const CATEGORY_RANGES = [
+    { key: 'animal', start: 1, emojis: animalEmojis, names: animalNames },
+    { key: 'pokemon', start: 31, emojis: pokemonEmojis, names: pokemonNames },
+    { key: 'anime', start: 61, emojis: animeEmojis, names: animeNames },
+    { key: 'landscape', start: 101, emojis: landscapeEmojis, names: landscapeNames },
+];
+const getItemMeta = (id) => {
+    for (const range of CATEGORY_RANGES) {
+        const index = id - range.start;
+        if (index >= 0 && index < range.emojis.length) {
+            return { emoji: range.emojis[index] || '?', name: range.names[index] || 'Nhân vật', category: range.key };
+        }
+    }
+    return { emoji: '?', name: 'Nhân vật', category: 'animal' };
+};
 const BACKGROUND_CONFIRM_MS = 2200;
 // Mỗi palette: [nền dịu, màu chủ đạo (lặp lại nhiều lần) + sắc độ nhạt + điểm nhấn hài hòa]
 const SAMPLE_PALETTES = [
@@ -215,6 +241,18 @@ export default function ColoringApp({
     const [historyStatus, setHistoryStatus] = useState({ canUndo: false, canRedo: false });
     const [unlockNotice, setUnlockNotice] = useState('');
     const [backgroundConfirm, setBackgroundConfirm] = useState(null);
+    const [favorites, setFavorites] = useState(loadFavorites);
+    const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+
+    const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+    const toggleFavorite = useCallback((id) => {
+        setFavorites(prev => (prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]));
+    }, []);
+    useEffect(() => {
+        try {
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+        } catch { /* ignore */ }
+    }, [favorites]);
 
     // Pháo hoa chỉ chạy 5 giây khi vừa hoàn thành 100%
     useEffect(() => {
@@ -609,7 +647,9 @@ export default function ColoringApp({
     };
 
     const handleCategorySwitch = (category) => {
-        const nextLevel = category === 'pokemon' ? 31 : category === 'anime' ? 61 : category === 'landscape' ? 101 : 1;
+        const nextLevel = category === 'favorite'
+            ? (favorites.length > 0 ? favorites[0] : currentLevelRef.current)
+            : category === 'pokemon' ? 31 : category === 'anime' ? 61 : category === 'landscape' ? 101 : 1;
         setBackgroundConfirm(null);
         currentLevelRef.current = nextLevel;
         setCurrentCategory(category);
@@ -704,6 +744,31 @@ export default function ColoringApp({
         updateProgress(level);
     };
 
+    // Xóa màu đã tô ở TẤT CẢ các bức tranh (mọi nhóm) để bé vẽ lại từ đầu.
+    const clearAllCanvases = () => {
+        setShowClearAllConfirm(false);
+        setBackgroundConfirm(null);
+
+        const container = svgContainerRef.current;
+        if (!container) return;
+
+        container.querySelectorAll('.svg-wrapper').forEach(wrapper => {
+            wrapper.querySelectorAll('.colorable').forEach(element => {
+                element.setAttribute('fill', element.dataset.initialFill || '#ffffff');
+            });
+            const id = Number(wrapper.getAttribute('data-id'));
+            if (Number.isFinite(id)) {
+                progressByLevelRef.current[id] = 0;
+            }
+        });
+
+        undoStacksRef.current = {};
+        redoStacksRef.current = {};
+
+        updateProgress(currentLevelRef.current);
+        syncHistoryStatus(currentLevelRef.current);
+    };
+
     const handleUnlockCurrentLevel = () => {
         if (isCurrentUnlocked) return;
 
@@ -739,9 +804,16 @@ export default function ColoringApp({
     const list = currentCategory === 'animal' ? animalEmojis : currentCategory === 'pokemon' ? pokemonEmojis : currentCategory === 'anime' ? animeEmojis : landscapeEmojis;
     const nameList = currentCategory === 'animal' ? animalNames : currentCategory === 'pokemon' ? pokemonNames : currentCategory === 'anime' ? animeNames : landscapeNames;
     const startIndex = currentCategory === 'pokemon' ? 31 : currentCategory === 'anime' ? 61 : currentCategory === 'landscape' ? 101 : 1;
-    const currentListIndex = currentLevel - startIndex;
-    const currentEmoji = list[currentListIndex] || '?';
-    const currentCharacterName = nameList[currentListIndex] || 'Nhân vật';
+    const currentMeta = getItemMeta(currentLevel);
+    const currentEmoji = currentMeta.emoji;
+    const currentCharacterName = currentMeta.name;
+    const favoritesEmpty = currentCategory === 'favorite' && favorites.length === 0;
+    const orderedItems = currentCategory === 'favorite'
+        ? favorites.map(id => ({ emoji: getItemMeta(id).emoji, id }))
+        : list
+            .map((emoji, index) => ({ emoji, id: startIndex + index }))
+            .sort((a, b) => (favoriteSet.has(b.id) ? 1 : 0) - (favoriteSet.has(a.id) ? 1 : 0));
+    const isCurrentFavorite = favoriteSet.has(currentLevel);
     const { canUndo, canRedo } = historyStatus;
 
     return (
@@ -758,6 +830,15 @@ export default function ColoringApp({
                         </button>
                         <h1 className="m-0 min-w-0 flex-1 truncate text-sm font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
                         <div className="flex shrink-0 items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setShowClearAllConfirm(true)}
+                                title="Xóa hết tất cả tranh đã tô để vẽ lại"
+                                aria-label="Xóa hết tất cả tranh đã tô để vẽ lại"
+                                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-600 transition hover:bg-rose-200 active:scale-90"
+                            >
+                                <Trash2 size={14} />
+                            </button>
                             <div className="flex h-7 items-center gap-1 rounded-full bg-emerald-100 px-2 text-xs font-black text-emerald-700">
                                 <Clock size={14} />
                                 {displayTimeLeft}
@@ -770,6 +851,14 @@ export default function ColoringApp({
                     </div>
 
                     <div className="flex gap-1.5 overflow-x-auto px-2.5 py-1 scrollbar-none">
+                        <button
+                            type="button"
+                            className={`flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
+                            onClick={() => handleCategorySwitch('favorite')}
+                        >
+                            <Heart size={13} className={currentCategory === 'favorite' ? 'fill-white' : 'fill-rose-500'} />
+                            Yêu thích ({favorites.length})
+                        </button>
                         <button
                             type="button"
                             className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
@@ -789,7 +878,7 @@ export default function ColoringApp({
                             className={`h-9 shrink-0 whitespace-nowrap rounded-full border-none px-3 text-xs font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('anime')}
                         >
-                            Anime (18)
+                            Anime (20)
                         </button>
                         <button
                             type="button"
@@ -801,9 +890,15 @@ export default function ColoringApp({
                     </div>
 
                     <div className="flex gap-2 overflow-x-auto px-2.5 pb-1 pt-1 scroll-smooth scrollbar-none">
-                        {list.map((emoji, index) => {
-                            const id = startIndex + index;
+                        {favoritesEmpty && (
+                            <div className="flex h-10 items-center gap-1.5 px-1 text-xs font-bold text-slate-400">
+                                <Heart size={14} className="text-rose-300" />
+                                Chưa có nhân vật yêu thích — chạm nút tim để thêm nhé!
+                            </div>
+                        )}
+                        {orderedItems.map(({ emoji, id }) => {
                             const isUnlocked = unlockedLevelSet.has(id);
+                            const isFavorite = favoriteSet.has(id);
                             return (
                                 <button
                                     type="button"
@@ -814,6 +909,11 @@ export default function ColoringApp({
                                     <span className={!isUnlocked ? 'opacity-55' : ''} style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                         {emoji || '?'}
                                     </span>
+                                    {isFavorite && (
+                                        <span className="absolute -left-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-white text-rose-500 shadow-sm">
+                                            <Heart size={9} className="fill-rose-500" />
+                                        </span>
+                                    )}
                                     {!isUnlocked && (
                                         <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-[#1f2937] text-white shadow-sm">
                                             <LockKeyhole size={10} />
@@ -825,19 +925,75 @@ export default function ColoringApp({
                     </div>
                 </header>
 
+                {showClearAllConfirm && (
+                    <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/45 px-6 text-center">
+                        <div className="w-full max-w-[300px] rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
+                            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-rose-100 text-rose-500">
+                                <Trash2 size={28} />
+                            </div>
+                            <h2 className="text-lg font-black text-slate-800">Xóa hết tất cả tranh?</h2>
+                            <p className="mt-2 text-sm font-bold text-slate-500">
+                                Toàn bộ màu đã tô ở mọi bức tranh sẽ bị xóa để bé vẽ lại từ đầu.
+                            </p>
+                            <div className="mt-4 flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowClearAllConfirm(false)}
+                                    className="flex-1 rounded-full bg-slate-100 px-4 py-2.5 text-sm font-black text-slate-600 transition hover:bg-slate-200"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={clearAllCanvases}
+                                    className="flex-1 rounded-full bg-rose-500 px-4 py-2.5 text-sm font-black text-white shadow-[0_4px_0_rgb(190,40,70)] transition active:translate-y-1 active:shadow-none"
+                                >
+                                    Xóa hết
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-1 py-0.5">
                     <div
-                        className={`flex h-full w-full items-center justify-center transition ${isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
+                        className={`flex h-full w-full items-center justify-center transition ${!favoritesEmpty && isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
                         ref={svgContainerRef}
                         onClick={handleSvgClick}
                         style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center', transition: 'transform 0.16s ease' }}
                     />
 
-                    {isCurrentUnlocked && (
+                    {favoritesEmpty && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#f1f5f9] px-6 text-center">
+                            <div className="w-full max-w-[280px] rounded-2xl border-2 border-rose-100 bg-white/95 px-4 py-5 shadow-xl">
+                                <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-full bg-rose-100 text-rose-500 shadow">
+                                    <Heart size={28} className="fill-rose-500" />
+                                </div>
+                                <div className="text-lg font-black text-slate-800">Chưa có nhân vật yêu thích</div>
+                                <div className="mt-1 text-sm font-bold text-slate-500">
+                                    Mở một nhân vật ở nhóm khác rồi chạm nút tim 💗 để thêm vào đây nhé!
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {!favoritesEmpty && isCurrentUnlocked && (
                         <div className={`pointer-events-none absolute right-2 top-2 z-[12] flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black shadow-sm backdrop-blur transition-colors ${progress === 100 ? 'animate-[cf-badge-pop_0.5s_ease] border-white bg-gradient-to-r from-amber-400 to-pink-500 text-white' : 'border-white/80 bg-white/90 text-[#334155]'}`}>
                             <span className="truncate">{currentCharacterName}</span>
                             <span className="shrink-0">{progress === 100 ? '🎉 100%' : `${progress}%`}</span>
                         </div>
+                    )}
+
+                    {!favoritesEmpty && isCurrentUnlocked && (
+                        <button
+                            type="button"
+                            onClick={() => toggleFavorite(currentLevel)}
+                            aria-pressed={isCurrentFavorite}
+                            aria-label={isCurrentFavorite ? 'Bỏ yêu thích nhân vật này' : 'Thả tim nhân vật yêu thích'}
+                            className={`absolute left-2 top-2 z-[12] grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition active:scale-90 ${isCurrentFavorite ? 'border-rose-200 bg-rose-50' : 'border-white/80 bg-white/90'}`}
+                        >
+                            <Heart size={19} className={isCurrentFavorite ? 'fill-rose-500 text-rose-500 animate-[cf-badge-pop_0.4s_ease]' : 'text-slate-400'} />
+                        </button>
                     )}
 
                     {isCurrentUnlocked && showFireworks && (
@@ -866,7 +1022,7 @@ export default function ColoringApp({
                         </div>
                     )}
 
-                    {!isCurrentUnlocked && (
+                    {!favoritesEmpty && !isCurrentUnlocked && (
                         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#e6ebf2] px-5 text-center">
                             <div className="w-full max-w-[280px] rounded-2xl border-2 border-white/80 bg-white/95 px-4 py-4 shadow-xl">
                                 <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-full bg-slate-800 text-white shadow">
