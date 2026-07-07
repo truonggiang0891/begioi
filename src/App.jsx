@@ -4356,7 +4356,7 @@ export default function App() {
           <button
             type="button"
             onClick={toggleReadingPanel}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-xs sm:text-sm md:text-lg transition-all ${
               showReadingPanel
                 ? 'bg-emerald-500 text-white shadow-[0_4px_0_rgb(5,150,105)]'
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-100'
@@ -4384,7 +4384,7 @@ export default function App() {
               setShowColoringPanel(false);
               setShowColoringAccessPanel(false);
             }}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-xs sm:text-sm md:text-lg transition-all ${
               showHistoryPanel
                 ? 'bg-sky-500 text-white shadow-[0_4px_0_rgb(2,132,199)]'
                 : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-2 border-sky-100'
@@ -4395,22 +4395,8 @@ export default function App() {
 
           <button
             type="button"
-            onClick={handleColoringMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-[11px] font-extrabold transition-all sm:text-xs md:text-base ${
-              showColoringPanel || showColoringAccessPanel
-                ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(217,119,6)]'
-                : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100'
-            }`}
-          >
-            <PencilLine size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Tô màu</span>
-          </button>
-        </div>
-
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
-          <button
-            type="button"
             onClick={handleDrawingMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-[11px] font-extrabold transition-all sm:text-xs md:text-base ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-xs font-extrabold transition-all sm:text-sm md:text-lg ${
               showDrawingPanel || showDrawingAccessPanel
                 ? 'bg-pink-500 text-white shadow-[0_4px_0_rgb(190,24,93)]'
                 : 'border-2 border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100'
@@ -4418,10 +4404,24 @@ export default function App() {
           >
             <Brush size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Học vẽ</span>
           </button>
+        </div>
+
+        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
+          <button
+            type="button"
+            onClick={handleColoringMenuClick}
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-xs font-extrabold transition-all sm:text-sm md:text-lg ${
+              showColoringPanel || showColoringAccessPanel
+                ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(217,119,6)]'
+                : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            <PencilLine size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Tô màu</span>
+          </button>
 
           <button
             type="button"
-            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 py-2 px-1 md:px-2 text-[11px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-xs md:text-base"
+            className="flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 py-2 px-1 md:px-2 text-xs font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-sm md:text-lg"
           >
             <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Game</span>
           </button>
@@ -4429,7 +4429,7 @@ export default function App() {
           <button
             type="button"
             onClick={toggleRobuxMode}
-            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-[11px] font-extrabold transition-all sm:text-xs md:text-base ${
+            className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 text-xs font-extrabold transition-all sm:text-sm md:text-lg ${
               rewardMode === 'robux'
                 ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
                 : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
@@ -4444,7 +4444,7 @@ export default function App() {
             <button
               type="button"
               onClick={toggleUserNameForm}
-              className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+              className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-xs sm:text-sm md:text-lg transition-all ${
                 showUserNameForm
                   ? 'bg-blue-500 text-white shadow-[0_4px_0_rgb(29,78,216)]'
                   : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-2 border-blue-100'
@@ -4472,7 +4472,7 @@ export default function App() {
                 setShowColoringPanel(false);
                 setShowColoringAccessPanel(false);
               }}
-              className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[11px] sm:text-xs md:text-base transition-all ${
+              className={`flex min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-1 md:px-2 font-extrabold text-xs sm:text-sm md:text-lg transition-all ${
                 isAdmin
                   ? 'bg-purple-500 text-white shadow-[0_4px_0_rgb(126,34,206)]'
                   : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-2 border-purple-100'
