@@ -856,10 +856,10 @@ export default function ColoringApp({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1.5 px-2.5 py-1">
+                    <div className="flex gap-1.5 overflow-x-auto px-2.5 py-1 scrollbar-none">
                         <button
                             type="button"
-                            className={`flex h-8 min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
                             onClick={() => handleCategorySwitch('favorite')}
                         >
                             <Heart size={13} className={currentCategory === 'favorite' ? 'fill-white' : 'fill-rose-500'} />
@@ -867,42 +867,42 @@ export default function ColoringApp({
                         </button>
                         <button
                             type="button"
-                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
                         </button>
                         <button
                             type="button"
-                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('anime')}
                         >
                             Anime ({animeEmojis.length})
                         </button>
                         <button
                             type="button"
-                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'brainrot' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='brainrot' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('brainrot')}
                         >
                             Brainrot ({brainrotEmojis.length})
                         </button>
                         <button
                             type="button"
-                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'tonghop' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='tonghop' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('tonghop')}
                         >
                             Tổng hợp ({tonghopEmojis.length})
                         </button>
                         <button
                             type="button"
-                            className={`h-8 min-w-0 overflow-hidden whitespace-nowrap rounded-full border-none px-2 text-[11px] font-black transition-all ${currentCategory === 'landscape' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='landscape' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('landscape')}
                         >
                             Phong Cảnh (3)
