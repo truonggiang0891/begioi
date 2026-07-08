@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ColoringApp from './ColoringApp';
 import DrawingApp from './DrawingApp';
+import GamesApp from './GamesApp';
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
@@ -2679,6 +2680,7 @@ export default function App() {
   const [unlockedColoringLevels, setUnlockedColoringLevels] = useState(() => loadUnlockedColoringLevels());
   const [showDrawingPanel, setShowDrawingPanel] = useState(false);
   const [showDrawingAccessPanel, setShowDrawingAccessPanel] = useState(false);
+  const [showGamesPanel, setShowGamesPanel] = useState(false);
   const [drawingTimeLeftSec, setDrawingTimeLeftSec] = useState(() => loadDrawingTimeLeft());
   const [drawingPurchaseMinutes, setDrawingPurchaseMinutes] = useState(MIN_COLORING_PURCHASE_MINUTES);
 
@@ -4426,6 +4428,7 @@ export default function App() {
 
           <button
             type="button"
+            onClick={() => setShowGamesPanel(true)}
             className="flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 py-2 px-0.5 md:px-2 text-[13px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-base md:text-xl"
           >
             <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Game</span>
@@ -6001,6 +6004,10 @@ export default function App() {
           drawingTimeLeftSec={drawingTimeLeftSec}
           unlimitedTime={drawingTimeExchangeCost <= 0}
         />
+      )}
+
+      {!isSummary && showGamesPanel && (
+        <GamesApp onBack={() => setShowGamesPanel(false)} />
       )}
 
       {!isSummary && showReadingPanel && (
