@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, RotateCw, ArrowLeft, ArrowRight, ArrowDown, ChevronsDown, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
@@ -164,6 +164,55 @@ export default function TetrisApp({ onBack }) {
 
   const act = useCallback((action) => setGame((g) => reduce(g, action)), []);
 
+  // Board tự co giãn lấp đầy không gian còn trống (giữ tỉ lệ COLS:ROWS).
+  const boardWrapRef = useRef(null);
+  const [boardPx, setBoardPx] = useState(0);
+  useLayoutEffect(() => {
+    const el = boardWrapRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w <= 0 || h <= 0) return;
+      setBoardPx(Math.floor(Math.min(w, h * COLS / ROWS)));
+    };
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
+
+  // Điều khiển bằng chạm/vuốt ngay trên bảng: chạm = xoay, kéo ngang = sang trái/phải, kéo xuống = rơi nhanh.
+  const dragRef = useRef(null);
+  const onBoardPointerDown = (e) => {
+    if (game.over) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    dragRef.current = { x0: e.clientX, y0: e.clientY, h: 0, v: 0, moved: false };
+  };
+  const onBoardPointerMove = (e) => {
+    const g = dragRef.current;
+    if (!g) return;
+    const cell = boardPx / COLS || 30;
+    const stepX = Math.max(16, cell * 0.6);
+    const stepY = Math.max(18, cell * 0.7);
+    const targetH = Math.trunc((e.clientX - g.x0) / stepX);
+    while (g.h < targetH) { act('right'); g.h += 1; g.moved = true; }
+    while (g.h > targetH) { act('left'); g.h -= 1; g.moved = true; }
+    const targetV = Math.trunc((e.clientY - g.y0) / stepY);
+    while (g.v < targetV) { act('down'); g.v += 1; g.moved = true; }
+  };
+  const onBoardPointerUp = (e) => {
+    const g = dragRef.current;
+    dragRef.current = null;
+    if (!g) return;
+    const dist = Math.hypot(e.clientX - g.x0, e.clientY - g.y0);
+    if (!g.moved && dist < 12) act('rotate');
+  };
+
   const restart = () => {
     prevLines.current = 0;
     prevOver.current = false;
@@ -218,8 +267,6 @@ export default function TetrisApp({ onBack }) {
   const ghostSet = new Set();
   game.cur.cells.forEach(([cr, cc]) => ghostSet.add(`${gr + cr},${game.cur.c + cc}`));
 
-  const boardW = 'min(80vw, 264px)';
-
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-800 to-slate-900">
       {/* Header */}
@@ -241,9 +288,9 @@ export default function TetrisApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-2 py-2">
         {/* Điểm + khối tiếp theo */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="rounded-2xl bg-white/10 px-4 py-1.5 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-xl font-black text-white">{game.score}</div>
@@ -261,41 +308,51 @@ export default function TetrisApp({ onBack }) {
           </div>
         </div>
 
-        {/* Bảng chơi */}
-        <div
-          className="grid rounded-2xl bg-slate-950/70 p-1.5 shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-          style={{
-            width: boardW,
-            height: `calc(${boardW} * ${ROWS} / ${COLS})`,
-            gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-            gridTemplateRows: `repeat(${ROWS}, 1fr)`,
-            gap: 1.5,
-          }}
-        >
-          {game.board.map((row, r) =>
-            row.map((cellColor, c) => {
-              const key = `${r},${c}`;
-              const color = cellColor || curMap.get(key);
-              const isGhost = !color && ghostSet.has(key);
-              return (
-                <div
-                  key={key}
-                  className="rounded-[16%]"
-                  style={
-                    color
-                      ? blockStyle(color)
-                      : isGhost
-                        ? { background: 'rgba(255,255,255,0.14)', borderRadius: '16%' }
-                        : { background: 'rgba(255,255,255,0.05)', borderRadius: '16%' }
-                  }
-                />
-              );
-            }),
-          )}
+        {/* Bảng chơi — lấp đầy không gian còn lại, điều khiển bằng chạm/vuốt */}
+        <div ref={boardWrapRef} className="flex min-h-0 w-full flex-1 items-center justify-center">
+          <div
+            className="grid touch-none select-none rounded-2xl bg-slate-950/70 p-1.5 shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+            onPointerDown={onBoardPointerDown}
+            onPointerMove={onBoardPointerMove}
+            onPointerUp={onBoardPointerUp}
+            onPointerCancel={onBoardPointerUp}
+            style={{
+              width: boardPx || undefined,
+              height: boardPx ? boardPx * ROWS / COLS : undefined,
+              touchAction: 'none',
+              gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+              gridTemplateRows: `repeat(${ROWS}, 1fr)`,
+              gap: 1.5,
+            }}
+          >
+            {game.board.map((row, r) =>
+              row.map((cellColor, c) => {
+                const key = `${r},${c}`;
+                const color = cellColor || curMap.get(key);
+                const isGhost = !color && ghostSet.has(key);
+                return (
+                  <div
+                    key={key}
+                    className="rounded-[16%]"
+                    style={
+                      color
+                        ? blockStyle(color)
+                        : isGhost
+                          ? { background: 'rgba(255,255,255,0.14)', borderRadius: '16%' }
+                          : { background: 'rgba(255,255,255,0.05)', borderRadius: '16%' }
+                    }
+                  />
+                );
+              }),
+            )}
+          </div>
         </div>
 
-        {/* Điều khiển cảm ứng */}
-        <div className="flex items-center gap-2">
+        {/* Gợi ý + điều khiển cảm ứng (nút để dự phòng) */}
+        <div className="shrink-0 text-center text-[11px] font-bold text-white/40">
+          Chạm để xoay · Vuốt ngang để đi · Vuốt xuống để rơi
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           <CtrlButton onClick={() => act('left')} label="Trái"><ArrowLeft size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('rotate')} label="Xoay"><RotateCw size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('right')} label="Phải"><ArrowRight size={26} /></CtrlButton>
