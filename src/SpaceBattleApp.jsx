@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Rocket, Zap, Shield, CircleDot } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: KHÔNG CHIẾN (Space Battle) ---
 // Phi thuyền địch BẮN TRẢ! Bé né đạn + tự bắn hạ chúng.
@@ -48,6 +49,7 @@ export default function SpaceBattleApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0);
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [gun, setGun] = useState(1);
@@ -454,9 +456,9 @@ export default function SpaceBattleApp({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onPointerMove = (e) => {
-    if (!(e.buttons || e.pointerType === 'touch')) return;
-    const g = gRef.current;
+  const steer = (e) => {
+    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
+    const g = gRef.current; if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width * W;
     g.ship.x = Math.max(0, Math.min(W - SHIP_W, x - SHIP_W / 2));
@@ -475,60 +477,75 @@ export default function SpaceBattleApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <div className="rounded-2xl bg-white/10 px-4 py-1.5 text-center">
-            <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
-            <div className="text-xl font-black text-white">{score}</div>
-          </div>
-          <div className="flex items-center gap-1 rounded-2xl bg-rose-400/15 px-3 py-1.5">
-            {Array.from({ length: 3 }, (_, i) => (
-              <Heart key={i} size={17} className={i < lives ? 'fill-rose-400 text-rose-400' : 'text-white/20'} />
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => selectWeapon('gun')}
-            className={`flex items-center gap-1 rounded-2xl px-3 py-1.5 transition ${weapon === 'gun' ? 'bg-cyan-400/40 ring-2 ring-cyan-300' : 'bg-cyan-400/15'}`}
-            title="Dùng súng thường"
-          >
-            <Zap size={16} className="text-cyan-300" />
-            <span className="text-sm font-black text-cyan-200">Lv{gun}</span>
-          </button>
-          <div className="flex items-center gap-1 rounded-2xl bg-orange-400/15 px-3 py-1.5" title="Tên lửa">
-            <Rocket size={16} className="text-orange-300" />
-            <span className="text-sm font-black text-orange-200">{rockets}</span>
-          </div>
-          <div className="flex items-center gap-0.5 rounded-2xl bg-green-400/15 px-2.5 py-1.5" title="Giáp — còn mấy lần đỡ đạn">
-            {Array.from({ length: MAX_SHIELD }, (_, i) => (
-              <Shield key={i} size={15} className={i < shield ? 'fill-green-400 text-green-400' : 'text-white/25'} />
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => selectWeapon('counter')}
-            disabled={counterLv <= 0}
-            className={`flex items-center gap-1 rounded-2xl px-3 py-1.5 transition ${weapon === 'counter' ? 'bg-violet-400/40 ring-2 ring-violet-300' : 'bg-violet-400/15'} ${counterLv <= 0 ? 'opacity-50' : ''}`}
-            title="Dùng đạn phản kích (triệt đạn địch)"
-          >
-            <CircleDot size={16} className={counterLv > 0 ? 'text-violet-300' : 'text-white/30'} />
-            <span className="text-sm font-black text-violet-200">Lv{counterLv}</span>
-          </button>
-          <div className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 px-3 py-1.5 text-center">
-            <Trophy size={15} className="text-amber-400" />
-            <div className="text-lg font-black text-amber-300">{best}</div>
-          </div>
+      <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 px-3 pt-2">
+        <div className="rounded-2xl bg-white/10 px-4 py-1.5 text-center">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
+          <div className="text-xl font-black text-white">{score}</div>
         </div>
+        <div className="flex items-center gap-1 rounded-2xl bg-rose-400/15 px-3 py-1.5">
+          {Array.from({ length: 3 }, (_, i) => (
+            <Heart key={i} size={17} className={i < lives ? 'fill-rose-400 text-rose-400' : 'text-white/20'} />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => selectWeapon('gun')}
+          className={`flex items-center gap-1 rounded-2xl px-3 py-1.5 transition ${weapon === 'gun' ? 'bg-cyan-400/40 ring-2 ring-cyan-300' : 'bg-cyan-400/15'}`}
+          title="Dùng súng thường"
+        >
+          <Zap size={16} className="text-cyan-300" />
+          <span className="text-sm font-black text-cyan-200">Lv{gun}</span>
+        </button>
+        <div className="flex items-center gap-1 rounded-2xl bg-orange-400/15 px-3 py-1.5" title="Tên lửa">
+          <Rocket size={16} className="text-orange-300" />
+          <span className="text-sm font-black text-orange-200">{rockets}</span>
+        </div>
+        <div className="flex items-center gap-0.5 rounded-2xl bg-green-400/15 px-2.5 py-1.5" title="Giáp — còn mấy lần đỡ đạn">
+          {Array.from({ length: MAX_SHIELD }, (_, i) => (
+            <Shield key={i} size={15} className={i < shield ? 'fill-green-400 text-green-400' : 'text-white/25'} />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => selectWeapon('counter')}
+          disabled={counterLv <= 0}
+          className={`flex items-center gap-1 rounded-2xl px-3 py-1.5 transition ${weapon === 'counter' ? 'bg-violet-400/40 ring-2 ring-violet-300' : 'bg-violet-400/15'} ${counterLv <= 0 ? 'opacity-50' : ''}`}
+          title="Dùng đạn phản kích (triệt đạn địch)"
+        >
+          <CircleDot size={16} className={counterLv > 0 ? 'text-violet-300' : 'text-white/30'} />
+          <span className="text-sm font-black text-violet-200">Lv{counterLv}</span>
+        </button>
+        <div className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 px-3 py-1.5 text-center">
+          <Trophy size={15} className="text-amber-400" />
+          <div className="text-lg font-black text-amber-300">{best}</div>
+        </div>
+      </div>
 
+      <div
+        ref={fitRef}
+        className="flex min-h-0 w-full flex-1 flex-col items-center justify-start touch-none pt-1"
+        onPointerDown={steer}
+        onPointerMove={steer}
+      >
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
-          onPointerMove={onPointerMove}
           className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-          style={{ width: 'min(84vw, 320px)', height: 'auto', display: 'block' }}
+          style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
         />
+      </div>
 
+      {/* Dải lái: kéo ngón tay ở đây (bên dưới thuyền) để điều khiển, tay không che sân chơi */}
+      <div
+        onPointerDown={steer}
+        onPointerMove={steer}
+        className="mx-3 mt-1 flex h-12 shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+      >
+        ↔ Kéo ở đây để lái thuyền
+      </div>
+
+      <div className="flex shrink-0 flex-col items-center gap-2 px-3 pb-3">
         <div className="flex items-center gap-3">
           <button type="button" aria-label="Trái" {...hold(-1)} className="flex h-16 w-20 touch-none items-center justify-center rounded-2xl bg-white/15 text-white shadow-[0_4px_0_rgba(0,0,0,0.3)] active:translate-y-0.5">
             <ArrowLeft size={28} />
@@ -550,7 +567,7 @@ export default function SpaceBattleApp({ onBack }) {
           </button>
         </div>
         <p className="text-center text-xs font-bold text-white/40">
-          Bấm <span className="text-cyan-300">⚡Lv</span>/<span className="text-violet-300">💠Lv</span> để đổi loại đạn (chỉ bắn 1 loại) · <span className="text-green-300">🛡️ giáp</span> đỡ đạn · <span className="text-orange-300">🚀 tên lửa nổ lan</span>
+          Kéo bên dưới để lái thuyền · Bấm <span className="text-cyan-300">⚡Lv</span>/<span className="text-violet-300">💠Lv</span> để đổi loại đạn (chỉ bắn 1 loại) · <span className="text-green-300">🛡️ giáp</span> đỡ đạn · <span className="text-orange-300">🚀 tên lửa nổ lan</span>
         </p>
       </div>
 

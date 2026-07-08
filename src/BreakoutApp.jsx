@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: PHÁ GẠCH (Breakout / Arkanoid) ---
 // Di thanh chắn để bật bóng lên phá các khối gạch phía trên.
@@ -40,6 +41,7 @@ const makeBricks = () => {
 export default function BreakoutApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [status, setStatus] = useState('ready'); // ready | playing | over
@@ -187,15 +189,16 @@ export default function BreakoutApp({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // điều khiển thanh chắn
-  const movePaddle = (clientX) => {
+  // điều khiển thanh chắn: kéo ở vùng bên dưới sân chơi
+  const steer = (e) => {
+    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
     const g = gRef.current;
+    if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (clientX - rect.left) / rect.width * W;
+    const x = (e.clientX - rect.left) / rect.width * W;
     g.paddle.x = Math.max(0, Math.min(W - PADDLE_W, x - PADDLE_W / 2));
+    if (e.type === 'pointerdown') launch();
   };
-  const onPointerDown = (e) => { movePaddle(e.clientX); launch(); };
-  const onPointerMove = (e) => { if (e.buttons || e.pointerType === 'touch') movePaddle(e.clientX); };
 
   useEffect(() => {
     const onKey = (e) => {
@@ -223,8 +226,8 @@ export default function BreakoutApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="rounded-2xl bg-white/10 px-4 py-1.5 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-xl font-black text-white">{score}</div>
@@ -240,25 +243,37 @@ export default function BreakoutApp({ onBack }) {
           </div>
         </div>
 
-        <div className="relative">
+        <div
+          ref={fitRef}
+          className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-start pt-1 touch-none"
+          onPointerDown={steer}
+          onPointerMove={steer}
+        >
           <canvas
             ref={canvasRef}
             width={W}
             height={H}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-            style={{ width: 'min(84vw, 320px)', height: 'auto', display: 'block' }}
+            className="rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+            style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
           />
           {status === 'ready' && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-16 text-center">
+            <div
+              className="pointer-events-none absolute inset-x-0 text-center"
+              style={{ top: Math.max(0, fitSize.h - 64) }}
+            >
               <span className="rounded-full bg-black/60 px-4 py-1.5 text-sm font-black text-white">
                 Chạm để bắn bóng 👆
               </span>
             </div>
           )}
         </div>
-        <p className="text-xs font-bold text-white/40">Kéo ngang để di thanh chắn</p>
+        <div
+          onPointerDown={steer}
+          onPointerMove={steer}
+          className="mx-3 mt-1 flex h-12 w-full max-w-[420px] shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+        >
+          ↔ Kéo ở đây để lái thanh chắn · chạm để bắn bóng
+        </div>
       </div>
 
       {status === 'over' && newRecord && <Fireworks />}

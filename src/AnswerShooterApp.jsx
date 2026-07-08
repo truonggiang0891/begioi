@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: BẮN ĐÁP ÁN / BẮN CHỮ (Answer Shooter) ---
 // Lái thuyền tự bắn, bắn trúng đáp án/chữ ĐÚNG đang rơi. Chế độ: 'math' | 'letter'.
@@ -52,6 +53,7 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0);
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
@@ -195,9 +197,10 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
     return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); };
   }, []);
 
-  const onPointerMove = (e) => {
-    if (!(e.buttons || e.pointerType === 'touch')) return;
+  const steer = (e) => {
+    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
     const g = gRef.current;
+    if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width * W;
     g.ship.x = Math.max(0, Math.min(W - SHIP_W, x - SHIP_W / 2));
@@ -219,8 +222,8 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 overflow-y-auto px-3 py-2">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="rounded-2xl bg-white/10 px-4 py-1 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-lg font-black text-white">{score}</div>
@@ -237,20 +240,34 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
         </div>
 
         {/* Câu hỏi */}
-        <div className="rounded-2xl bg-white/15 px-6 py-1.5 text-2xl font-black text-white">
+        <div className="shrink-0 rounded-2xl bg-white/15 px-6 py-1.5 text-2xl font-black text-white">
           {question}
         </div>
 
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          onPointerMove={onPointerMove}
-          className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-          style={{ width: 'min(80vw, 300px)', height: 'auto', display: 'block' }}
-        />
+        <div
+          ref={fitRef}
+          className="flex min-h-0 w-full flex-1 flex-col items-center justify-start pt-1 touch-none"
+          onPointerDown={steer}
+          onPointerMove={steer}
+        >
+          <canvas
+            ref={canvasRef}
+            width={W}
+            height={H}
+            className="rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+            style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
+          />
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div
+          onPointerDown={steer}
+          onPointerMove={steer}
+          className="mx-3 mt-1 flex h-12 w-full max-w-[420px] shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+        >
+          ↔ Kéo ở đây để lái thuyền
+        </div>
+
+        <div className="flex shrink-0 items-center gap-4">
           <button type="button" aria-label="Trái" {...hold(-1)} className="flex h-14 w-20 touch-none items-center justify-center rounded-2xl bg-white/15 text-white shadow-[0_4px_0_rgba(0,0,0,0.3)] active:translate-y-0.5">
             <ArrowLeft size={26} />
           </button>

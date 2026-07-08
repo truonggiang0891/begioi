@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Trophy, Heart } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: CHÉM HOA QUẢ (Fruit Slice / Fruit Ninja kiểu đơn giản) ---
 // Trái cây được bắn lên từ dưới theo đường cầu vồng, bé vuốt ngón tay/chuột
@@ -63,6 +64,7 @@ const makeFruit = () => {
 export default function FruitSliceApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const trailRef = useRef([]);
   const pointerDownRef = useRef(false);
   const lastPointRef = useRef(null);
@@ -347,8 +349,8 @@ export default function FruitSliceApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-3">
           <div className="rounded-2xl bg-white/10 px-5 py-1.5 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-xl font-black text-white">{score}</div>
@@ -369,32 +371,34 @@ export default function FruitSliceApp({ onBack }) {
         </div>
 
         {freezeActive && (
-          <div className="rounded-full bg-sky-400/20 px-4 py-1 text-xs font-black text-sky-300">
+          <div className="shrink-0 rounded-full bg-sky-400/20 px-4 py-1 text-xs font-black text-sky-300">
             ❄️ Đóng băng — chậm lại!
           </div>
         )}
 
-        <div className="relative">
-          <canvas
-            ref={canvasRef}
-            width={W}
-            height={H}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerEnd}
-            onPointerLeave={onPointerEnd}
-            onPointerCancel={onPointerEnd}
-            className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-            style={{ width: 'min(84vw, 320px)', height: 'auto', display: 'block' }}
-          />
-          {comboText && (
-            <div className="pointer-events-none absolute inset-x-0 top-6 text-center text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-              {comboText}
-            </div>
-          )}
+        <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center px-1">
+          <div className="relative" style={{ width: fitSize.w, height: fitSize.h }}>
+            <canvas
+              ref={canvasRef}
+              width={W}
+              height={H}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerEnd}
+              onPointerLeave={onPointerEnd}
+              onPointerCancel={onPointerEnd}
+              className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+              style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
+            />
+            {comboText && (
+              <div className="pointer-events-none absolute inset-x-0 top-6 text-center text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                {comboText}
+              </div>
+            )}
+          </div>
         </div>
 
-        <p className="max-w-xs text-center text-xs font-bold text-white/40">
+        <p className="shrink-0 max-w-xs text-center text-xs font-bold text-white/40">
           Vuốt qua trái cây để chém · né 💣 · ⭐ +5 điểm · ❄️ làm chậm thời gian
         </p>
       </div>

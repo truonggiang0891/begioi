@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: BẮN PHÁO (Ném bóng theo đường bay có trọng lực) ---
 // Kéo để ngắm góc + lực, thả để bắn bóng trúng mục tiêu. Trượt 3 lần -> thua.
@@ -24,6 +25,7 @@ const randTarget = () => ({
 export default function CannonApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
@@ -180,8 +182,8 @@ export default function CannonApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="rounded-2xl bg-white/10 px-4 py-1.5 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-xl font-black text-white">{score}</div>
@@ -197,17 +199,19 @@ export default function CannonApp({ onBack }) {
           </div>
         </div>
 
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-          style={{ width: 'min(84vw, 330px)', height: 'auto', display: 'block' }}
-        />
-        <p className="text-xs font-bold text-white/40">Kéo từ khẩu pháo để ngắm · thả để bắn</p>
+        <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center px-1">
+          <canvas
+            ref={canvasRef}
+            width={W}
+            height={H}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+            style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
+          />
+        </div>
+        <p className="shrink-0 text-xs font-bold text-white/40">Kéo từ khẩu pháo để ngắm · thả để bắn</p>
       </div>
 
       {over && newRecord && <Fireworks />}

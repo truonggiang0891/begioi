@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: BẮN GẠCH (Shooter kiểu Space Invaders) ---
 // Lái phi thuyền trái/phải, tự động bắn đạn lên phá các khối gạch đang trôi xuống.
@@ -42,6 +43,7 @@ const makeWave = (rows, startY) => {
 export default function ShooterApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [status, setStatus] = useState('playing'); // playing | over
   const [best, setBest] = useState(() => {
@@ -172,10 +174,10 @@ export default function ShooterApp({ onBack }) {
     return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); };
   }, []);
 
-  // kéo trên canvas để lái thuyền
-  const onPointerMove = (e) => {
-    if (!(e.buttons || e.pointerType === 'touch')) return;
-    const g = gRef.current;
+  // kéo bên dưới thuyền để lái
+  const steer = (e) => {
+    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
+    const g = gRef.current; if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width * W;
     g.ship.x = Math.max(0, Math.min(W - SHIP_W, x - SHIP_W / 2));
@@ -195,27 +197,41 @@ export default function ShooterApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-white/10 px-5 py-1.5 text-center">
-            <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
-            <div className="text-xl font-black text-white">{score}</div>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 px-5 py-1.5 text-center">
-            <Trophy size={16} className="text-amber-400" />
-            <div className="text-xl font-black text-amber-300">{best}</div>
-          </div>
+      <div className="flex shrink-0 items-center justify-center gap-3 px-3 pt-2">
+        <div className="rounded-2xl bg-white/10 px-5 py-1.5 text-center">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
+          <div className="text-xl font-black text-white">{score}</div>
         </div>
+        <div className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 px-5 py-1.5 text-center">
+          <Trophy size={16} className="text-amber-400" />
+          <div className="text-xl font-black text-amber-300">{best}</div>
+        </div>
+      </div>
 
+      <div
+        ref={fitRef}
+        className="flex min-h-0 w-full flex-1 flex-col items-center justify-start touch-none pt-1"
+        onPointerDown={steer}
+        onPointerMove={steer}
+      >
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
-          onPointerMove={onPointerMove}
           className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-          style={{ width: 'min(84vw, 320px)', height: 'auto', display: 'block' }}
+          style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
         />
+      </div>
 
+      <div
+        onPointerDown={steer}
+        onPointerMove={steer}
+        className="mx-3 mt-1 flex h-12 shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+      >
+        ↔ Kéo ở đây để lái thuyền
+      </div>
+
+      <div className="flex shrink-0 flex-col items-center gap-2 px-3 pb-3">
         {/* Nút lái (tự động bắn) */}
         <div className="flex items-center gap-4">
           <button type="button" aria-label="Trái" {...hold(-1)}
@@ -227,7 +243,7 @@ export default function ShooterApp({ onBack }) {
             <ArrowRight size={28} />
           </button>
         </div>
-        <p className="text-xs font-bold text-white/40">Giữ nút để lái · thuyền tự bắn</p>
+        <p className="text-xs font-bold text-white/40">Kéo bên dưới để lái thuyền · thuyền tự bắn</p>
       </div>
 
       {status === 'over' && newRecord && <Fireworks />}

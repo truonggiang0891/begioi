@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy, Rocket } from 'lucide-react';
 import { playSound, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: NHẢY CAO (kiểu Doodle Jump) ---
 // Nhân vật tự nảy lên nhờ trọng lực + bệ đỡ. Bé lái trái/phải để nhân vật rơi
@@ -32,6 +33,7 @@ export default function DoodleJumpApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0); // -1 trái, 1 phải, 0 đứng yên
+  const { ref: fitRef, size: fitSize } = useFitSize(W, H);
 
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(() => {
@@ -302,8 +304,8 @@ export default function DoodleJumpApp({ onBack }) {
         </button>
       </div>
 
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-3">
           <div className="rounded-2xl bg-white/10 px-5 py-1.5 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-xl font-black text-white">{score}</div>
@@ -324,16 +326,18 @@ export default function DoodleJumpApp({ onBack }) {
           )}
         </div>
 
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          onPointerMove={onPointerMove}
-          className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
-          style={{ width: 'min(84vw, 320px)', height: 'auto', display: 'block' }}
-        />
+        <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center px-1">
+          <canvas
+            ref={canvasRef}
+            width={W}
+            height={H}
+            onPointerMove={onPointerMove}
+            className="touch-none rounded-2xl shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+            style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
+          />
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-4">
           <button type="button" aria-label="Trái" {...hold(-1)}
             className="flex h-16 w-20 touch-none items-center justify-center rounded-2xl bg-white/15 text-white shadow-[0_4px_0_rgba(0,0,0,0.3)] active:translate-y-0.5">
             <ArrowLeft size={28} />
@@ -343,7 +347,7 @@ export default function DoodleJumpApp({ onBack }) {
             <ArrowRight size={28} />
           </button>
         </div>
-        <p className="text-xs font-bold text-white/40">Giữ nút, gõ phím ← → hoặc kéo trên màn hình để lái</p>
+        <p className="shrink-0 text-xs font-bold text-white/40">Giữ nút, gõ phím ← → hoặc kéo trên màn hình để lái</p>
 
         {status === 'over' && newRecord && <Fireworks />}
         {status === 'over' && (
