@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronLeft, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, Clock, Heart } from 'lucide-react';
 import GameApp from './GameApp';
 import MemoryApp from './MemoryApp';
 import BlockPuzzleApp from './BlockPuzzleApp';
@@ -33,9 +33,28 @@ const formatGameClock = (totalSec) => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+const FAV_KEY = 'game_favorites';
+const loadFavs = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = false }) {
   const [screen, setScreen] = useState('home');
+  const [favorites, setFavorites] = useState(loadFavs);
   const back = () => setScreen('home');
+
+  useEffect(() => {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); } catch { /* ignore */ }
+  }, [favorites]);
+
+  const toggleFav = (id) => {
+    setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
   const wrap = (node) => <div className="fixed inset-0 z-[60] bg-slate-900">{node}</div>;
 
   if (screen === 'puzzle') return wrap(<GameApp onBack={back} />);
@@ -84,6 +103,12 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
     { id: 'match3', emoji: '🍬', title: 'Xếp kẹo', desc: 'Đổi 3 kẹo giống nhau', bg: 'from-fuchsia-100 to-pink-200' },
   ];
 
+  const favSet = new Set(favorites);
+  // Game được thả tim xếp lên đầu (giữ nguyên thứ tự trong từng nhóm).
+  const orderedCards = [...cards].sort(
+    (a, b) => (favSet.has(b.id) ? 1 : 0) - (favSet.has(a.id) ? 1 : 0)
+  );
+
   return (
     <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-sky-50 to-emerald-100 px-4 py-5">
       <div className="mb-4 flex w-full max-w-md shrink-0 items-center justify-between gap-2">
@@ -103,19 +128,31 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
         </div>
       </div>
 
-      <div className="grid w-full max-w-md shrink-0 grid-cols-2 gap-3 pb-6 md:gap-4">
-        {cards.map((c) => (
-          <button
-            type="button"
-            key={c.id}
-            onClick={() => { playSound('pop'); setScreen(c.id); }}
-            className={`flex aspect-square flex-col items-center justify-center gap-1.5 rounded-3xl bg-gradient-to-b ${c.bg} p-3 shadow-[0_6px_0_rgba(0,0,0,0.1)] transition active:translate-y-1`}
-          >
-            <span style={{ fontSize: '2.9rem', lineHeight: 1, ...emojiFont }}>{c.emoji}</span>
-            <span className="text-base font-black text-slate-700">{c.title}</span>
-            <span className="text-center text-[11px] font-bold leading-tight text-slate-500">{c.desc}</span>
-          </button>
-        ))}
+      <div className="grid w-full max-w-md shrink-0 grid-cols-3 gap-2 pb-6">
+        {orderedCards.map((c) => {
+          const isFav = favSet.has(c.id);
+          return (
+            <div key={c.id} className="relative">
+              <button
+                type="button"
+                onClick={() => { playSound('pop'); setScreen(c.id); }}
+                className={`flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-b ${c.bg} p-1.5 shadow-[0_4px_0_rgba(0,0,0,0.1)] transition active:translate-y-1`}
+              >
+                <span style={{ fontSize: '2rem', lineHeight: 1, ...emojiFont }}>{c.emoji}</span>
+                <span className="text-center text-[11px] font-black leading-tight text-slate-700">{c.title}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleFav(c.id)}
+                aria-label={isFav ? `Bỏ yêu thích ${c.title}` : `Yêu thích ${c.title}`}
+                aria-pressed={isFav}
+                className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-white/75 shadow-sm backdrop-blur transition active:scale-90"
+              >
+                <Heart size={13} className={isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400'} />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
