@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
+import { useFitSize } from './useFitSize';
 import Fireworks from './Fireworks';
 
 // --- GAME: RẮN SĂN MỒI (Snake) ---
@@ -56,6 +57,7 @@ export default function SnakeApp({ onBack }) {
   const prevScore = useRef(0);
   const prevOver = useRef(false);
   const swipeStart = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(1, 1);
 
   const speed = Math.max(90, 180 - Math.floor(game.score / 4) * 12);
 
@@ -143,8 +145,8 @@ export default function SnakeApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-3 py-3">
-        <div className="flex items-center gap-3">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-3 px-3 py-3">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="rounded-2xl bg-white/10 px-5 py-1.5 text-center">
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-xl font-black text-white">{game.score}</div>
@@ -158,12 +160,13 @@ export default function SnakeApp({ onBack }) {
           </div>
         </div>
 
-        {/* Bàn cờ */}
+        {/* Bàn cờ — lấp đầy không gian còn lại */}
+        <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center">
         <div
           className="grid touch-none rounded-2xl bg-slate-950/70 p-1.5 shadow-[0_0_0_2px_rgba(52,211,153,0.4)]"
           style={{
-            width: 'min(88vw, 340px)',
-            height: 'min(88vw, 340px)',
+            width: fitSize.w,
+            height: fitSize.h,
             gridTemplateColumns: `repeat(${N}, 1fr)`,
             gridTemplateRows: `repeat(${N}, 1fr)`,
             gap: 1,
@@ -187,9 +190,10 @@ export default function SnakeApp({ onBack }) {
             return <div key={key} className={cls} style={style} />;
           })}
         </div>
+        </div>
 
         {/* Nút 4 hướng */}
-        <div className="grid grid-cols-3 gap-2" style={{ width: 172 }}>
+        <div className="grid shrink-0 grid-cols-3 gap-2" style={{ width: 172 }}>
           <div />
           <DirBtn onClick={() => turn(-1, 0)} label="Lên"><ArrowUp size={24} /></DirBtn>
           <div />

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, Trophy } from 'lucide-react';
 import { playSound, emojiFont } from './gameAudio';
+import { useFitSize } from './useFitSize';
 import Fireworks from './Fireworks';
 
 // --- GAME: XẾP KẸO (Match-3, kiểu Candy) ---
@@ -174,6 +175,7 @@ export default function Match3App({ onBack }) {
   const [newRecord, setNewRecord] = useState(false);
 
   const scoreRef = useRef(0);
+  const { ref: fitRef, size: fitSize } = useFitSize(1, 1);
   const prevOver = useRef(false);
   const toastTimer = useRef(null);
 
@@ -286,8 +288,11 @@ export default function Match3App({ onBack }) {
         )}
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-2 pb-3">
-        <div className="grid w-full max-w-[440px] grid-cols-7 gap-1 rounded-2xl bg-black/20 p-2">
+      <div ref={fitRef} className="flex min-h-0 flex-1 items-center justify-center px-2 pb-3">
+        <div
+          className="grid grid-cols-7 gap-1 rounded-2xl bg-black/20 p-2"
+          style={{ width: fitSize.w, height: fitSize.w }}
+        >
           {board.map((row, r) =>
             row.map((cell, c) => {
               const isSelected = selected && selected.r === r && selected.c === c;

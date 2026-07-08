@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronUp, ChevronDown, ChevronRight, RotateCcw, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
+import { useFitSize } from './useFitSize';
 import Fireworks from './Fireworks';
 
 // --- GAME: MÊ CUNG (Maze) ---
@@ -100,6 +101,7 @@ export default function MazeApp({ onBack }) {
   });
   const [overlay, setOverlay] = useState(null); // { fullClear, bonus, isNewBest, level }
   const touchStart = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(1, 1);
 
   const size = maze.length;
   const totalGems = Object.keys(gems).length;
@@ -252,15 +254,16 @@ export default function MazeApp({ onBack }) {
         </div>
       </div>
 
-      {/* Bàn mê cung */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-3 overflow-y-auto px-3 py-2">
+      {/* Bàn mê cung — lấp đầy không gian còn lại */}
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-3 px-3 py-2">
+        <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center">
         <div
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          className="grid shrink-0 touch-none select-none overflow-hidden rounded-xl bg-slate-950 shadow-inner"
+          className="grid touch-none select-none overflow-hidden rounded-xl bg-slate-950 shadow-inner"
           style={{
-            width: 'min(88vw, 340px)',
-            aspectRatio: '1 / 1',
+            width: fitSize.w,
+            height: fitSize.h,
             gridTemplateColumns: `repeat(${size}, 1fr)`,
             gridTemplateRows: `repeat(${size}, 1fr)`,
           }}
@@ -293,6 +296,7 @@ export default function MazeApp({ onBack }) {
               );
             }),
           )}
+        </div>
         </div>
 
         <p className="shrink-0 text-center text-xs font-bold text-indigo-200/70">

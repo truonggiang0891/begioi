@@ -118,13 +118,13 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
       {/* Bảng ghép hình */}
       <div
         className="relative rounded-3xl bg-white/70 p-2 shadow-[0_10px_0_rgba(0,0,0,0.06)]"
-        style={{ '--emoji': 'min(74vw, 300px)' }}
+        style={{ '--emoji': 'min(85vw, 396px)' }}
       >
         <div
           className="grid overflow-hidden rounded-2xl"
           style={{
-            width: 'min(82vw, 340px)',
-            height: 'min(82vw, 340px)',
+            width: 'min(94vw, 440px)',
+            height: 'min(94vw, 440px)',
             gridTemplateColumns: `repeat(${n}, 1fr)`,
             gap: solved ? 0 : 2,
             background: '#e2e8f0',
@@ -166,7 +166,7 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
         {/* Lớp xem gợi ý */}
         {peek && (
           <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-white/95">
-            <span style={{ fontSize: 'min(60vw, 240px)', lineHeight: 1, ...emojiFont }}>
+            <span style={{ fontSize: 'min(78vw, 360px)', lineHeight: 1, ...emojiFont }}>
               {picture.emoji}
             </span>
           </div>

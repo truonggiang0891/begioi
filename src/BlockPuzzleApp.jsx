@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { ChevronLeft, RotateCcw, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useFitSize } from './useFitSize';
 
 // --- GAME: XẾP KHỐI (Block Puzzle kiểu Block Blast / 1010) ---
 // Kéo khối vào lưới 8 cột x 11 hàng. Lấp đầy 1 hàng hoặc 1 cột -> hàng/cột đó nổ, được điểm.
@@ -129,6 +130,7 @@ export default function BlockPuzzleApp({ onBack }) {
   const [newRecord, setNewRecord] = useState(false);
   const [drag, setDrag] = useState(null); // {slot, shape, color, cell, px, py, anchor, valid}
   const boardRef = useRef(null);
+  const { ref: fitRef, size: fitSize } = useFitSize(COLS, ROWS);
 
   const restart = useCallback(() => {
     setBoard(emptyBoard());
@@ -257,9 +259,9 @@ export default function BlockPuzzleApp({ onBack }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto px-3 py-4">
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-3 px-3 py-3">
         {/* Điểm */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="rounded-2xl bg-white/10 px-5 py-2 text-center">
             <div className="text-[11px] font-bold uppercase tracking-wide text-white/50">Điểm</div>
             <div className="text-2xl font-black text-white">{score}</div>
@@ -273,13 +275,14 @@ export default function BlockPuzzleApp({ onBack }) {
           </div>
         </div>
 
-        {/* Lưới */}
+        {/* Lưới — lấp đầy không gian còn lại */}
+        <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center">
         <div
           ref={boardRef}
           className="grid touch-none rounded-2xl bg-slate-950/70 p-1.5 shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
           style={{
-            width: 'min(86vw, 304px)',
-            height: `calc(min(86vw, 304px) * ${ROWS} / ${COLS})`,
+            width: fitSize.w,
+            height: fitSize.h,
             gridTemplateColumns: `repeat(${COLS}, 1fr)`,
             gridTemplateRows: `repeat(${ROWS}, 1fr)`,
             gap: 2,
@@ -304,9 +307,10 @@ export default function BlockPuzzleApp({ onBack }) {
             }),
           )}
         </div>
+        </div>
 
         {/* Khay 3 khối */}
-        <div className="flex w-full max-w-[400px] items-center justify-around gap-2 rounded-2xl bg-white/5 px-2 py-3">
+        <div className="flex w-full max-w-[400px] shrink-0 items-center justify-around gap-2 rounded-2xl bg-white/5 px-2 py-3">
           {tray.map((piece, slot) => {
             if (!piece) return <div key={slot} className="h-[64px] flex-1" />;
             const { h, w } = dims(piece.shape);

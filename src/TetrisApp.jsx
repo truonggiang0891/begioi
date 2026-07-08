@@ -6,8 +6,8 @@ import Fireworks from './Fireworks';
 // --- GAME: KHỐI RƠI (Tetris) — bản động của xếp khối ---
 // Khối rơi từ trên xuống, xoay/di chuyển để xếp kín hàng -> hàng nổ, được điểm.
 
-const COLS = 8;
-const ROWS = 14;
+const COLS = 10;
+const ROWS = 15;
 const BEST_KEY = 'game_tetris_best';
 
 const shade = (hex, p) => {
@@ -353,10 +353,10 @@ export default function TetrisApp({ onBack }) {
           Chạm để xoay · Vuốt ngang để đi · Vuốt xuống để rơi
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <CtrlButton onClick={() => act('down')} label="Xuống"><ArrowDown size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('left')} label="Trái"><ArrowLeft size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('rotate')} label="Xoay"><RotateCw size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('right')} label="Phải"><ArrowRight size={26} /></CtrlButton>
-          <CtrlButton onClick={() => act('down')} label="Xuống"><ArrowDown size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('drop')} label="Thả" strong><ChevronsDown size={26} /></CtrlButton>
         </div>
       </div>

@@ -126,7 +126,7 @@ function MemoryBoard({ level, nextLevel, frontier, onSolved, onNext }) {
       <div
         className="grid gap-2.5"
         style={{
-          width: 'min(92vw, 440px)',
+          width: 'min(96vw, 480px)',
           gridTemplateColumns: `repeat(${level.cols}, 1fr)`,
         }}
       >
