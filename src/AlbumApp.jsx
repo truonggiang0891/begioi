@@ -57,7 +57,7 @@ function NeedConfig({ onBack }) {
         >
           <ChevronLeft size={18} /> Trở về
         </button>
-        <h1 className="text-2xl font-black text-slate-700">📸 Album của bé</h1>
+        <h1 className="text-2xl font-black text-slate-700">📸 Khoảnh khắc</h1>
         <div className="w-[86px]" />
       </div>
       <div className="mt-6 w-full max-w-md rounded-3xl bg-white p-6 text-slate-700 shadow-lg">
@@ -230,7 +230,7 @@ export default function AlbumApp({ onBack }) {
             onClick={closeAlbum}
             className="flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-600 shadow transition hover:bg-slate-50"
           >
-            <ChevronLeft size={18} /> Album
+            <ChevronLeft size={18} /> Khoảnh khắc
           </button>
           <h1 className="min-w-0 flex-1 truncate text-center text-xl font-black text-slate-700 md:text-2xl">
             {current.name}
@@ -289,7 +289,7 @@ export default function AlbumApp({ onBack }) {
         >
           <ChevronLeft size={18} /> Trở về
         </button>
-        <h1 className="text-2xl font-black text-slate-700 md:text-3xl">📸 Album của bé</h1>
+        <h1 className="text-2xl font-black text-slate-700 md:text-3xl">📸 Khoảnh khắc</h1>
         <div className="w-[86px]" />
       </div>
 

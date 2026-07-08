@@ -4509,6 +4509,18 @@ export default function App() {
         <div className="grid grid-cols-3 gap-1.5 md:gap-2">
           <button
             type="button"
+            onClick={handleAlbumMenuClick}
+            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
+              showAlbumPanel
+                ? 'bg-violet-500 text-white shadow-[0_4px_0_rgb(109,40,217)]'
+                : 'bg-violet-50 text-violet-700 hover:bg-violet-100 border-2 border-violet-100'
+            }`}
+          >
+            <Camera size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Khoảnh khắc</span>
+          </button>
+
+          <button
+            type="button"
             onClick={toggleReadingPanel}
             className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
               showReadingPanel
@@ -4517,34 +4529,6 @@ export default function App() {
             }`}
           >
             <BookOpen size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Tập đọc</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveHistoryTab('math');
-              setShowHistoryPanel(prev => !prev);
-              setShowUserNameForm(false);
-              setShowAdminLogin(false);
-              setAdminError('');
-              setAvatarError('');
-              setShowParentConfirm(false);
-              rememberCurrentReadingPosition();
-              setReadingSummary(null);
-              readingSessionStartedAtRef.current = null;
-              setShowReadingPanel(false);
-              setSelectedReadingId(null);
-              setExpandedReadingSeriesId(null);
-              setShowColoringPanel(false);
-              setShowColoringAccessPanel(false);
-            }}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
-              showHistoryPanel
-                ? 'bg-sky-500 text-white shadow-[0_4px_0_rgb(2,132,199)]'
-                : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-2 border-sky-100'
-            }`}
-          >
-            <BarChart size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
           </button>
 
           <button
@@ -4598,22 +4582,36 @@ export default function App() {
           </button>
         </div>
 
-        <div className="mt-1.5 md:mt-2">
-          <button
-            type="button"
-            onClick={handleAlbumMenuClick}
-            className={`flex w-full min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
-              showAlbumPanel
-                ? 'bg-violet-500 text-white shadow-[0_4px_0_rgb(109,40,217)]'
-                : 'border-2 border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100'
-            }`}
-          >
-            <Camera size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Album của bé</span>
-          </button>
-        </div>
-
         {showAccountButtons && (
-          <div className="mt-1.5 grid grid-cols-2 gap-1.5 md:mt-2 md:gap-2">
+          <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveHistoryTab('math');
+                setShowHistoryPanel(prev => !prev);
+                setShowUserNameForm(false);
+                setShowAdminLogin(false);
+                setAdminError('');
+                setAvatarError('');
+                setShowParentConfirm(false);
+                rememberCurrentReadingPosition();
+                setReadingSummary(null);
+                readingSessionStartedAtRef.current = null;
+                setShowReadingPanel(false);
+                setSelectedReadingId(null);
+                setExpandedReadingSeriesId(null);
+                setShowColoringPanel(false);
+                setShowColoringAccessPanel(false);
+              }}
+              className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
+                showHistoryPanel
+                  ? 'bg-sky-500 text-white shadow-[0_4px_0_rgb(2,132,199)]'
+                  : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-2 border-sky-100'
+              }`}
+            >
+              <BarChart size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
+            </button>
+
             <button
               type="button"
               onClick={toggleUserNameForm}
@@ -4659,11 +4657,11 @@ export default function App() {
         <button
           type="button"
           onClick={() => setShowAccountButtons(prev => !prev)}
-          aria-label={showAccountButtons ? 'Thu gọn nút Người dùng và Admin' : 'Hiện nút Người dùng và Admin'}
+          aria-label={showAccountButtons ? 'Thu gọn nút Lịch sử, Người dùng và Admin' : 'Hiện nút Lịch sử, Người dùng và Admin'}
           className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-xl bg-slate-100 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-200 md:mt-2 md:text-xs"
         >
           <ChevronDown size={15} className={`transition-transform ${showAccountButtons ? 'rotate-180' : ''}`} />
-          <span>{showAccountButtons ? 'Thu gọn' : 'Người dùng · Admin'}</span>
+          <span>{showAccountButtons ? 'Thu gọn' : 'Lịch sử · Người dùng · Admin'}</span>
         </button>
 
         {showUserNameForm && (
