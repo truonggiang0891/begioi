@@ -46,6 +46,12 @@ const handleImgError = (e, id, w) => {
   el.src = thumbUrl(id, w);
 };
 
+// Bộ nhớ đệm trong phiên: giữ dữ liệu đã tải để mở lại album là hiện ngay,
+// không phải chờ tải lại. Cache tự xóa khi tải lại trang (F5) -> ảnh mới thêm
+// vào Drive sẽ xuất hiện lại sau khi reload.
+let albumsCache = null;         // danh sách album + ảnh bìa đã tải
+const mediaCache = new Map();   // albumId -> mảng ảnh/video đã tải
+
 function NeedConfig({ onBack }) {
   return (
     <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-5 py-6">
@@ -73,8 +79,8 @@ function NeedConfig({ onBack }) {
 }
 
 export default function AlbumApp({ onBack }) {
-  const [albums, setAlbums] = useState([]);
-  const [albumsLoading, setAlbumsLoading] = useState(true);
+  const [albums, setAlbums] = useState(() => albumsCache || []);
+  const [albumsLoading, setAlbumsLoading] = useState(() => !albumsCache);
   const [albumsError, setAlbumsError] = useState('');
 
   const [current, setCurrent] = useState(null); // album đang mở {id, name}
@@ -84,8 +90,9 @@ export default function AlbumApp({ onBack }) {
 
   const [lightbox, setLightbox] = useState(null); // index trong media
 
-  // Tải danh sách album (folder con) + ảnh bìa.
+  // Tải danh sách album (folder con) + ảnh bìa. Nếu đã có trong bộ nhớ đệm thì bỏ qua.
   useEffect(() => {
+    if (albumsCache) return undefined;
     let alive = true;
     (async () => {
       setAlbumsLoading(true);
@@ -108,7 +115,7 @@ export default function AlbumApp({ onBack }) {
             }
           })
         );
-        if (alive) setAlbums(withCovers);
+        if (alive) { setAlbums(withCovers); albumsCache = withCovers; }
       } catch (err) {
         if (alive) setAlbumsError(err.message || 'Không tải được album');
       } finally {
@@ -120,6 +127,14 @@ export default function AlbumApp({ onBack }) {
 
   const openAlbum = useCallback(async (album) => {
     setCurrent(album);
+    setLightbox(null);
+    // Đã tải album này trong phiên -> hiện ngay từ bộ nhớ đệm.
+    if (mediaCache.has(album.id)) {
+      setMedia(mediaCache.get(album.id));
+      setMediaError('');
+      setMediaLoading(false);
+      return;
+    }
     setMedia([]);
     setMediaError('');
     setMediaLoading(true);
@@ -129,6 +144,7 @@ export default function AlbumApp({ onBack }) {
         { orderBy: 'createdTime' }
       );
       setMedia(files);
+      mediaCache.set(album.id, files);
     } catch (err) {
       setMediaError(err.message || 'Không tải được nội dung album');
     } finally {
