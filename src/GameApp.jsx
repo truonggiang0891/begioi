@@ -28,6 +28,7 @@ const LEVELS = [
   { id: 'easy', label: 'Dễ', n: 2 },
   { id: 'medium', label: 'Vừa', n: 3 },
   { id: 'hard', label: 'Khó', n: 4 },
+  { id: 'expert', label: 'Cực khó', n: 5 },
 ];
 
 const shuffled = (n) => {
@@ -270,7 +271,7 @@ export default function GameApp({ onBack }) {
       {picture ? (
         <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-3 py-4">
           {/* Chọn độ khó — mức khó chỉ mở khi đã vượt qua mức trước */}
-          <div className="mb-2 flex items-center gap-2 rounded-full bg-white/70 p-1 shadow-sm">
+          <div className="mb-2 flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-white/70 p-1 shadow-sm">
             {LEVELS.map((l, idx) => {
               const locked = idx > unlockedIndex;
               const active = levelId === l.id;
@@ -280,7 +281,7 @@ export default function GameApp({ onBack }) {
                   key={l.id}
                   disabled={locked}
                   onClick={() => !locked && setLevelId(l.id)}
-                  className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-sm font-black transition ${
+                  className={`flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-black transition ${
                     locked
                       ? 'cursor-not-allowed text-slate-300'
                       : active
@@ -288,7 +289,7 @@ export default function GameApp({ onBack }) {
                         : 'text-slate-500 hover:bg-white'
                   }`}
                 >
-                  {locked && <Lock size={13} />}
+                  {locked && <Lock size={12} />}
                   {l.label} ({l.n}×{l.n})
                 </button>
               );

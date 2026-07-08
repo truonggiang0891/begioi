@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, RotateCcw, Trophy } from 'lucide-react';
+import { ChevronLeft, RotateCcw, Trophy, Lightbulb } from 'lucide-react';
 import { playSound, emojiFont } from './gameAudio';
 import { useFitSize } from './useFitSize';
 import Fireworks from './Fireworks';
+import GameHelp from './GameHelp';
 
 // --- GAME: XẾP KẸO (Match-3, kiểu Candy) ---
 // Bàn 7x7, đổi chỗ 2 viên kẹo kề nhau để tạo hàng 3+ giống nhau -> nổ, rơi, lấp đầy, dây chuyền.
@@ -14,6 +15,7 @@ const TYPES = CANDIES.length;
 const START_MOVES = 20;
 const BONUS_MOVES = 2;
 const MAX_ITER = 30;
+const START_HINTS = 3;
 
 const randType = () => Math.floor(Math.random() * TYPES);
 
@@ -163,12 +165,33 @@ const resolveCascades = (initialBoard, hintPos) => {
   return { board: workingBoard, totalScore, bonusMoves, maxCombo };
 };
 
+// Tìm một nước đi hợp lệ (đổi 2 viên kề nhau tạo được hàng 3+). Null = bế tắc.
+const findHint = (board) => {
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      if (c + 1 < SIZE) {
+        const nb = cloneBoard(board);
+        const t = nb[r][c]; nb[r][c] = nb[r][c + 1]; nb[r][c + 1] = t;
+        if (findMatchGroups(nb).groups.length > 0) return { a: { r, c }, b: { r, c: c + 1 } };
+      }
+      if (r + 1 < SIZE) {
+        const nb = cloneBoard(board);
+        const t = nb[r][c]; nb[r][c] = nb[r + 1][c]; nb[r + 1][c] = t;
+        if (findMatchGroups(nb).groups.length > 0) return { a: { r, c }, b: { r: r + 1, c } };
+      }
+    }
+  }
+  return null;
+};
+
 export default function Match3App({ onBack }) {
   const [board, setBoard] = useState(() => makeBoard());
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
   const [movesLeft, setMovesLeft] = useState(START_MOVES);
   const [message, setMessage] = useState('');
+  const [hintsLeft, setHintsLeft] = useState(START_HINTS);
+  const [hintCells, setHintCells] = useState(null); // [{r,c},{r,c}] đang gợi ý
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }
   });
@@ -178,6 +201,8 @@ export default function Match3App({ onBack }) {
   const { ref: fitRef, size: fitSize } = useFitSize(1, 1);
   const prevOver = useRef(false);
   const toastTimer = useRef(null);
+  const hintTimer = useRef(null);
+  const dragRef = useRef(null); // {r,c,x0,y0,done} cho thao tác trượt
 
   useEffect(() => { scoreRef.current = score; }, [score]);
 
@@ -187,7 +212,7 @@ export default function Match3App({ onBack }) {
     toastTimer.current = setTimeout(() => setMessage(''), 1600);
   }, []);
 
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  useEffect(() => () => { clearTimeout(toastTimer.current); clearTimeout(hintTimer.current); }, []);
 
   // Hết lượt -> kết thúc ván (suy ra trực tiếp từ số lượt còn lại).
   const over = movesLeft <= 0;
@@ -207,29 +232,22 @@ export default function Match3App({ onBack }) {
 
   const restart = () => {
     clearTimeout(toastTimer.current);
+    clearTimeout(hintTimer.current);
     setBoard(makeBoard());
     setSelected(null);
+    setHintCells(null);
+    setHintsLeft(START_HINTS);
     setScore(0);
     setMovesLeft(START_MOVES);
     setMessage('');
     setNewRecord(false);
   };
 
-  const handleTapCell = (r, c) => {
+  // Đổi chỗ 2 viên KỀ NHAU a,b. Tính toàn bộ trong handler (1 lần) để tránh lỗi StrictMode gọi updater 2 lần.
+  const trySwap = (a, b) => {
     if (over) return;
-    if (!selected) { setSelected({ r, c }); return; }
-    if (selected.r === r && selected.c === c) { setSelected(null); return; }
-
-    const dr = Math.abs(selected.r - r);
-    const dc = Math.abs(selected.c - c);
-    if (dr + dc !== 1) { setSelected({ r, c }); return; }
-
-    const a = selected;
-    const b = { r, c };
     setSelected(null);
-
-    // Tính toàn bộ trong event handler (chạy 1 lần) — KHÔNG đặt trong updater
-    // để tránh lỗi StrictMode gọi updater 2 lần (điểm/lượt bị gấp đôi).
+    setHintCells(null);
     const nb = cloneBoard(board);
     const tmp = nb[a.r][a.c];
     nb[a.r][a.c] = nb[b.r][b.c];
@@ -246,11 +264,83 @@ export default function Match3App({ onBack }) {
     setScore((s) => s + totalScore);
     setMovesLeft((m) => Math.max(0, m - 1 + bonusMoves));
 
-    if (bonusMoves > 0 && maxCombo > 1) showToast(`Combo x${maxCombo}! +${bonusMoves} lượt! 🎉`);
+    // Phần thưởng: tạo combo (dây chuyền) thì được thêm 1 gợi ý để dùng khi bí.
+    const comboReward = maxCombo >= 2;
+    if (comboReward) setHintsLeft((h) => Math.min(9, h + 1));
+
+    if (bonusMoves > 0 && maxCombo > 1) showToast(`Combo x${maxCombo}! +${bonusMoves} lượt +1 💡`);
     else if (bonusMoves > 0) showToast(`+${bonusMoves} lượt! 🎁`);
-    else if (maxCombo > 1) showToast(`Combo x${maxCombo}!`);
+    else if (maxCombo > 1) showToast(`Combo x${maxCombo}! +1 💡`);
 
     playSound('correct');
+
+    // Bế tắc (không còn nước đi) -> xáo lại bàn cho bé chơi tiếp.
+    if (!findHint(finalBoard)) {
+      clearTimeout(hintTimer.current);
+      hintTimer.current = setTimeout(() => {
+        setBoard(makeBoard());
+        showToast('Xáo lại bàn — hết nước đi! 🔀');
+      }, 500);
+    }
+  };
+
+  const handleTapCell = (r, c) => {
+    if (over) return;
+    if (!selected) { setSelected({ r, c }); return; }
+    if (selected.r === r && selected.c === c) { setSelected(null); return; }
+
+    const dr = Math.abs(selected.r - r);
+    const dc = Math.abs(selected.c - c);
+    if (dr + dc !== 1) { setSelected({ r, c }); return; }
+
+    trySwap(selected, { r, c });
+  };
+
+  // Trượt: nhấn 1 viên rồi kéo về hướng viên kề bên để đổi chỗ.
+  const onCellPointerDown = (r, c, e) => {
+    if (over) return;
+    dragRef.current = { r, c, x0: e.clientX, y0: e.clientY, done: false };
+  };
+  const onBoardPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || d.done) return;
+    const dx = e.clientX - d.x0;
+    const dy = e.clientY - d.y0;
+    const cell = (fitSize.w / SIZE) || 40;
+    if (Math.hypot(dx, dy) < cell * 0.35) return;
+    let tr = d.r;
+    let tc = d.c;
+    if (Math.abs(dx) > Math.abs(dy)) tc += dx > 0 ? 1 : -1;
+    else tr += dy > 0 ? 1 : -1;
+    d.done = true;
+    if (tr >= 0 && tr < SIZE && tc >= 0 && tc < SIZE) trySwap({ r: d.r, c: d.c }, { r: tr, c: tc });
+    else setSelected(null);
+  };
+  const onBoardPointerUp = () => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (d && !d.done) handleTapCell(d.r, d.c); // không kéo -> coi như chạm chọn
+  };
+
+  // Gợi ý: sáng 2 viên có thể đổi; hết nước đi thì xáo lại bàn (miễn phí).
+  const useHint = () => {
+    if (over) return;
+    const move = findHint(board);
+    if (!move) {
+      setBoard(makeBoard());
+      setSelected(null);
+      showToast('Xáo lại bàn — hết nước đi! 🔀');
+      return;
+    }
+    if (hintsLeft <= 0) {
+      showToast('Hết gợi ý — tạo combo để nhận thêm 🎁');
+      return;
+    }
+    setHintsLeft((h) => h - 1);
+    setHintCells([move.a, move.b]);
+    playSound('pop');
+    clearTimeout(hintTimer.current);
+    hintTimer.current = setTimeout(() => setHintCells(null), 2000);
   };
 
   return (
@@ -260,9 +350,14 @@ export default function Match3App({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white drop-shadow md:text-2xl">🍬 Xếp kẹo</h1>
-        <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-2 text-sm font-black text-white transition hover:bg-white/25">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            <b>Trượt</b> hoặc chạm để đổi 2 viên kẹo kề nhau · xếp 3 viên giống nhau để nổ ghi điểm · 4 viên tạo kẹo đặc biệt · Bấm <b>💡 Gợi ý</b> khi bí (tạo combo để nhận thêm gợi ý).
+          </GameHelp>
+          <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-2 text-sm font-black text-white transition hover:bg-white/25">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 py-2">
@@ -278,6 +373,15 @@ export default function Match3App({ onBack }) {
           <div className="text-[10px] font-black uppercase tracking-wide text-white/60">Lượt</div>
           <div className={`text-xl font-black ${movesLeft <= 5 ? 'text-rose-400' : 'text-white'}`}>{movesLeft}</div>
         </div>
+        <button
+          type="button"
+          onClick={useHint}
+          disabled={over}
+          className="flex items-center gap-1.5 rounded-2xl bg-yellow-300/20 px-4 py-2 font-black text-yellow-200 transition hover:bg-yellow-300/30 active:scale-95 disabled:opacity-40"
+        >
+          <Lightbulb size={18} className="fill-yellow-300/60" />
+          <span className="text-lg">{hintsLeft}</span>
+        </button>
       </div>
 
       <div className="relative flex h-6 items-center justify-center">
@@ -290,19 +394,27 @@ export default function Match3App({ onBack }) {
 
       <div ref={fitRef} className="flex min-h-0 flex-1 items-center justify-center px-2 pb-3">
         <div
-          className="grid grid-cols-7 gap-1 rounded-2xl bg-black/20 p-2"
+          className="grid touch-none grid-cols-7 gap-1 rounded-2xl bg-black/20 p-2"
           style={{ width: fitSize.w, height: fitSize.w }}
+          onPointerMove={onBoardPointerMove}
+          onPointerUp={onBoardPointerUp}
+          onPointerCancel={onBoardPointerUp}
         >
           {board.map((row, r) =>
             row.map((cell, c) => {
               const isSelected = selected && selected.r === r && selected.c === c;
+              const isHint = hintCells && hintCells.some((h) => h.r === r && h.c === c);
               return (
                 <button
                   key={`${r}-${c}`}
                   type="button"
-                  onClick={() => handleTapCell(r, c)}
+                  onPointerDown={(e) => onCellPointerDown(r, c, e)}
                   className={`relative flex aspect-square select-none items-center justify-center rounded-xl text-xl transition sm:text-2xl ${
-                    isSelected ? 'scale-95 bg-white/40 ring-4 ring-white' : 'bg-white/10 hover:bg-white/20'
+                    isSelected
+                      ? 'scale-95 bg-white/40 ring-4 ring-white'
+                      : isHint
+                        ? 'bg-yellow-300/30 ring-4 ring-yellow-300 animate-pulse'
+                        : 'bg-white/10 hover:bg-white/20'
                   }`}
                   style={emojiFont}
                   aria-label="kẹo"
@@ -320,9 +432,6 @@ export default function Match3App({ onBack }) {
           )}
         </div>
       </div>
-      <p className="pb-2 text-center text-xs font-bold text-white/60">
-        Chạm 2 viên kẹo kề nhau để đổi chỗ — xếp 3 viên giống nhau để ghi điểm 🍭
-      </p>
 
       {over && newRecord && <Fireworks />}
       {over && (

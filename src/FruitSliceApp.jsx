@@ -14,10 +14,70 @@ const W = 320;
 const H = 440;
 const BEST_KEY = 'game_fruit_best';
 const GRAVITY = 0.12;
-const FRUIT_EMOJIS = ['🍎', '🍉', '🍊', '🍓', '🍇', '🥝', '🍍'];
-const FRUIT_R = 20;
+// Màu quả rực rỡ, tương phản mạnh với nền tối để không bị chìm.
+const FRUIT_COLORS = ['#ff3b3b', '#ff8a00', '#ffd000', '#7cf03a', '#00d9c0', '#ff4fa3', '#b15bff'];
+const FRUIT_R = 22;
 const FREEZE_MS = 3000;
 const FREEZE_FACTOR = 0.35;
+
+// Trộn màu với trắng/đen theo tỉ lệ p (âm = tối đi).
+const shade = (hex, p) => {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255;
+  let g = (n >> 8) & 255;
+  let b = n & 255;
+  const t = p < 0 ? 0 : 255;
+  const a = Math.abs(p);
+  r = Math.round((t - r) * a + r);
+  g = Math.round((t - g) * a + g);
+  b = Math.round((t - b) * a + b);
+  return `rgb(${r},${g},${b})`;
+};
+
+// Vẽ một quả tròn rực rỡ (bóng sáng góc trên + viền + cuống lá).
+const drawBall = (ctx, r, color) => {
+  const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.2, 0, 0, r);
+  grad.addColorStop(0, shade(color, 0.45));
+  grad.addColorStop(0.6, color);
+  grad.addColorStop(1, shade(color, -0.22));
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = shade(color, -0.35);
+  ctx.stroke();
+  // lá xanh nhỏ
+  ctx.fillStyle = '#37c25a';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.25, -r * 0.92, r * 0.3, r * 0.15, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  // đốm sáng
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.32, -r * 0.32, r * 0.24, r * 0.14, -0.6, 0, Math.PI * 2);
+  ctx.fill();
+};
+
+// Vẽ nửa quả đã bị chém (side +1/-1): vỏ màu + ruột sáng ở mặt cắt.
+const drawHalf = (ctx, r, color, side) => {
+  ctx.beginPath();
+  if (side > 0) ctx.arc(0, 0, r, 0, Math.PI);
+  else ctx.arc(0, 0, r, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = shade(color, -0.3);
+  ctx.stroke();
+  // ruột quả (sáng hơn) ở mặt cắt
+  ctx.beginPath();
+  if (side > 0) ctx.arc(0, 0, r * 0.72, 0, Math.PI);
+  else ctx.arc(0, 0, r * 0.72, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fillStyle = shade(color, 0.55);
+  ctx.fill();
+};
 
 // Khoảng cách từ 1 điểm tới đoạn thẳng (dùng để kiểm tra lưỡi dao có chạm quả không).
 const distToSegment = (px, py, x1, y1, x2, y2) => {
@@ -36,7 +96,8 @@ const rand = (min, max) => min + Math.random() * (max - min);
 const makeFruit = () => {
   const roll = Math.random();
   let type = 'fruit';
-  let emoji = FRUIT_EMOJIS[Math.floor(Math.random() * FRUIT_EMOJIS.length)];
+  let emoji = null;
+  let color = FRUIT_COLORS[Math.floor(Math.random() * FRUIT_COLORS.length)];
   if (roll < 0.12) {
     type = 'bomb';
     emoji = '💣';
@@ -51,6 +112,7 @@ const makeFruit = () => {
     id: Math.random(),
     type,
     emoji,
+    color,
     x: rand(36, W - 36),
     y: H + 24,
     vx: rand(-1, 1),
@@ -144,7 +206,7 @@ export default function FruitSliceApp({ onBack }) {
   };
 
   const newGame = () => {
-    gRef.current = { fruits: [], frame: 0, spawnTimer: 30, spawnEvery: 75, waveCount: 0 };
+    gRef.current = { fruits: [], halves: [], frame: 0, spawnTimer: 30, spawnEvery: 75, waveCount: 0 };
     trailRef.current = [];
     pointerDownRef.current = false;
     lastPointRef.current = null;
@@ -195,6 +257,16 @@ export default function FruitSliceApp({ onBack }) {
         f.rot += f.rotSpeed * factor;
       });
       g.fruits = g.fruits.filter((f) => f.y < H + 40);
+
+      // Nửa quả bay ra sau khi chém.
+      g.halves.forEach((h) => {
+        h.vy += GRAVITY * factor;
+        h.x += h.vx * factor;
+        h.y += h.vy * factor;
+        h.rot += h.rotSpeed * factor;
+        h.life -= 0.016;
+      });
+      g.halves = g.halves.filter((h) => h.life > 0 && h.y < H + 60);
     };
 
     const draw = () => {
@@ -212,6 +284,16 @@ export default function FruitSliceApp({ onBack }) {
         ctx.fillRect(0, 0, W, H);
       }
 
+      // nửa quả đã chém (vẽ trước, nằm dưới)
+      g.halves.forEach((h) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, h.life));
+        ctx.translate(h.x, h.y);
+        ctx.rotate(h.rot);
+        drawHalf(ctx, h.r, h.color, h.side);
+        ctx.restore();
+      });
+
       // trái cây
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -219,12 +301,16 @@ export default function FruitSliceApp({ onBack }) {
         ctx.save();
         ctx.translate(f.x, f.y);
         ctx.rotate(f.rot);
-        if (f.type === 'golden' || f.type === 'freeze') {
-          ctx.shadowColor = f.type === 'golden' ? 'rgba(250,204,21,0.9)' : 'rgba(125,211,252,0.9)';
-          ctx.shadowBlur = 18;
+        if (f.type === 'fruit') {
+          drawBall(ctx, f.r, f.color);
+        } else {
+          if (f.type === 'golden' || f.type === 'freeze') {
+            ctx.shadowColor = f.type === 'golden' ? 'rgba(250,204,21,0.9)' : 'rgba(125,211,252,0.9)';
+            ctx.shadowBlur = 18;
+          }
+          ctx.font = '34px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+          ctx.fillText(f.emoji, 0, 0);
         }
-        ctx.font = '32px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
-        ctx.fillText(f.emoji, 0, 0);
         ctx.restore();
       });
 
@@ -262,13 +348,33 @@ export default function FruitSliceApp({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sliceFruit = (f) => {
+  const sliceFruit = (f, angle = 0) => {
     const g = gRef.current;
     g.fruits = g.fruits.filter((x) => x !== f);
     if (f.type === 'bomb') {
       sliceRunRef.current = 0;
       loseLife();
       return;
+    }
+    // Tách đôi: 2 nửa bay ngược nhau theo phương vuông góc lưỡi dao.
+    if (f.type === 'fruit') {
+      const px = Math.cos(angle + Math.PI / 2);
+      const py = Math.sin(angle + Math.PI / 2);
+      const push = 1.8;
+      [1, -1].forEach((side) => {
+        g.halves.push({
+          x: f.x,
+          y: f.y,
+          vx: f.vx * 0.4 + px * push * side,
+          vy: f.vy * 0.4 + py * push * side - 0.6,
+          r: f.r,
+          color: f.color,
+          rot: angle,
+          rotSpeed: 0.06 * side,
+          side,
+          life: 1,
+        });
+      });
     }
     playSound('pop');
     addScore(1);
@@ -312,12 +418,13 @@ export default function FruitSliceApp({ onBack }) {
 
     const g = gRef.current;
     if (g && prev) {
+      const angle = Math.atan2(p.y - prev.y, p.x - prev.x);
       g.fruits.forEach((f) => {
         if (f.sliced) return;
         const d = distToSegment(f.x, f.y, prev.x, prev.y, p.x, p.y);
         if (d < f.r + 12) {
           f.sliced = true;
-          sliceFruit(f);
+          sliceFruit(f, angle);
         }
       });
     }
