@@ -53,6 +53,7 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0);
+  const steerRef = useRef(null); // mốc kéo tương đối {startX, startShipX}
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -197,14 +198,23 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
     return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); };
   }, []);
 
+  // Lái tương đối: kéo ngắn cũng đi được xa (nhân độ nhạy) -> đỡ phải rê tay cả màn hình.
+  const STEER_GAIN = 2.2;
   const steer = (e) => {
-    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
+    const isDown = e.type === 'pointerdown';
+    if (!isDown && !(e.pointerType === 'touch' || e.buttons)) return;
     const g = gRef.current;
     if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width * W;
-    g.ship.x = Math.max(0, Math.min(W - SHIP_W, x - SHIP_W / 2));
+    const scale = rect.width ? W / rect.width : 1; // px màn hình -> đơn vị game
+    if (isDown || !steerRef.current) {
+      steerRef.current = { startX: e.clientX, startShipX: g.ship.x };
+      if (isDown) return;
+    }
+    const dx = (e.clientX - steerRef.current.startX) * scale * STEER_GAIN;
+    g.ship.x = Math.max(0, Math.min(W - SHIP_W, steerRef.current.startShipX + dx));
   };
+  const endSteer = () => { steerRef.current = null; };
   const hold = (v) => ({ onPointerDown: () => { moveRef.current = v; }, onPointerUp: () => { moveRef.current = 0; }, onPointerLeave: () => { moveRef.current = 0; } });
 
   const title = mode === 'letter' ? '🔤 Bắn chữ' : '➕ Bắn đáp án';
@@ -249,6 +259,8 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
           className="flex min-h-0 w-full flex-1 flex-col items-center justify-start pt-1 touch-none"
           onPointerDown={steer}
           onPointerMove={steer}
+          onPointerUp={endSteer}
+          onPointerCancel={endSteer}
         >
           <canvas
             ref={canvasRef}
@@ -262,9 +274,11 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
         <div
           onPointerDown={steer}
           onPointerMove={steer}
-          className="mx-3 mt-1 flex h-12 w-full max-w-[420px] shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+          onPointerUp={endSteer}
+          onPointerCancel={endSteer}
+          className="mx-3 mt-1 flex h-14 w-full max-w-[420px] shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
         >
-          ↔ Kéo ở đây để lái thuyền
+          ↔ Kéo qua lại để lái (kéo ngắn cũng đi xa)
         </div>
 
         <div className="flex shrink-0 items-center gap-4">

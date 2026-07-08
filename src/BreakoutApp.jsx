@@ -41,6 +41,7 @@ const makeBricks = () => {
 export default function BreakoutApp({ onBack }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
+  const steerRef = useRef(null); // mốc kéo tương đối {startX, startPaddleX}
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -189,16 +190,23 @@ export default function BreakoutApp({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // điều khiển thanh chắn: kéo ở vùng bên dưới sân chơi
+  // Lái tương đối: kéo ngắn cũng đi được xa (nhân độ nhạy) -> đỡ phải rê tay cả màn hình.
+  const STEER_GAIN = 2.2;
   const steer = (e) => {
-    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
+    const isDown = e.type === 'pointerdown';
+    if (!isDown && !(e.pointerType === 'touch' || e.buttons)) return;
     const g = gRef.current;
     if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width * W;
-    g.paddle.x = Math.max(0, Math.min(W - PADDLE_W, x - PADDLE_W / 2));
-    if (e.type === 'pointerdown') launch();
+    const scale = rect.width ? W / rect.width : 1;
+    if (isDown || !steerRef.current) {
+      steerRef.current = { startX: e.clientX, startPaddleX: g.paddle.x };
+      if (isDown) { launch(); return; }
+    }
+    const dx = (e.clientX - steerRef.current.startX) * scale * STEER_GAIN;
+    g.paddle.x = Math.max(0, Math.min(W - PADDLE_W, steerRef.current.startPaddleX + dx));
   };
+  const endSteer = () => { steerRef.current = null; };
 
   useEffect(() => {
     const onKey = (e) => {
@@ -248,6 +256,8 @@ export default function BreakoutApp({ onBack }) {
           className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-start pt-1 touch-none"
           onPointerDown={steer}
           onPointerMove={steer}
+          onPointerUp={endSteer}
+          onPointerCancel={endSteer}
         >
           <canvas
             ref={canvasRef}
@@ -270,9 +280,11 @@ export default function BreakoutApp({ onBack }) {
         <div
           onPointerDown={steer}
           onPointerMove={steer}
-          className="mx-3 mt-1 flex h-12 w-full max-w-[420px] shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+          onPointerUp={endSteer}
+          onPointerCancel={endSteer}
+          className="mx-3 mt-1 flex h-14 w-full max-w-[420px] shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
         >
-          ↔ Kéo ở đây để lái thanh chắn · chạm để bắn bóng
+          ↔ Kéo qua lại để lái · chạm để bắn bóng
         </div>
       </div>
 

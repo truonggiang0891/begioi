@@ -53,6 +53,7 @@ export default function ShooterApp({ onBack }) {
   const statusRef = useRef('playing');
   const setStatusBoth = (s) => { statusRef.current = s; setStatus(s); };
   const moveRef = useRef(0); // -1 trái, 1 phải, 0 đứng
+  const steerRef = useRef(null); // mốc kéo tương đối {startX, startShipX}
 
   const newGame = () => {
     gRef.current = {
@@ -174,14 +175,22 @@ export default function ShooterApp({ onBack }) {
     return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); };
   }, []);
 
-  // kéo bên dưới thuyền để lái
+  // Lái tương đối: kéo ngắn cũng đi được xa (nhân độ nhạy) -> đỡ phải rê tay cả màn hình.
+  const STEER_GAIN = 2.2;
   const steer = (e) => {
-    if (e.type === 'pointermove' && !(e.pointerType === 'touch' || e.buttons)) return;
+    const isDown = e.type === 'pointerdown';
+    if (!isDown && !(e.pointerType === 'touch' || e.buttons)) return;
     const g = gRef.current; if (!g) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width * W;
-    g.ship.x = Math.max(0, Math.min(W - SHIP_W, x - SHIP_W / 2));
+    const scale = rect.width ? W / rect.width : 1;
+    if (isDown || !steerRef.current) {
+      steerRef.current = { startX: e.clientX, startShipX: g.ship.x };
+      if (isDown) return;
+    }
+    const dx = (e.clientX - steerRef.current.startX) * scale * STEER_GAIN;
+    g.ship.x = Math.max(0, Math.min(W - SHIP_W, steerRef.current.startShipX + dx));
   };
+  const endSteer = () => { steerRef.current = null; };
 
   const hold = (v) => ({ onPointerDown: () => { moveRef.current = v; }, onPointerUp: () => { moveRef.current = 0; }, onPointerLeave: () => { moveRef.current = 0; } });
 
@@ -213,6 +222,8 @@ export default function ShooterApp({ onBack }) {
         className="flex min-h-0 w-full flex-1 flex-col items-center justify-start touch-none pt-1"
         onPointerDown={steer}
         onPointerMove={steer}
+        onPointerUp={endSteer}
+        onPointerCancel={endSteer}
       >
         <canvas
           ref={canvasRef}
@@ -226,9 +237,11 @@ export default function ShooterApp({ onBack }) {
       <div
         onPointerDown={steer}
         onPointerMove={steer}
-        className="mx-3 mt-1 flex h-12 shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
+        onPointerUp={endSteer}
+        onPointerCancel={endSteer}
+        className="mx-3 mt-1 flex h-14 shrink-0 touch-none items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 text-xs font-black text-cyan-100/70"
       >
-        ↔ Kéo ở đây để lái thuyền
+        ↔ Kéo qua lại để lái (kéo ngắn cũng đi xa)
       </div>
 
       <div className="flex shrink-0 flex-col items-center gap-2 px-3 pb-3">
