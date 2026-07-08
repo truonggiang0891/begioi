@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight } from 'lu
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: BẮN ĐÁP ÁN / BẮN CHỮ (Answer Shooter) ---
 // Lái thuyền tự bắn, bắn trúng đáp án/chữ ĐÚNG đang rơi. Chế độ: 'math' | 'letter'.
@@ -46,7 +47,7 @@ const makeLetter = () => {
   return { text: `Tìm chữ  ${ans}`, answer: ans, options: shuffle([...opts]) };
 };
 
-export default function AnswerShooterApp({ onBack, mode = 'math' }) {
+export default function AnswerShooterApp({ onBack, mode = 'math', onReward }) {
   const bestKey = `game_${mode}shooter_best`;
   const gen = mode === 'letter' ? makeLetter : makeMath;
 
@@ -56,6 +57,7 @@ export default function AnswerShooterApp({ onBack, mode = 'math' }) {
   const steerRef = useRef(null); // mốc kéo tương đối {startX, startShipX}
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
   const [question, setQuestion] = useState('');

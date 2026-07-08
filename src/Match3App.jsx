@@ -4,6 +4,7 @@ import { playSound, emojiFont } from './gameAudio';
 import { useFitSize } from './useFitSize';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: XẾP KẸO (Match-3, kiểu Candy) ---
 // Bàn 7x7, đổi chỗ 2 viên kẹo kề nhau để tạo hàng 3+ giống nhau -> nổ, rơi, lấp đầy, dây chuyền.
@@ -184,10 +185,11 @@ const findHint = (board) => {
   return null;
 };
 
-export default function Match3App({ onBack }) {
+export default function Match3App({ onBack, onReward }) {
   const [board, setBoard] = useState(() => makeBoard());
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [movesLeft, setMovesLeft] = useState(START_MOVES);
   const [message, setMessage] = useState('');
   const [hintsLeft, setHintsLeft] = useState(START_HINTS);

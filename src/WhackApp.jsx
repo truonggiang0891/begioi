@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: ĐẬP CHUỘT CHŨI (Whack-a-mole) ---
 // Lưới 3x3 hang. Chuột 🐹 ngoi lên -> đập trúng +1 điểm.
@@ -19,9 +20,10 @@ const MAX_LIVES = 5;
 const emptyHoles = () => Array.from({ length: HOLE_COUNT }, () => null);
 const comboMultiplier = (combo) => Math.min(5, 1 + Math.floor(combo / 3));
 
-export default function WhackApp({ onBack }) {
+export default function WhackApp({ onBack, onReward }) {
   const [holes, setHoles] = useState(emptyHoles);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [combo, setCombo] = useState(0);
   const [over, setOver] = useState(false);

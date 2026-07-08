@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: BẮN TRÚNG ĐÍCH (Target / Duck Hunt) ---
 // Mục tiêu chạy ngang màn hình, chạm để bắn trúng. Bỏ lỡ 3 con -> thua.
@@ -29,9 +30,10 @@ const mkTarget = (speed, onScreen) => {
   };
 };
 
-export default function TargetShootApp({ onBack }) {
+export default function TargetShootApp({ onBack, onReward }) {
   const [items, setItems] = useState(() => [mkTarget(0.8, true), mkTarget(0.8, true), mkTarget(0.8, true)]);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
   const [best, setBest] = useState(() => {

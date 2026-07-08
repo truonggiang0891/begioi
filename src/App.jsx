@@ -3762,6 +3762,13 @@ export default function App() {
     setRobuxBalance(prev => normalizeRobuxBalance(prev + amount));
   }
 
+  // Phần thưởng Robux từ game -> cộng thẳng vào Robux tổng (mỗi lần 1..10).
+  const handleGameReward = useCallback((amount) => {
+    const rb = Math.max(0, Math.min(10, Math.round(Number(amount) || 0)));
+    if (rb < 1) return;
+    setRobuxBalance(prev => normalizeRobuxBalance(prev + rb));
+  }, []);
+
   function applyLearningReward(isCorrect) {
     if (rewardMode === 'robux') {
       updateRobux(isCorrect ? settings.robuxReward : -ROBUX_WRONG_PENALTY);
@@ -6253,6 +6260,7 @@ export default function App() {
           onBack={() => setShowGamesPanel(false)}
           timeLeftSec={gameTimeLeftSec}
           unlimitedTime={gameTimeExchangeCost <= 0}
+          onReward={handleGameReward}
         />
       )}
 

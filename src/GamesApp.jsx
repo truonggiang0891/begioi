@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft, Clock, Heart } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, Clock, Heart, Gem } from 'lucide-react';
 import GameApp from './GameApp';
 import MemoryApp from './MemoryApp';
 import BlockPuzzleApp from './BlockPuzzleApp';
@@ -43,41 +43,65 @@ const loadFavs = () => {
   }
 };
 
-export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = false }) {
+export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = false, onReward }) {
   const [screen, setScreen] = useState('home');
   const [favorites, setFavorites] = useState(loadFavs);
+  const [rewardToast, setRewardToast] = useState(null); // { rb, reason, key }
+  const rewardTimer = useRef(null);
   const back = () => setScreen('home');
 
   useEffect(() => {
     try { localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); } catch { /* ignore */ }
   }, [favorites]);
+  useEffect(() => () => clearTimeout(rewardTimer.current), []);
 
   const toggleFav = (id) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
-  const wrap = (node) => <div className="fixed inset-0 z-[60] bg-slate-900">{node}</div>;
 
-  if (screen === 'puzzle') return wrap(<GameApp onBack={back} />);
-  if (screen === 'memory') return wrap(<MemoryApp onBack={back} />);
-  if (screen === 'block') return wrap(<BlockPuzzleApp onBack={back} />);
-  if (screen === 'tetris') return wrap(<TetrisApp onBack={back} />);
-  if (screen === 'snake') return wrap(<SnakeApp onBack={back} />);
-  if (screen === 'breakout') return wrap(<BreakoutApp onBack={back} />);
-  if (screen === 'shooter') return wrap(<ShooterApp onBack={back} />);
-  if (screen === 'bubble') return wrap(<BubbleShooterApp onBack={back} />);
-  if (screen === 'balloon') return wrap(<BalloonPopApp onBack={back} />);
-  if (screen === 'target') return wrap(<TargetShootApp onBack={back} />);
-  if (screen === 'cannon') return wrap(<CannonApp onBack={back} />);
-  if (screen === 'mathshoot') return wrap(<AnswerShooterApp mode="math" onBack={back} />);
-  if (screen === 'lettershoot') return wrap(<AnswerShooterApp mode="letter" onBack={back} />);
-  if (screen === 'battle') return wrap(<SpaceBattleApp onBack={back} />);
-  if (screen === 'flappy') return wrap(<FlappyApp onBack={back} />);
-  if (screen === 'doodle') return wrap(<DoodleJumpApp onBack={back} />);
-  if (screen === 'catch') return wrap(<CatchApp onBack={back} />);
-  if (screen === 'whack') return wrap(<WhackApp onBack={back} />);
-  if (screen === 'fruit') return wrap(<FruitSliceApp onBack={back} />);
-  if (screen === 'maze') return wrap(<MazeApp onBack={back} />);
-  if (screen === 'match3') return wrap(<Match3App onBack={back} />);
+  // Nhận thưởng từ game: cộng Robux tổng + hiện quà bay lên.
+  const reward = useCallback((rb, reason) => {
+    onReward?.(rb);
+    setRewardToast({ rb, reason, key: `${rb}-${reason}-${Math.round(timeLeftSec)}-${Math.random()}` });
+    clearTimeout(rewardTimer.current);
+    rewardTimer.current = setTimeout(() => setRewardToast(null), 2200);
+  }, [onReward, timeLeftSec]);
+
+  const rewardToastEl = rewardToast && (
+    <div key={rewardToast.key} className="pointer-events-none fixed left-1/2 top-16 z-[80] -translate-x-1/2 animate-[reward-pop_2.2s_ease-out_forwards]">
+      <div className="flex flex-col items-center gap-1 rounded-2xl border-2 border-yellow-300 bg-slate-900/90 px-5 py-2.5 shadow-2xl">
+        <div className="flex items-center gap-1.5 text-xl font-black text-yellow-300">
+          <Gem size={20} className="fill-yellow-300/40" /> +{rewardToast.rb} Robux!
+        </div>
+        {rewardToast.reason && <div className="text-[11px] font-bold text-white/70">{rewardToast.reason}</div>}
+      </div>
+      <style>{'@keyframes reward-pop{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}12%{opacity:1;transform:translate(-50%,0) scale(1.08)}22%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-14px) scale(1)}}'}</style>
+    </div>
+  );
+
+  const wrap = (node) => <div className="fixed inset-0 z-[60] bg-slate-900">{node}{rewardToastEl}</div>;
+
+  if (screen === 'puzzle') return wrap(<GameApp onBack={back} onReward={reward} />);
+  if (screen === 'memory') return wrap(<MemoryApp onBack={back} onReward={reward} />);
+  if (screen === 'block') return wrap(<BlockPuzzleApp onBack={back} onReward={reward} />);
+  if (screen === 'tetris') return wrap(<TetrisApp onBack={back} onReward={reward} />);
+  if (screen === 'snake') return wrap(<SnakeApp onBack={back} onReward={reward} />);
+  if (screen === 'breakout') return wrap(<BreakoutApp onBack={back} onReward={reward} />);
+  if (screen === 'shooter') return wrap(<ShooterApp onBack={back} onReward={reward} />);
+  if (screen === 'bubble') return wrap(<BubbleShooterApp onBack={back} onReward={reward} />);
+  if (screen === 'balloon') return wrap(<BalloonPopApp onBack={back} onReward={reward} />);
+  if (screen === 'target') return wrap(<TargetShootApp onBack={back} onReward={reward} />);
+  if (screen === 'cannon') return wrap(<CannonApp onBack={back} onReward={reward} />);
+  if (screen === 'mathshoot') return wrap(<AnswerShooterApp mode="math" onBack={back} onReward={reward} />);
+  if (screen === 'lettershoot') return wrap(<AnswerShooterApp mode="letter" onBack={back} onReward={reward} />);
+  if (screen === 'battle') return wrap(<SpaceBattleApp onBack={back} onReward={reward} />);
+  if (screen === 'flappy') return wrap(<FlappyApp onBack={back} onReward={reward} />);
+  if (screen === 'doodle') return wrap(<DoodleJumpApp onBack={back} onReward={reward} />);
+  if (screen === 'catch') return wrap(<CatchApp onBack={back} onReward={reward} />);
+  if (screen === 'whack') return wrap(<WhackApp onBack={back} onReward={reward} />);
+  if (screen === 'fruit') return wrap(<FruitSliceApp onBack={back} onReward={reward} />);
+  if (screen === 'maze') return wrap(<MazeApp onBack={back} onReward={reward} />);
+  if (screen === 'match3') return wrap(<Match3App onBack={back} onReward={reward} />);
 
   const cards = [
     { id: 'puzzle', emoji: '🧩', title: 'Ghép hình', desc: 'Chạm 2 ô để đổi chỗ', bg: 'from-orange-100 to-amber-200' },

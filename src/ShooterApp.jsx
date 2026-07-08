@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy } from 'lucide-re
 import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useScoreRewards } from './gameRewards';
 import { useFitSize } from './useFitSize';
 
 // --- GAME: BẮN GẠCH (Shooter kiểu Space Invaders) ---
@@ -41,11 +42,12 @@ const makeWave = (rows, startY) => {
   return bricks;
 };
 
-export default function ShooterApp({ onBack }) {
+export default function ShooterApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [status, setStatus] = useState('playing'); // playing | over
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }

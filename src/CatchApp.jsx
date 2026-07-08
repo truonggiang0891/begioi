@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, Timer, Sparkles, Magnet } from '
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: HỨNG ĐỒ (Catch) ---
 // Giỏ 🧺 ở dưới hứng đồ tốt rơi xuống (+điểm), tránh bom 💣 (-1 mạng).
@@ -51,9 +52,10 @@ const seedItems = () => {
   return arr;
 };
 
-export default function CatchApp({ onBack }) {
+export default function CatchApp({ onBack, onReward }) {
   const [items, setItems] = useState(() => seedItems());
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
   const [best, setBest] = useState(() => {

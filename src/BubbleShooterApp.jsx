@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import { useScoreRewards } from './gameRewards';
 import GameHelp from './GameHelp';
 
 // --- GAME: BẮN BONG BÓNG (Bubble Shooter) ---
@@ -32,11 +33,12 @@ const makeGrid = () => {
   return grid;
 };
 
-export default function BubbleShooterApp({ onBack }) {
+export default function BubbleShooterApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [status, setStatus] = useState('playing');
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }

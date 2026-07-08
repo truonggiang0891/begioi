@@ -4,6 +4,7 @@ import { playSound, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: CHIM BAY (Flappy Bird kiểu dễ cho bé) ---
 // Chạm / click / Space / mũi tên lên để vỗ cánh, bay qua khe giữa các ống.
@@ -38,11 +39,12 @@ const makePipe = (x) => {
   };
 };
 
-export default function FlappyApp({ onBack }) {
+export default function FlappyApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [status, setStatus] = useState('ready'); // ready | playing | over
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }

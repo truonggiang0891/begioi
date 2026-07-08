@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import { useFitSize } from './useFitSize';
+import { useScoreRewards } from './gameRewards';
 import Fireworks from './Fireworks';
 
 // --- GAME: RẮN SĂN MỒI (Snake) ---
@@ -48,8 +49,9 @@ const step = (g) => {
   return { ...g, snake };
 };
 
-export default function SnakeApp({ onBack }) {
+export default function SnakeApp({ onBack, onReward }) {
   const [game, setGame] = useState(initGame);
+  useScoreRewards(game.score, onReward);
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }
   });

@@ -4,6 +4,7 @@ import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: KHÔNG CHIẾN (Space Battle) ---
 // Phi thuyền địch BẮN TRẢ! Bé né đạn + tự bắn hạ chúng.
@@ -46,13 +47,14 @@ const makeWave = (rows) => {
   return enemies;
 };
 
-export default function SpaceBattleApp({ onBack }) {
+export default function SpaceBattleApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0);
   const steerRef = useRef(null); // mốc kéo tương đối {startX, startShipX}
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [gun, setGun] = useState(1);
   const [rockets, setRockets] = useState(0);

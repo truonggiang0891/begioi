@@ -4,6 +4,7 @@ import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: CHÉM HOA QUẢ (Fruit Slice / Fruit Ninja kiểu đơn giản) ---
 // Trái cây được bắn lên từ dưới theo đường cầu vồng, bé vuốt ngón tay/chuột
@@ -139,7 +140,7 @@ const makeFruit = () => {
   };
 };
 
-export default function FruitSliceApp({ onBack }) {
+export default function FruitSliceApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
@@ -157,6 +158,7 @@ export default function FruitSliceApp({ onBack }) {
   const comboTimeoutRef = useRef(null);
 
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [best, setBest] = useState(() => {
     try {

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronUp, ChevronDown, ChevronRight, RotateCcw, Trophy } 
 import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import { useFitSize } from './useFitSize';
+import { levelRewardRobux } from './gameRewards';
 import Fireworks from './Fireworks';
 
 // --- GAME: MÊ CUNG (Maze) ---
@@ -91,7 +92,7 @@ const DIR_KEYS = {
   ArrowRight: 'E',
 };
 
-export default function MazeApp({ onBack }) {
+export default function MazeApp({ onBack, onReward }) {
   const [level, setLevel] = useState(1);
   const [maze, setMaze] = useState(() => generateMaze(sizeForLevel(1)));
   const [gems, setGems] = useState(() => placeGems(sizeForLevel(1)));
@@ -140,6 +141,9 @@ export default function MazeApp({ onBack }) {
       const trueCollected = Object.values(gems).filter((g) => g.collected).length + (gem && !gem.collected ? 1 : 0);
       const fullClear = total > 0 && trueCollected >= total;
       const bonus = levelBonus(level) + (fullClear ? FULL_CLEAR_BONUS : 0);
+
+      // Thưởng Robux khi qua 1 màn mê cung (nhặt đủ ngọc thì thêm 1).
+      onReward?.(levelRewardRobux(level + (fullClear ? 1 : 0)), `Qua mê cung màn ${level}${fullClear ? ' (đủ ngọc!)' : ''}`);
 
       playSound('win');
       setScore((s) => {

@@ -207,9 +207,10 @@ function MemoryBoard({ level, nextLevel, frontier, onSolved, onNext }) {
   );
 }
 
-export default function MemoryApp({ onBack }) {
+export default function MemoryApp({ onBack, onReward }) {
   const [levelId, setLevelId] = useState('easy');
   const [unlockedIndex, setUnlockedIndex] = useState(() => loadUnlocked(MEMORY_UNLOCK_KEY));
+  const rewardedRef = useRef(new Set()); // mỗi mức chỉ thưởng Robux 1 lần/phiên
 
   const levelIndex = useMemo(() => {
     const i = LEVELS.findIndex((l) => l.id === levelId);
@@ -223,6 +224,10 @@ export default function MemoryApp({ onBack }) {
       const nv = levelIndex + 1;
       setUnlockedIndex(nv);
       saveUnlocked(MEMORY_UNLOCK_KEY, nv);
+    }
+    if (!rewardedRef.current.has(levelId)) {
+      rewardedRef.current.add(levelId);
+      onReward?.([1, 2, 3][levelIndex] || 1, `Xong mức ${level.label}`);
     }
   };
   const goNext = () => {

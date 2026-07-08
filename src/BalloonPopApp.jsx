@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: BẮN BÓNG BAY (Balloon Pop) ---
 // Bóng bay bay lên, chạm để nổ. Để bóng thoát lên đỉnh -> mất 1 mạng.
@@ -11,9 +12,10 @@ const BEST_KEY = 'game_balloon_best';
 
 let seq = 0;
 
-export default function BalloonPopApp({ onBack }) {
+export default function BalloonPopApp({ onBack, onReward }) {
   const [balloons, setBalloons] = useState([]);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
   const [best, setBest] = useState(() => {

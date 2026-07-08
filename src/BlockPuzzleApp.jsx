@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: XẾP KHỐI (Block Puzzle kiểu Block Blast / 1010) ---
 // Kéo khối vào lưới 8 cột x 11 hàng. Lấp đầy 1 hàng hoặc 1 cột -> hàng/cột đó nổ, được điểm.
@@ -119,10 +120,11 @@ const clearLines = (board) => {
   return { board: next, cleared };
 };
 
-export default function BlockPuzzleApp({ onBack }) {
+export default function BlockPuzzleApp({ onBack, onReward }) {
   const [board, setBoard] = useState(emptyBoard);
   const [tray, setTray] = useState(newTray);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }
   });

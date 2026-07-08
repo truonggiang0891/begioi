@@ -4,6 +4,7 @@ import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: BẮN PHÁO (Ném bóng theo đường bay có trọng lực) ---
 // Kéo để ngắm góc + lực, thả để bắn bóng trúng mục tiêu. Trượt 3 lần -> thua.
@@ -23,11 +24,12 @@ const randTarget = () => ({
   r: TARGET_R,
 });
 
-export default function CannonApp({ onBack }) {
+export default function CannonApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [over, setOver] = useState(false);
   const [best, setBest] = useState(() => {

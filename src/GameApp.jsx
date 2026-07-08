@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Eye, EyeOff, Sparkles, Lock, ArrowRight } from 'lucide-react';
 import { playSound, emojiFont, loadUnlocked, saveUnlocked } from './gameAudio';
 import Fireworks from './Fireworks';
@@ -213,10 +213,11 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
   );
 }
 
-export default function GameApp({ onBack }) {
+export default function GameApp({ onBack, onReward }) {
   const [selectedId, setSelectedId] = useState(null);
   const [levelId, setLevelId] = useState('easy');
   const [unlockedIndex, setUnlockedIndex] = useState(() => loadUnlocked(PUZZLE_UNLOCK_KEY));
+  const rewardedRef = useRef(new Set()); // mỗi độ khó chỉ thưởng Robux 1 lần/phiên
 
   const picture = useMemo(
     () => PICTURES.find((p) => p.id === selectedId) || null,
@@ -242,6 +243,12 @@ export default function GameApp({ onBack }) {
       const nv = levelIndex + 1;
       setUnlockedIndex(nv);
       saveUnlocked(PUZZLE_UNLOCK_KEY, nv);
+    }
+    // Thưởng Robux: mỗi độ khó 1 lần/phiên (2×2→1, 3×3→2, 4×4→3, 5×5→5).
+    if (!rewardedRef.current.has(levelId)) {
+      rewardedRef.current.add(levelId);
+      const rb = [1, 2, 3, 5][levelIndex] || 1;
+      onReward?.(rb, `Ghép xong ${level.label} (${level.n}×${level.n})`);
     }
   };
   const goNext = () => {

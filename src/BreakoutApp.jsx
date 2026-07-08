@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: PHÁ GẠCH (Breakout / Arkanoid) ---
 // Di thanh chắn để bật bóng lên phá các khối gạch phía trên.
@@ -38,12 +39,13 @@ const makeBricks = () => {
   return bricks;
 };
 
-export default function BreakoutApp({ onBack }) {
+export default function BreakoutApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const steerRef = useRef(null); // mốc kéo tương đối {startX, startPaddleX}
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [status, setStatus] = useState('ready'); // ready | playing | over
   const [best, setBest] = useState(() => {

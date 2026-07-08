@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, RotateCw, ArrowLeft, ArrowRight, ArrowDown, Che
 import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: KHỐI RƠI (Tetris) — bản động của xếp khối ---
 // Khối rơi từ trên xuống, xoay/di chuyển để xếp kín hàng -> hàng nổ, được điểm.
@@ -151,8 +152,9 @@ const initGame = () => ({
   over: false,
 });
 
-export default function TetrisApp({ onBack }) {
+export default function TetrisApp({ onBack, onReward }) {
   const [game, setGame] = useState(initGame);
+  useScoreRewards(game.score, onReward);
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }
   });

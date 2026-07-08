@@ -4,6 +4,7 @@ import { playSound, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
+import { useScoreRewards } from './gameRewards';
 
 // --- GAME: NHẢY CAO (kiểu Doodle Jump) ---
 // Nhân vật tự nảy lên nhờ trọng lực + bệ đỡ. Bé lái trái/phải để nhân vật rơi
@@ -30,13 +31,14 @@ const SCROLL_Y = H * 0.42;
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
-export default function DoodleJumpApp({ onBack }) {
+export default function DoodleJumpApp({ onBack, onReward }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0); // -1 trái, 1 phải, 0 đứng yên
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
 
   const [score, setScore] = useState(0);
+  useScoreRewards(score, onReward);
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }
   });
