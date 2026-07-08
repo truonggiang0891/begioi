@@ -128,7 +128,7 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
         </div>
       </div>
 
-      <div className="grid w-full max-w-md shrink-0 grid-cols-3 gap-2 pb-6">
+      <div className="grid w-full max-w-md shrink-0 grid-cols-4 gap-1.5 pb-6">
         {orderedCards.map((c) => {
           const isFav = favSet.has(c.id);
           return (
@@ -136,19 +136,19 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
               <button
                 type="button"
                 onClick={() => { playSound('pop'); setScreen(c.id); }}
-                className={`flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-b ${c.bg} p-1.5 shadow-[0_4px_0_rgba(0,0,0,0.1)] transition active:translate-y-1`}
+                className={`flex aspect-square w-full flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-b ${c.bg} p-1 shadow-[0_4px_0_rgba(0,0,0,0.1)] transition active:translate-y-1`}
               >
-                <span style={{ fontSize: '2rem', lineHeight: 1, ...emojiFont }}>{c.emoji}</span>
-                <span className="text-center text-[11px] font-black leading-tight text-slate-700">{c.title}</span>
+                <span style={{ fontSize: '1.7rem', lineHeight: 1, ...emojiFont }}>{c.emoji}</span>
+                <span className="text-center text-[9.5px] font-black leading-tight text-slate-700">{c.title}</span>
               </button>
               <button
                 type="button"
                 onClick={() => toggleFav(c.id)}
                 aria-label={isFav ? `Bỏ yêu thích ${c.title}` : `Yêu thích ${c.title}`}
                 aria-pressed={isFav}
-                className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-white/75 shadow-sm backdrop-blur transition active:scale-90"
+                className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-white/75 shadow-sm backdrop-blur transition active:scale-90"
               >
-                <Heart size={13} className={isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400'} />
+                <Heart size={11} className={isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400'} />
               </button>
             </div>
           );
