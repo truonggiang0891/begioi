@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ColoringApp from './ColoringApp';
 import DrawingApp from './DrawingApp';
 import GamesApp from './GamesApp';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home } from 'lucide-react';
+import AlbumApp from './AlbumApp';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home, Camera } from 'lucide-react';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -2692,6 +2693,7 @@ export default function App() {
   const [showDrawingPanel, setShowDrawingPanel] = useState(false);
   const [showDrawingAccessPanel, setShowDrawingAccessPanel] = useState(false);
   const [showGamesPanel, setShowGamesPanel] = useState(false);
+  const [showAlbumPanel, setShowAlbumPanel] = useState(false);
   const [showGameAccessPanel, setShowGameAccessPanel] = useState(false);
   const [gameTimeLeftSec, setGameTimeLeftSec] = useState(() => loadGameTimeLeft());
   const [gamePurchaseMinutes, setGamePurchaseMinutes] = useState(DEFAULT_COLORING_PURCHASE_MINUTES);
@@ -4308,6 +4310,33 @@ export default function App() {
     setShowGameAccessPanel(true);
   };
 
+  const handleAlbumMenuClick = () => {
+    if (showAlbumPanel) {
+      setShowAlbumPanel(false);
+      return;
+    }
+
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    setShowParentConfirm(false);
+    setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
+    setShowDrawingPanel(false);
+    setShowDrawingAccessPanel(false);
+    setShowGamesPanel(false);
+    setShowGameAccessPanel(false);
+    rememberCurrentReadingPosition();
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
+    setShowHistoryPanel(false);
+    setShowAlbumPanel(true);
+  };
+
   const handleBuyGameTime = () => {
     if (!canBuySelectedGameTime) return;
 
@@ -4566,6 +4595,20 @@ export default function App() {
             }`}
           >
             <Gem size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">{rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}</span>
+          </button>
+        </div>
+
+        <div className="mt-1.5 md:mt-2">
+          <button
+            type="button"
+            onClick={handleAlbumMenuClick}
+            className={`flex w-full min-w-0 items-center justify-center gap-1 md:gap-2 rounded-xl md:rounded-2xl py-2 px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
+              showAlbumPanel
+                ? 'bg-violet-500 text-white shadow-[0_4px_0_rgb(109,40,217)]'
+                : 'border-2 border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100'
+            }`}
+          >
+            <Camera size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Album của bé</span>
           </button>
         </div>
 
@@ -6213,6 +6256,10 @@ export default function App() {
           timeLeftSec={gameTimeLeftSec}
           unlimitedTime={gameTimeExchangeCost <= 0}
         />
+      )}
+
+      {!isSummary && showAlbumPanel && (
+        <AlbumApp onBack={() => setShowAlbumPanel(false)} />
       )}
 
       {!isSummary && showReadingPanel && (
