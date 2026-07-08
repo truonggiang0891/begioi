@@ -33,6 +33,9 @@ const formatGameClock = (totalSec) => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+// Hệ số giảm thưởng Robux (3 = chỉ còn 1/3 so với game tính ra). Tăng để thưởng ít hơn nữa.
+const REWARD_DIVISOR = 3;
+
 const FAV_KEY = 'game_favorites';
 const loadFavs = () => {
   try {
@@ -59,10 +62,12 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  // Nhận thưởng từ game: cộng Robux tổng + hiện quà bay lên.
+  // Nhận thưởng từ game: giảm còn ~1/3 rồi cộng Robux tổng + hiện quà bay lên.
   const reward = useCallback((rb, reason) => {
-    onReward?.(rb);
-    setRewardToast({ rb, reason, key: `${rb}-${reason}-${Math.round(timeLeftSec)}-${Math.random()}` });
+    const amt = Math.round((Number(rb) || 0) / REWARD_DIVISOR);
+    if (amt < 1) return; // sau khi giảm mà < 1 thì bỏ qua
+    onReward?.(amt);
+    setRewardToast({ rb: amt, reason, key: `${amt}-${reason}-${Math.round(timeLeftSec)}-${Math.random()}` });
     clearTimeout(rewardTimer.current);
     rewardTimer.current = setTimeout(() => setRewardToast(null), 2200);
   }, [onReward, timeLeftSec]);
