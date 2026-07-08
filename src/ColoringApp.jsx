@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Clock, Cuboid, Eraser, Gem, Heart, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Trash2, Undo2, X } from 'lucide-react';
 import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, animeEmojis, animeNames, landscapeEmojis, landscapeNames, brainrotEmojis, brainrotIds, brainrotNames, BRAINROT_START_LEVEL, tonghopEmojis, tonghopIds, tonghopNames, TONGHOP_START_LEVEL, colorThemes, coloringSVGs } from './ColoringData';
+import { splitColorableRegions } from './regionSplit';
+import { applyOuterBackgroundMask } from './backgroundMask';
 
 const EMPTY_FILL_VALUES = new Set(['', '#ffffff', '#fff', 'white', 'none']);
 const THEME_LABELS = {
@@ -311,6 +313,11 @@ export default function ColoringApp({
         svgContainerRef.current.querySelectorAll('.svg-wrapper').forEach(wrapper => {
             const svgElement = wrapper.querySelector('svg');
 
+            // Tranh Brainrot / Tổng hợp bị gộp nhiều khối trong 1 path -> tách ra để bé tô từng khối riêng.
+            if (svgElement && (svgElement.classList.contains('brainrot-artwork') || svgElement.classList.contains('tonghop-artwork'))) {
+                splitColorableRegions(svgElement);
+            }
+
             wrapper.querySelectorAll('.colorable').forEach((element, index) => {
                 const initialFill = element.getAttribute('fill') || '#ffffff';
                 const tagName = element.tagName.toLowerCase();
@@ -374,15 +381,22 @@ export default function ColoringApp({
         if (!svgContainerRef.current) return;
 
         const wrappers = svgContainerRef.current.querySelectorAll('.svg-wrapper');
+        let currentSvg = null;
         wrappers.forEach(wrapper => {
             if (parseInt(wrapper.getAttribute('data-id'), 10) === currentLevel) {
                 wrapper.classList.remove('hidden');
                 wrapper.classList.add('block');
+                currentSvg = wrapper.querySelector('svg');
             } else {
                 wrapper.classList.remove('block');
                 wrapper.classList.add('hidden');
             }
         });
+
+        // Chặn tô nền lem vào nhân vật cho tranh Brainrot/Tổng hợp (chạy 1 lần/nhân vật, khi mở).
+        if (currentSvg && (currentSvg.classList.contains('brainrot-artwork') || currentSvg.classList.contains('tonghop-artwork'))) {
+            void applyOuterBackgroundMask(currentSvg, currentLevel);
+        }
 
         setTimeout(() => updateProgress(currentLevel), 50);
     }, [currentLevel, updateProgress]);

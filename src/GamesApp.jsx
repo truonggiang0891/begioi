@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Clock } from 'lucide-react';
 import GameApp from './GameApp';
 import MemoryApp from './MemoryApp';
 import BlockPuzzleApp from './BlockPuzzleApp';
@@ -26,7 +26,14 @@ import { playSound, emojiFont } from './gameAudio';
 // Hub chứa toàn bộ mini-game cho bé, mở từ nút "Game" trong app.
 // Mỗi game là 1 component full-screen với prop onBack (quay lại danh sách).
 
-export default function GamesApp({ onBack }) {
+const formatGameClock = (totalSec) => {
+  const safe = Math.max(0, Math.floor(totalSec));
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
+
+export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = false }) {
   const [screen, setScreen] = useState('home');
   const back = () => setScreen('home');
   const wrap = (node) => <div className="fixed inset-0 z-[60] bg-slate-900">{node}</div>;
@@ -88,7 +95,12 @@ export default function GamesApp({ onBack }) {
           <ChevronLeft size={18} /> Trở về
         </button>
         <h1 className="text-2xl font-black text-slate-700 md:text-3xl">🎮 Khu vui chơi</h1>
-        <div className="w-[86px]" />
+        <div className="flex min-w-[86px] justify-end">
+          <div className="flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-700 shadow">
+            <Clock size={16} />
+            {unlimitedTime ? '∞' : formatGameClock(timeLeftSec)}
+          </div>
+        </div>
       </div>
 
       <div className="grid w-full max-w-md shrink-0 grid-cols-2 gap-3 pb-6 md:gap-4">

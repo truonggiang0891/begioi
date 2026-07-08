@@ -74,6 +74,7 @@ const ROBUX_BALANCE_KEY = 'math_robuxBalance';
 const ROBUX_UNLOCKED_COLORING_KEY = 'coloring_unlockedLevels';
 const COLORING_TIME_LEFT_KEY = 'coloring_timeLeftSec';
 const DRAWING_TIME_LEFT_KEY = 'drawing_timeLeftSec';
+const GAME_TIME_LEFT_KEY = 'game_timeLeftSec';
 const MAX_SESSION_HISTORY = 30;
 const AVATAR_SIZE = 160;
 const DEFAULT_ROBUX_CORRECT_REWARD = 1;
@@ -84,6 +85,8 @@ const DEFAULT_GAME_TIME_EXCHANGE_COST = 5;
 const COLORING_TIME_EXCHANGE_SECONDS = 60;
 const MIN_COLORING_PURCHASE_MINUTES = 1;
 const MAX_COLORING_PURCHASE_MINUTES = 180;
+const COLORING_PURCHASE_STEP_MINUTES = 10; // mặc định + mỗi lần bấm đổi 10 phút
+const DEFAULT_COLORING_PURCHASE_MINUTES = 10;
 const MAX_COLORING_TIME_LEFT = 24 * 60 * 60;
 const LEARNING_SESSION_WINDOW_MS = 60 * 60 * 1000;
 const END_SESSION_WINDOW_MS = 60 * 60 * 1000;
@@ -2082,6 +2085,14 @@ const loadDrawingTimeLeft = () => {
   }
 };
 
+const loadGameTimeLeft = () => {
+  try {
+    return normalizeColoringTimeLeft(localStorage.getItem(GAME_TIME_LEFT_KEY));
+  } catch {
+    return 0;
+  }
+};
+
 const normalizeUnlockedColoringLevels = (levels) => {
   if (!Array.isArray(levels)) return [];
 
@@ -2676,13 +2687,16 @@ export default function App() {
   const [showColoringAccessPanel, setShowColoringAccessPanel] = useState(false);
   const [robuxBalance, setRobuxBalance] = useState(() => loadRobuxBalance());
   const [coloringTimeLeftSec, setColoringTimeLeftSec] = useState(() => loadColoringTimeLeft());
-  const [coloringPurchaseMinutes, setColoringPurchaseMinutes] = useState(MIN_COLORING_PURCHASE_MINUTES);
+  const [coloringPurchaseMinutes, setColoringPurchaseMinutes] = useState(DEFAULT_COLORING_PURCHASE_MINUTES);
   const [unlockedColoringLevels, setUnlockedColoringLevels] = useState(() => loadUnlockedColoringLevels());
   const [showDrawingPanel, setShowDrawingPanel] = useState(false);
   const [showDrawingAccessPanel, setShowDrawingAccessPanel] = useState(false);
   const [showGamesPanel, setShowGamesPanel] = useState(false);
+  const [showGameAccessPanel, setShowGameAccessPanel] = useState(false);
+  const [gameTimeLeftSec, setGameTimeLeftSec] = useState(() => loadGameTimeLeft());
+  const [gamePurchaseMinutes, setGamePurchaseMinutes] = useState(DEFAULT_COLORING_PURCHASE_MINUTES);
   const [drawingTimeLeftSec, setDrawingTimeLeftSec] = useState(() => loadDrawingTimeLeft());
-  const [drawingPurchaseMinutes, setDrawingPurchaseMinutes] = useState(MIN_COLORING_PURCHASE_MINUTES);
+  const [drawingPurchaseMinutes, setDrawingPurchaseMinutes] = useState(DEFAULT_COLORING_PURCHASE_MINUTES);
 
   const [currentQ, setCurrentQ] = useState(null);
   const [pausedQuestion, setPausedQuestion] = useState(null);
@@ -2825,10 +2839,12 @@ export default function App() {
     )
   );
   const maxSelectableColoringMinutes = Math.min(maxAllowedColoringPurchaseMinutes, maxAffordableColoringMinutes);
+  // Mua theo bậc 10 phút; nếu Robux không đủ 10 phút thì lấy đúng số phút mua được.
+  const minColoringPurchaseMinutes = Math.min(DEFAULT_COLORING_PURCHASE_MINUTES, maxSelectableColoringMinutes);
   const safeColoringPurchaseMinutes = clampNumber(
     coloringPurchaseMinutes,
-    MIN_COLORING_PURCHASE_MINUTES,
-    MIN_COLORING_PURCHASE_MINUTES,
+    minColoringPurchaseMinutes,
+    minColoringPurchaseMinutes,
     maxSelectableColoringMinutes
   );
   const coloringPurchaseCost = safeColoringPurchaseMinutes * coloringTimeExchangeCost;
@@ -2853,14 +2869,44 @@ export default function App() {
     )
   );
   const maxSelectableDrawingMinutes = Math.min(maxAllowedDrawingPurchaseMinutes, maxAffordableDrawingMinutes);
+  const minDrawingPurchaseMinutes = Math.min(DEFAULT_COLORING_PURCHASE_MINUTES, maxSelectableDrawingMinutes);
   const safeDrawingPurchaseMinutes = clampNumber(
     drawingPurchaseMinutes,
-    MIN_COLORING_PURCHASE_MINUTES,
-    MIN_COLORING_PURCHASE_MINUTES,
+    minDrawingPurchaseMinutes,
+    minDrawingPurchaseMinutes,
     maxSelectableDrawingMinutes
   );
   const drawingPurchaseCost = safeDrawingPurchaseMinutes * drawingTimeExchangeCost;
   const canBuySelectedDrawingTime = robuxBalance >= drawingPurchaseCost;
+  const gameTimeExchangeCost = clampNumber(
+    settings.gameTimeExchangeCost,
+    DEFAULT_SETTINGS.gameTimeExchangeCost,
+    MIN_TIME_EXCHANGE_COST,
+    MAX_TIME_EXCHANGE_COST
+  );
+  const maxAffordableGameMinutes = gameTimeExchangeCost > 0
+    ? Math.max(
+        MIN_COLORING_PURCHASE_MINUTES,
+        Math.floor(robuxBalance / gameTimeExchangeCost)
+      )
+    : MAX_COLORING_PURCHASE_MINUTES;
+  const maxAllowedGamePurchaseMinutes = Math.max(
+    MIN_COLORING_PURCHASE_MINUTES,
+    Math.min(
+      MAX_COLORING_PURCHASE_MINUTES,
+      Math.floor((MAX_COLORING_TIME_LEFT - gameTimeLeftSec) / COLORING_TIME_EXCHANGE_SECONDS)
+    )
+  );
+  const maxSelectableGameMinutes = Math.min(maxAllowedGamePurchaseMinutes, maxAffordableGameMinutes);
+  const minGamePurchaseMinutes = Math.min(DEFAULT_COLORING_PURCHASE_MINUTES, maxSelectableGameMinutes);
+  const safeGamePurchaseMinutes = clampNumber(
+    gamePurchaseMinutes,
+    minGamePurchaseMinutes,
+    minGamePurchaseMinutes,
+    maxSelectableGameMinutes
+  );
+  const gamePurchaseCost = safeGamePurchaseMinutes * gameTimeExchangeCost;
+  const canBuySelectedGameTime = robuxBalance >= gamePurchaseCost;
   const draftLessonTypes = useMemo(
     () => getValidLessonTypes(
       Array.isArray(draftSettings.lessonTypes) ? draftSettings.lessonTypes : [draftSettings.lessonType]
@@ -3474,6 +3520,31 @@ export default function App() {
       setShowColoringAccessPanel(true);
     }
   }, [coloringTimeLeftSec, showColoringPanel, coloringTimeExchangeCost]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(GAME_TIME_LEFT_KEY, String(gameTimeLeftSec));
+    } catch {
+      console.log('Cannot save game time');
+    }
+  }, [gameTimeLeftSec]);
+
+  useEffect(() => {
+    if (!showGamesPanel || gameTimeExchangeCost <= 0) return undefined;
+
+    const intervalId = setInterval(() => {
+      setGameTimeLeftSec(prev => normalizeColoringTimeLeft(prev - 1));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [showGamesPanel, gameTimeExchangeCost]);
+
+  useEffect(() => {
+    if (showGamesPanel && gameTimeLeftSec <= 0 && gameTimeExchangeCost > 0) {
+      setShowGamesPanel(false);
+      setShowGameAccessPanel(true);
+    }
+  }, [gameTimeLeftSec, showGamesPanel, gameTimeExchangeCost]);
 
   useEffect(() => {
     try {
@@ -4141,7 +4212,7 @@ export default function App() {
     }
 
     setShowColoringPanel(false);
-    setColoringPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
+    setColoringPurchaseMinutes(DEFAULT_COLORING_PURCHASE_MINUTES);
     setShowColoringAccessPanel(true);
   };
 
@@ -4152,7 +4223,7 @@ export default function App() {
     setColoringTimeLeftSec(prev => (
       normalizeColoringTimeLeft(prev + safeColoringPurchaseMinutes * COLORING_TIME_EXCHANGE_SECONDS)
     ));
-    setColoringPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
+    setColoringPurchaseMinutes(DEFAULT_COLORING_PURCHASE_MINUTES);
     setShowColoringAccessPanel(false);
     setShowColoringPanel(true);
   };
@@ -4186,7 +4257,7 @@ export default function App() {
     }
 
     setShowDrawingPanel(false);
-    setDrawingPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
+    setDrawingPurchaseMinutes(DEFAULT_COLORING_PURCHASE_MINUTES);
     setShowDrawingAccessPanel(true);
   };
 
@@ -4197,9 +4268,56 @@ export default function App() {
     setDrawingTimeLeftSec(prev => (
       normalizeColoringTimeLeft(prev + safeDrawingPurchaseMinutes * COLORING_TIME_EXCHANGE_SECONDS)
     ));
-    setDrawingPurchaseMinutes(MIN_COLORING_PURCHASE_MINUTES);
+    setDrawingPurchaseMinutes(DEFAULT_COLORING_PURCHASE_MINUTES);
     setShowDrawingAccessPanel(false);
     setShowDrawingPanel(true);
+  };
+
+  const handleGamesMenuClick = () => {
+    if (showGamesPanel) {
+      setShowGamesPanel(false);
+      setShowGameAccessPanel(false);
+      return;
+    }
+
+    setShowUserNameForm(false);
+    setShowAdminLogin(false);
+    setAdminError('');
+    setAvatarError('');
+    setShowParentConfirm(false);
+    setShowColoringPanel(false);
+    setShowColoringAccessPanel(false);
+    setShowDrawingPanel(false);
+    setShowDrawingAccessPanel(false);
+    rememberCurrentReadingPosition();
+    setReadingSummary(null);
+    readingSessionStartedAtRef.current = null;
+    setShowReadingPanel(false);
+    setSelectedReadingId(null);
+    setExpandedReadingSeriesId(null);
+    setShowHistoryPanel(false);
+
+    if (gameTimeLeftSec > 0 || gameTimeExchangeCost <= 0) {
+      setShowGameAccessPanel(false);
+      setShowGamesPanel(true);
+      return;
+    }
+
+    setShowGamesPanel(false);
+    setGamePurchaseMinutes(DEFAULT_COLORING_PURCHASE_MINUTES);
+    setShowGameAccessPanel(true);
+  };
+
+  const handleBuyGameTime = () => {
+    if (!canBuySelectedGameTime) return;
+
+    setRobuxBalance(prev => normalizeRobuxBalance(prev - gamePurchaseCost));
+    setGameTimeLeftSec(prev => (
+      normalizeColoringTimeLeft(prev + safeGamePurchaseMinutes * COLORING_TIME_EXCHANGE_SECONDS)
+    ));
+    setGamePurchaseMinutes(DEFAULT_COLORING_PURCHASE_MINUTES);
+    setShowGameAccessPanel(false);
+    setShowGamesPanel(true);
   };
 
   const handleReviewPractice = () => {
@@ -4428,8 +4546,12 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setShowGamesPanel(true)}
-            className="flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl border-2 border-orange-100 bg-orange-50 py-2 px-0.5 md:px-2 text-[13px] font-extrabold text-orange-700 transition-all hover:bg-orange-100 sm:text-base md:text-xl"
+            onClick={handleGamesMenuClick}
+            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
+              showGamesPanel || showGameAccessPanel
+                ? 'bg-orange-500 text-white shadow-[0_4px_0_rgb(194,65,12)]'
+                : 'border-2 border-orange-100 bg-orange-50 text-orange-700 hover:bg-orange-100'
+            }`}
           >
             <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Game</span>
           </button>
@@ -5837,15 +5959,15 @@ export default function App() {
               <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setColoringPurchaseMinutes(prev => (
+                  onClick={() => setColoringPurchaseMinutes(
                     clampNumber(
-                      prev - 1,
-                      MIN_COLORING_PURCHASE_MINUTES,
-                      MIN_COLORING_PURCHASE_MINUTES,
+                      safeColoringPurchaseMinutes - COLORING_PURCHASE_STEP_MINUTES,
+                      minColoringPurchaseMinutes,
+                      minColoringPurchaseMinutes,
                       maxSelectableColoringMinutes
                     )
-                  ))}
-                  disabled={safeColoringPurchaseMinutes <= MIN_COLORING_PURCHASE_MINUTES}
+                  )}
+                  disabled={safeColoringPurchaseMinutes <= minColoringPurchaseMinutes}
                   className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
                   aria-label="Giảm thời gian tô màu muốn mua"
                 >
@@ -5859,14 +5981,14 @@ export default function App() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setColoringPurchaseMinutes(prev => (
+                  onClick={() => setColoringPurchaseMinutes(
                     clampNumber(
-                      prev + 1,
-                      MIN_COLORING_PURCHASE_MINUTES,
-                      MIN_COLORING_PURCHASE_MINUTES,
+                      safeColoringPurchaseMinutes + COLORING_PURCHASE_STEP_MINUTES,
+                      minColoringPurchaseMinutes,
+                      minColoringPurchaseMinutes,
                       maxSelectableColoringMinutes
                     )
-                  ))}
+                  )}
                   disabled={safeColoringPurchaseMinutes >= maxSelectableColoringMinutes}
                   className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
                   aria-label="Tăng thời gian tô màu muốn mua"
@@ -5926,10 +6048,10 @@ export default function App() {
               <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setDrawingPurchaseMinutes(prev => (
-                    clampNumber(prev - 1, MIN_COLORING_PURCHASE_MINUTES, MIN_COLORING_PURCHASE_MINUTES, maxSelectableDrawingMinutes)
-                  ))}
-                  disabled={safeDrawingPurchaseMinutes <= MIN_COLORING_PURCHASE_MINUTES}
+                  onClick={() => setDrawingPurchaseMinutes(
+                    clampNumber(safeDrawingPurchaseMinutes - COLORING_PURCHASE_STEP_MINUTES, minDrawingPurchaseMinutes, minDrawingPurchaseMinutes, maxSelectableDrawingMinutes)
+                  )}
+                  disabled={safeDrawingPurchaseMinutes <= minDrawingPurchaseMinutes}
                   className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
                   aria-label="Giảm thời gian học vẽ muốn mua"
                 >
@@ -5943,9 +6065,9 @@ export default function App() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setDrawingPurchaseMinutes(prev => (
-                    clampNumber(prev + 1, MIN_COLORING_PURCHASE_MINUTES, MIN_COLORING_PURCHASE_MINUTES, maxSelectableDrawingMinutes)
-                  ))}
+                  onClick={() => setDrawingPurchaseMinutes(
+                    clampNumber(safeDrawingPurchaseMinutes + COLORING_PURCHASE_STEP_MINUTES, minDrawingPurchaseMinutes, minDrawingPurchaseMinutes, maxSelectableDrawingMinutes)
+                  )}
                   disabled={safeDrawingPurchaseMinutes >= maxSelectableDrawingMinutes}
                   className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
                   aria-label="Tăng thời gian học vẽ muốn mua"
@@ -5985,6 +6107,85 @@ export default function App() {
         </div>
       )}
 
+      {!isSummary && showGameAccessPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+          <div className="w-full max-w-sm rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-orange-100 text-orange-600">
+              <Gamepad2 size={30} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800">Game đang khóa</h2>
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              Đổi {gameTimeExchangeCost} Robux cho mỗi phút chơi game.
+            </p>
+            {gameTimeLeftSec > 0 && (
+              <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
+                Còn lại: {formatClockTime(gameTimeLeftSec)}
+              </div>
+            )}
+            <div className="mt-4 rounded-2xl border-2 border-yellow-100 bg-yellow-50 p-3">
+              <div className="mb-2 text-xs font-black uppercase text-yellow-700">Chọn thời gian mua</div>
+              <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGamePurchaseMinutes(
+                    clampNumber(safeGamePurchaseMinutes - COLORING_PURCHASE_STEP_MINUTES, minGamePurchaseMinutes, minGamePurchaseMinutes, maxSelectableGameMinutes)
+                  )}
+                  disabled={safeGamePurchaseMinutes <= minGamePurchaseMinutes}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
+                  aria-label="Giảm thời gian chơi game muốn mua"
+                >
+                  <Minus size={20} />
+                </button>
+                <div className="rounded-xl bg-white px-3 py-2">
+                  <div className="text-3xl font-black leading-none text-yellow-700">
+                    {safeGamePurchaseMinutes}
+                  </div>
+                  <div className="text-xs font-black text-yellow-500">phút</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGamePurchaseMinutes(
+                    clampNumber(safeGamePurchaseMinutes + COLORING_PURCHASE_STEP_MINUTES, minGamePurchaseMinutes, minGamePurchaseMinutes, maxSelectableGameMinutes)
+                  )}
+                  disabled={safeGamePurchaseMinutes >= maxSelectableGameMinutes}
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-yellow-700 shadow-sm transition hover:bg-yellow-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none"
+                  aria-label="Tăng thời gian chơi game muốn mua"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+              <div className="mt-2 text-sm font-black text-yellow-800">
+                Cần: {gamePurchaseCost} Robux
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl bg-yellow-50 px-3 py-2 text-sm font-black text-yellow-700">
+              Robux hiện có: {robuxBalance}
+            </div>
+            <button
+              type="button"
+              onClick={handleBuyGameTime}
+              disabled={!canBuySelectedGameTime}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-5 py-3 text-base font-black text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              <Gem size={19} className="fill-yellow-100" />
+              Đổi {gamePurchaseCost} Robux lấy {safeGamePurchaseMinutes} phút
+            </button>
+            {!canBuySelectedGameTime && (
+              <div className="mt-2 text-xs font-bold text-rose-500">
+                Bé cần kiếm thêm Robux để mở khu vui chơi.
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowGameAccessPanel(false)}
+              className="mt-3 w-full rounded-full bg-slate-100 px-5 py-2.5 text-sm font-black text-slate-600 transition hover:bg-slate-200"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
       {!isSummary && showColoringPanel && (
         <ColoringApp
           onBack={() => setShowColoringPanel(false)}
@@ -6007,7 +6208,11 @@ export default function App() {
       )}
 
       {!isSummary && showGamesPanel && (
-        <GamesApp onBack={() => setShowGamesPanel(false)} />
+        <GamesApp
+          onBack={() => setShowGamesPanel(false)}
+          timeLeftSec={gameTimeLeftSec}
+          unlimitedTime={gameTimeExchangeCost <= 0}
+        />
       )}
 
       {!isSummary && showReadingPanel && (
