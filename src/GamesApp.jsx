@@ -46,7 +46,7 @@ const loadFavs = () => {
   }
 };
 
-export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = false, onReward }) {
+export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = false, onReward, robuxBalance = 0 }) {
   const [screen, setScreen] = useState('home');
   const [favorites, setFavorites] = useState(loadFavs);
   const [rewardToast, setRewardToast] = useState(null); // { rb, reason, key }
@@ -148,9 +148,13 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
         >
           <ChevronLeft size={18} /> Trở về
         </button>
-        <h1 className="text-2xl font-black text-slate-700 md:text-3xl">🎮 Khu vui chơi</h1>
-        <div className="flex min-w-[86px] justify-end">
-          <div className="flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-700 shadow">
+        <h1 className="min-w-0 flex-1 truncate text-center text-lg font-black text-slate-700 md:text-2xl">🎮 Khu vui chơi</h1>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex items-center gap-1 rounded-full bg-yellow-400/25 px-2.5 py-2 text-sm font-black text-yellow-700 shadow">
+            <Gem size={16} className="fill-yellow-300" />
+            {robuxBalance}
+          </div>
+          <div className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-2 text-sm font-black text-emerald-700 shadow">
             <Clock size={16} />
             {unlimitedTime ? '∞' : formatGameClock(timeLeftSec)}
           </div>

@@ -6261,6 +6261,7 @@ export default function App() {
           timeLeftSec={gameTimeLeftSec}
           unlimitedTime={gameTimeExchangeCost <= 0}
           onReward={handleGameReward}
+          robuxBalance={robuxBalance}
         />
       )}
 

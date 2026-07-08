@@ -1,16 +1,13 @@
 import { useRef, useEffect } from 'react';
 
-// Mốc điểm -> thưởng Robux (cộng thẳng vào Robux tổng). Thường 2-3, 5 là cao, tối đa 10.
+// Robux RẤT HIẾM: chỉ thưởng ở các mốc điểm CAO, số ít (sau còn chia REWARD_DIVISOR ở GamesApp).
+// Phần thưởng chính khi chơi là KỸ NĂNG trong game, không phải Robux.
 export const SCORE_TIERS = [
-  { at: 50, rb: 1 },
-  { at: 120, rb: 2 },
-  { at: 250, rb: 2 },
-  { at: 450, rb: 3 },
-  { at: 700, rb: 3 },
-  { at: 1000, rb: 5 },
-  { at: 1600, rb: 5 },
-  { at: 2500, rb: 7 },
-  { at: 4000, rb: 10 },
+  { at: 250, rb: 2 },   // ~1 sau khi giảm
+  { at: 600, rb: 2 },   // ~1
+  { at: 1200, rb: 3 },  // ~1
+  { at: 2500, rb: 5 },  // ~2
+  { at: 5000, rb: 7 },  // ~2
 ];
 
 // Theo dõi điểm và tự thưởng Robux khi vượt từng mốc (mỗi mốc 1 lần/ván).
