@@ -309,7 +309,7 @@ export default function AlbumApp({ onBack }) {
         </p>
       )}
 
-      <div className="grid w-full max-w-3xl grid-cols-2 gap-3 pb-8 sm:grid-cols-3">
+      <div className="grid w-full max-w-3xl grid-cols-3 gap-2 pb-8 sm:gap-3 md:grid-cols-4">
         {albums.map((a) => (
           <button
             key={a.id}
