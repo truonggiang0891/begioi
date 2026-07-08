@@ -34,7 +34,17 @@ const shade = (hex, p) => {
   return `rgb(${r},${g},${b})`;
 };
 
+// Độ sáng tương đối của màu (0 tối → 1 sáng).
+const luminance = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+};
+
 // Vẽ một quả tròn rực rỡ (bóng sáng góc trên + viền + cuống lá).
+// Quả tối màu -> viền vàng nổi bật để không chìm vào nền.
 const drawBall = (ctx, r, color) => {
   const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.2, 0, 0, r);
   grad.addColorStop(0, shade(color, 0.45));
@@ -44,8 +54,13 @@ const drawBall = (ctx, r, color) => {
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, Math.PI * 2);
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = shade(color, -0.35);
+  if (luminance(color) < 0.58) {
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffe14d'; // viền vàng cho quả tối
+  } else {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = shade(color, -0.35);
+  }
   ctx.stroke();
   // lá xanh nhỏ
   ctx.fillStyle = '#37c25a';
@@ -304,7 +319,18 @@ export default function FruitSliceApp({ onBack }) {
         if (f.type === 'fruit') {
           drawBall(ctx, f.r, f.color);
         } else {
-          if (f.type === 'golden' || f.type === 'freeze') {
+          if (f.type === 'bomb') {
+            // vòng trắng + quầng sáng để bom không chìm vào nền tối
+            ctx.beginPath();
+            ctx.arc(0, 0, f.r + 3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.14)';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+            ctx.shadowColor = 'rgba(255,255,255,0.95)';
+            ctx.shadowBlur = 10;
+          } else if (f.type === 'golden' || f.type === 'freeze') {
             ctx.shadowColor = f.type === 'golden' ? 'rgba(250,204,21,0.9)' : 'rgba(125,211,252,0.9)';
             ctx.shadowBlur = 18;
           }

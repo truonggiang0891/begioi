@@ -203,6 +203,9 @@ export default function Match3App({ onBack }) {
   const toastTimer = useRef(null);
   const hintTimer = useRef(null);
   const dragRef = useRef(null); // {r,c,x0,y0,done} cho thao tác trượt
+  const swappingRef = useRef(false); // đang chạy animation đổi chỗ -> khoá thao tác
+  const [swapAnim, setSwapAnim] = useState(null); // {a,b,back} để trượt mượt (kể cả đổi sai)
+  const [pops, setPops] = useState([]); // hiệu ứng nổ tại ô vừa ăn
 
   useEffect(() => { scoreRef.current = score; }, [score]);
 
@@ -243,49 +246,71 @@ export default function Match3App({ onBack }) {
     setNewRecord(false);
   };
 
-  // Đổi chỗ 2 viên KỀ NHAU a,b. Tính toàn bộ trong handler (1 lần) để tránh lỗi StrictMode gọi updater 2 lần.
-  const trySwap = (a, b) => {
-    if (over) return;
+  // Đổi chỗ 2 viên KỀ NHAU a,b — có animation TRƯỢT mượt: đúng thì nổ, sai thì trượt rồi bật lại.
+  const animateSwap = (a, b) => {
+    if (over || swappingRef.current) return;
+    const dr = Math.abs(a.r - b.r);
+    const dc = Math.abs(a.c - b.c);
+    if (dr + dc !== 1) return;
+
+    swappingRef.current = true;
     setSelected(null);
     setHintCells(null);
+
     const nb = cloneBoard(board);
     const tmp = nb[a.r][a.c];
     nb[a.r][a.c] = nb[b.r][b.c];
     nb[b.r][b.c] = tmp;
-
     const { groups } = findMatchGroups(nb);
-    if (groups.length === 0) {
-      playSound('wrong');
-      return;
-    }
+    const valid = groups.length > 0;
 
-    const { board: finalBoard, totalScore, bonusMoves, maxCombo } = resolveCascades(nb, b);
-    setBoard(finalBoard);
-    setScore((s) => s + totalScore);
-    setMovesLeft((m) => Math.max(0, m - 1 + bonusMoves));
+    setSwapAnim({ a, b, back: false });
 
-    // Phần thưởng: tạo combo (dây chuyền) thì được thêm 1 gợi ý để dùng khi bí.
-    const comboReward = maxCombo >= 2;
-    if (comboReward) setHintsLeft((h) => Math.min(9, h + 1));
+    window.setTimeout(() => {
+      if (!valid) {
+        // Đổi sai: trượt về vị trí cũ (bật lại) rồi thôi.
+        playSound('wrong');
+        setSwapAnim({ a, b, back: true });
+        window.setTimeout(() => { setSwapAnim(null); swappingRef.current = false; }, 170);
+        return;
+      }
 
-    if (bonusMoves > 0 && maxCombo > 1) showToast(`Combo x${maxCombo}! +${bonusMoves} lượt +1 💡`);
-    else if (bonusMoves > 0) showToast(`+${bonusMoves} lượt! 🎁`);
-    else if (maxCombo > 1) showToast(`Combo x${maxCombo}! +1 💡`);
+      // Đúng: hiệu ứng nổ tại các ô khớp đầu tiên, rồi giải quyết dây chuyền.
+      const burstKeys = new Set();
+      groups.forEach((g) => g.cells.forEach((cc) => burstKeys.add(`${cc.r},${cc.c}`)));
+      const bursts = Array.from(burstKeys).map((k, i) => {
+        const [pr, pc] = k.split(',').map(Number);
+        return { key: `${Date.now()}-${i}`, r: pr, c: pc };
+      });
+      setPops(bursts);
+      window.setTimeout(() => setPops([]), 420);
 
-    playSound('correct');
+      const { board: finalBoard, totalScore, bonusMoves, maxCombo } = resolveCascades(nb, b);
+      setBoard(finalBoard);
+      setSwapAnim(null);
+      swappingRef.current = false;
+      setScore((s) => s + totalScore);
+      setMovesLeft((m) => Math.max(0, m - 1 + bonusMoves));
+      if (maxCombo >= 2) setHintsLeft((h) => Math.min(9, h + 1));
 
-    // Bế tắc (không còn nước đi) -> xáo lại bàn cho bé chơi tiếp.
-    if (!findHint(finalBoard)) {
-      clearTimeout(hintTimer.current);
-      hintTimer.current = setTimeout(() => {
-        setBoard(makeBoard());
-        showToast('Xáo lại bàn — hết nước đi! 🔀');
-      }, 500);
-    }
+      if (bonusMoves > 0 && maxCombo > 1) showToast(`Combo x${maxCombo}! +${bonusMoves} lượt +1 💡`);
+      else if (bonusMoves > 0) showToast(`+${bonusMoves} lượt! 🎁`);
+      else if (maxCombo > 1) showToast(`Combo x${maxCombo}! +1 💡`);
+
+      playSound('correct');
+
+      if (!findHint(finalBoard)) {
+        clearTimeout(hintTimer.current);
+        hintTimer.current = setTimeout(() => {
+          setBoard(makeBoard());
+          showToast('Xáo lại bàn — hết nước đi! 🔀');
+        }, 500);
+      }
+    }, 170);
   };
 
   const handleTapCell = (r, c) => {
-    if (over) return;
+    if (over || swappingRef.current) return;
     if (!selected) { setSelected({ r, c }); return; }
     if (selected.r === r && selected.c === c) { setSelected(null); return; }
 
@@ -293,7 +318,7 @@ export default function Match3App({ onBack }) {
     const dc = Math.abs(selected.c - c);
     if (dr + dc !== 1) { setSelected({ r, c }); return; }
 
-    trySwap(selected, { r, c });
+    animateSwap(selected, { r, c });
   };
 
   // Trượt: nhấn 1 viên rồi kéo về hướng viên kề bên để đổi chỗ.
@@ -313,7 +338,7 @@ export default function Match3App({ onBack }) {
     if (Math.abs(dx) > Math.abs(dy)) tc += dx > 0 ? 1 : -1;
     else tr += dy > 0 ? 1 : -1;
     d.done = true;
-    if (tr >= 0 && tr < SIZE && tc >= 0 && tc < SIZE) trySwap({ r: d.r, c: d.c }, { r: tr, c: tc });
+    if (tr >= 0 && tr < SIZE && tc >= 0 && tc < SIZE) animateSwap({ r: d.r, c: d.c }, { r: tr, c: tc });
     else setSelected(null);
   };
   const onBoardPointerUp = () => {
@@ -394,7 +419,7 @@ export default function Match3App({ onBack }) {
 
       <div ref={fitRef} className="flex min-h-0 flex-1 items-center justify-center px-2 pb-3">
         <div
-          className="grid touch-none grid-cols-7 gap-1 rounded-2xl bg-black/20 p-2"
+          className="relative grid touch-none grid-cols-7 gap-1 rounded-2xl bg-black/20 p-2"
           style={{ width: fitSize.w, height: fitSize.w }}
           onPointerMove={onBoardPointerMove}
           onPointerUp={onBoardPointerUp}
@@ -404,19 +429,26 @@ export default function Match3App({ onBack }) {
             row.map((cell, c) => {
               const isSelected = selected && selected.r === r && selected.c === c;
               const isHint = hintCells && hintCells.some((h) => h.r === r && h.c === c);
+              // Trượt: ô a/b dịch về phía nhau (kể cả khi đổi sai rồi bật lại).
+              let cellTransform;
+              if (swapAnim && !swapAnim.back) {
+                const { a, b } = swapAnim;
+                if (r === a.r && c === a.c) cellTransform = `translate(calc(${b.c - a.c} * (100% + 4px)), calc(${b.r - a.r} * (100% + 4px)))`;
+                else if (r === b.r && c === b.c) cellTransform = `translate(calc(${a.c - b.c} * (100% + 4px)), calc(${a.r - b.r} * (100% + 4px)))`;
+              }
               return (
                 <button
                   key={`${r}-${c}`}
                   type="button"
                   onPointerDown={(e) => onCellPointerDown(r, c, e)}
-                  className={`relative flex aspect-square select-none items-center justify-center rounded-xl text-xl transition sm:text-2xl ${
+                  className={`relative flex aspect-square select-none items-center justify-center rounded-xl text-xl transition-all duration-150 sm:text-2xl ${
                     isSelected
                       ? 'scale-95 bg-white/40 ring-4 ring-white'
                       : isHint
                         ? 'bg-yellow-300/30 ring-4 ring-yellow-300 animate-pulse'
                         : 'bg-white/10 hover:bg-white/20'
                   }`}
-                  style={emojiFont}
+                  style={{ ...emojiFont, transform: cellTransform, zIndex: cellTransform ? 5 : undefined }}
                   aria-label="kẹo"
                 >
                   {cell && CANDIES[cell.type]}
@@ -430,8 +462,39 @@ export default function Match3App({ onBack }) {
               );
             }),
           )}
+
+          {/* Hiệu ứng nổ khi ăn kẹo */}
+          {pops.map((p) => {
+            const cellW = (fitSize.w - 40) / SIZE;
+            const pitch = cellW + 4;
+            return (
+              <span
+                key={p.key}
+                className="m3-burst pointer-events-none absolute"
+                style={{
+                  left: 8 + cellW / 2 + p.c * pitch,
+                  top: 8 + cellW / 2 + p.r * pitch,
+                  width: cellW * 1.5,
+                  height: cellW * 1.5,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
+      <style>{`
+        .m3-burst {
+          transform: translate(-50%, -50%) scale(0.3);
+          border-radius: 9999px;
+          background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(253,224,71,0.85) 35%, rgba(244,114,182,0.35) 60%, rgba(244,114,182,0) 75%);
+          animation: m3-pop 0.42s ease-out forwards;
+        }
+        @keyframes m3-pop {
+          0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+          60% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+      `}</style>
 
       {over && newRecord && <Fireworks />}
       {over && (
