@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy } from 'lucide-react';
+import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
@@ -201,9 +202,14 @@ export default function ShooterApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🚀 Bắn gạch</h1>
-        <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Kéo bên dưới để lái thuyền · thuyền tự bắn
+          </GameHelp>
+          <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex shrink-0 items-center justify-center gap-3 px-3 pt-2">
@@ -256,7 +262,6 @@ export default function ShooterApp({ onBack }) {
             <ArrowRight size={28} />
           </button>
         </div>
-        <p className="text-xs font-bold text-white/40">Kéo bên dưới để lái thuyền · thuyền tự bắn</p>
       </div>
 
       {status === 'over' && newRecord && <Fireworks />}

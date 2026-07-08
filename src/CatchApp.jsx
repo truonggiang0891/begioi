@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy, Timer, Sparkles, Magnet } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import GameHelp from './GameHelp';
 
 // --- GAME: HỨNG ĐỒ (Catch) ---
 // Giỏ 🧺 ở dưới hứng đồ tốt rơi xuống (+điểm), tránh bom 💣 (-1 mạng).
@@ -272,9 +273,14 @@ export default function CatchApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white drop-shadow md:text-2xl">🧺 Hứng đồ</h1>
-        <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Kéo giỏ hoặc dùng phím mũi tên 👆
+          </GameHelp>
+          <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 py-2">
@@ -351,7 +357,6 @@ export default function CatchApp({ onBack }) {
         >
           ◀
         </button>
-        <p className="text-center text-xs font-bold text-orange-950/80">Kéo giỏ hoặc dùng phím mũi tên 👆</p>
         <button
           type="button"
           aria-label="Phải"

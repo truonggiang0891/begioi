@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import GameHelp from './GameHelp';
 
 // --- GAME: ĐẬP CHUỘT CHŨI (Whack-a-mole) ---
 // Lưới 3x3 hang. Chuột 🐹 ngoi lên -> đập trúng +1 điểm.
@@ -161,9 +162,14 @@ export default function WhackApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white drop-shadow md:text-2xl">🔨 Đập chuột</h1>
-        <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/20 px-3 py-2 text-sm font-black text-white transition hover:bg-white/30">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Chạm vào 🐹 để đập, tránh 💣 nhé!
+          </GameHelp>
+          <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/20 px-3 py-2 text-sm font-black text-white transition hover:bg-white/30">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 py-2 px-2">
@@ -203,7 +209,6 @@ export default function WhackApp({ onBack }) {
           </button>
         ))}
       </div>
-      <p className="py-1 text-center text-xs font-bold text-white/70">Chạm vào 🐹 để đập, tránh 💣 nhé!</p>
 
       {over && newRecord && <Fireworks />}
       {over && (

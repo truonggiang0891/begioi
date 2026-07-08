@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, RotateCw, ArrowLeft, ArrowRight, ArrowDown, ChevronsDown, Trophy } from 'lucide-react';
+import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 
@@ -279,13 +280,18 @@ export default function TetrisApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">⬇️ Khối rơi</h1>
-        <button
-          type="button"
-          onClick={restart}
-          className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20"
-        >
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Chạm để xoay · Vuốt ngang để đi · Vuốt xuống để rơi
+          </GameHelp>
+          <button
+            type="button"
+            onClick={restart}
+            className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20"
+          >
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-2 py-2">
@@ -348,10 +354,7 @@ export default function TetrisApp({ onBack }) {
           </div>
         </div>
 
-        {/* Gợi ý + điều khiển cảm ứng (nút để dự phòng) */}
-        <div className="shrink-0 text-center text-[11px] font-bold text-white/40">
-          Chạm để xoay · Vuốt ngang để đi · Vuốt xuống để rơi
-        </div>
+        {/* Điều khiển cảm ứng (nút để dự phòng) */}
         <div className="flex shrink-0 items-center gap-2">
           <CtrlButton onClick={() => act('down')} label="Xuống"><ArrowDown size={26} /></CtrlButton>
           <CtrlButton onClick={() => act('left')} label="Trái"><ArrowLeft size={26} /></CtrlButton>

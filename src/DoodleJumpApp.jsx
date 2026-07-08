@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy, Rocket } from 'l
 import { playSound, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import GameHelp from './GameHelp';
 
 // --- GAME: NHẢY CAO (kiểu Doodle Jump) ---
 // Nhân vật tự nảy lên nhờ trọng lực + bệ đỡ. Bé lái trái/phải để nhân vật rơi
@@ -299,9 +300,14 @@ export default function DoodleJumpApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🦘 Nhảy cao</h1>
-        <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Giữ nút, gõ phím ← → hoặc kéo trên màn hình để lái
+          </GameHelp>
+          <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
@@ -347,7 +353,6 @@ export default function DoodleJumpApp({ onBack }) {
             <ArrowRight size={28} />
           </button>
         </div>
-        <p className="shrink-0 text-xs font-bold text-white/40">Giữ nút, gõ phím ← → hoặc kéo trên màn hình để lái</p>
 
         {status === 'over' && newRecord && <Fireworks />}
         {status === 'over' && (

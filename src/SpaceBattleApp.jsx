@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Rocket, Z
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import GameHelp from './GameHelp';
 
 // --- GAME: KHÔNG CHIẾN (Space Battle) ---
 // Phi thuyền địch BẮN TRẢ! Bé né đạn + tự bắn hạ chúng.
@@ -482,9 +483,14 @@ export default function SpaceBattleApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">✈️ Không chiến</h1>
-        <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Kéo <b>bên dưới</b> để lái thuyền · Bấm <span className="text-cyan-300">⚡Lv</span>/<span className="text-violet-300">💠Lv</span> để đổi loại đạn (chỉ bắn 1 loại) · <span className="text-green-300">🛡️ giáp</span> đỡ đạn · <span className="text-orange-300">🚀 tên lửa nổ lan</span>
+          </GameHelp>
+          <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 px-3 pt-2">
@@ -580,9 +586,6 @@ export default function SpaceBattleApp({ onBack }) {
             <ArrowRight size={28} />
           </button>
         </div>
-        <p className="text-center text-xs font-bold text-white/40">
-          Kéo bên dưới để lái thuyền · Bấm <span className="text-cyan-300">⚡Lv</span>/<span className="text-violet-300">💠Lv</span> để đổi loại đạn (chỉ bắn 1 loại) · <span className="text-green-300">🛡️ giáp</span> đỡ đạn · <span className="text-orange-300">🚀 tên lửa nổ lan</span>
-        </p>
       </div>
 
       {over && newRecord && <Fireworks />}

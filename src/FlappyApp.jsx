@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Trophy, Shield } from 'lucide-react';
 import { playSound, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import GameHelp from './GameHelp';
 
 // --- GAME: CHIM BAY (Flappy Bird kiểu dễ cho bé) ---
 // Chạm / click / Space / mũi tên lên để vỗ cánh, bay qua khe giữa các ống.
@@ -302,9 +303,14 @@ export default function FlappyApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🐤 Chim bay</h1>
-        <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Chạm màn hình hoặc bấm Space / ↑ để bay
+          </GameHelp>
+          <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
@@ -333,7 +339,6 @@ export default function FlappyApp({ onBack }) {
             style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
           />
         </div>
-        <p className="shrink-0 text-xs font-bold text-white/40">Chạm màn hình hoặc bấm Space / ↑ để bay</p>
 
         {status === 'over' && newRecord && <Fireworks />}
         {status === 'over' && (

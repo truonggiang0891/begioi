@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import GameHelp from './GameHelp';
 
 // --- GAME: BẮN BÓNG BAY (Balloon Pop) ---
 // Bóng bay bay lên, chạm để nổ. Để bóng thoát lên đỉnh -> mất 1 mạng.
@@ -103,9 +104,14 @@ export default function BalloonPopApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white drop-shadow md:text-2xl">🎈 Bắn bóng bay</h1>
-        <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Chạm vào bóng để nổ 👆
+          </GameHelp>
+          <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-center gap-3 py-2">
@@ -154,7 +160,6 @@ export default function BalloonPopApp({ onBack }) {
           </button>
         ))}
       </div>
-      <p className="py-1 text-center text-xs font-bold text-white/80">Chạm vào bóng để nổ 👆</p>
 
       {over && newRecord && <Fireworks />}
       {over && (

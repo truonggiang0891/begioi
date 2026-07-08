@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
+import GameHelp from './GameHelp';
 
 // --- GAME: BẮN TRÚNG ĐÍCH (Target / Duck Hunt) ---
 // Mục tiêu chạy ngang màn hình, chạm để bắn trúng. Bỏ lỡ 3 con -> thua.
@@ -110,9 +111,14 @@ export default function TargetShootApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white drop-shadow md:text-2xl">🎯 Bắn trúng đích</h1>
-        <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Chạm để bắn trúng 👆
+          </GameHelp>
+          <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-center gap-3 py-2">
@@ -147,7 +153,6 @@ export default function TargetShootApp({ onBack }) {
           </button>
         ))}
       </div>
-      <p className="py-1 text-center text-xs font-bold text-white/80">Chạm để bắn trúng 👆</p>
 
       {over && newRecord && <Fireworks />}
       {over && (

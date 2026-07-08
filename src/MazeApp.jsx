@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronUp, ChevronDown, ChevronRight, RotateCcw, Trophy } from 'lucide-react';
+import GameHelp from './GameHelp';
 import { playSound } from './gameAudio';
 import { useFitSize } from './useFitSize';
 import Fireworks from './Fireworks';
@@ -226,13 +227,18 @@ export default function MazeApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white drop-shadow md:text-2xl">🧭 Mê cung</h1>
-        <button
-          type="button"
-          onClick={restart}
-          className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20"
-        >
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Chạm ô cạnh 🙂 · vuốt · phím mũi tên · hoặc nút dưới 👇
+          </GameHelp>
+          <button
+            type="button"
+            onClick={restart}
+            className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20"
+          >
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 py-2 px-2">
@@ -298,10 +304,6 @@ export default function MazeApp({ onBack }) {
           )}
         </div>
         </div>
-
-        <p className="shrink-0 text-center text-xs font-bold text-indigo-200/70">
-          Chạm ô cạnh 🙂 · vuốt · phím mũi tên · hoặc nút dưới 👇
-        </p>
 
         {/* D-pad */}
         <div className="grid shrink-0 grid-cols-3 grid-rows-2 gap-1.5 pb-1" style={{ width: 168 }}>

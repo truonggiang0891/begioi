@@ -3,6 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
 import { playSound } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
+import GameHelp from './GameHelp';
 
 // --- GAME: BẮN PHÁO (Ném bóng theo đường bay có trọng lực) ---
 // Kéo để ngắm góc + lực, thả để bắn bóng trúng mục tiêu. Trượt 3 lần -> thua.
@@ -177,9 +178,14 @@ export default function CannonApp({ onBack }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">💥 Bắn pháo</h1>
-        <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex items-center gap-1.5">
+          <GameHelp>
+            Kéo từ khẩu pháo để ngắm · thả để bắn
+          </GameHelp>
+          <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center gap-2 px-3 py-2">
@@ -211,7 +217,6 @@ export default function CannonApp({ onBack }) {
             style={{ width: fitSize.w, height: fitSize.h, display: 'block' }}
           />
         </div>
-        <p className="shrink-0 text-xs font-bold text-white/40">Kéo từ khẩu pháo để ngắm · thả để bắn</p>
       </div>
 
       {over && newRecord && <Fireworks />}
