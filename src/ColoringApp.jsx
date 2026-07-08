@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Clock, Cuboid, Eraser, Gem, Heart, LockKeyhole, Minus, Plus, RotateCcw, Redo2, Sparkles, Square, Trash2, Undo2, X } from 'lucide-react';
-import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, animeEmojis, animeNames, landscapeEmojis, landscapeNames, brainrotEmojis, brainrotIds, brainrotNames, BRAINROT_START_LEVEL, tonghopEmojis, tonghopIds, tonghopNames, TONGHOP_START_LEVEL, colorThemes, coloringSVGs } from './ColoringData';
+import { animalEmojis, animalNames, pokemonEmojis, pokemonNames, landscapeEmojis, landscapeNames, brainrotEmojis, brainrotIds, brainrotNames, BRAINROT_START_LEVEL, tonghopEmojis, tonghopIds, tonghopNames, TONGHOP_START_LEVEL, colorThemes, coloringSVGs } from './ColoringData';
 import { splitColorableRegions } from './regionSplit';
 import { applyOuterBackgroundMask } from './backgroundMask';
 
@@ -28,7 +28,6 @@ const loadFavorites = () => {
 const CATEGORY_RANGES = [
     { key: 'animal', start: 1, emojis: animalEmojis, names: animalNames },
     { key: 'pokemon', start: 31, emojis: pokemonEmojis, names: pokemonNames },
-    { key: 'anime', start: 61, emojis: animeEmojis, names: animeNames },
     { key: 'landscape', start: 101, emojis: landscapeEmojis, names: landscapeNames },
     { key: 'brainrot', start: BRAINROT_START_LEVEL, ids: brainrotIds, emojis: brainrotEmojis, names: brainrotNames },
     { key: 'tonghop', start: TONGHOP_START_LEVEL, ids: tonghopIds, emojis: tonghopEmojis, names: tonghopNames },
@@ -895,13 +894,6 @@ export default function ColoringApp({
                         </button>
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='anime' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
-                            onClick={() => handleCategorySwitch('anime')}
-                        >
-                            Anime ({animeEmojis.length})
-                        </button>
-                        <button
-                            type="button"
                             className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='brainrot' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('brainrot')}
                         >
@@ -912,7 +904,7 @@ export default function ColoringApp({
                             className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='tonghop' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('tonghop')}
                         >
-                            Tổng hợp ({tonghopEmojis.length})
+                            Đặc biệt ({tonghopEmojis.length})
                         </button>
                         <button
                             type="button"
@@ -1008,7 +1000,7 @@ export default function ColoringApp({
                                 <div className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-slate-400 shadow">
                                     <Square size={28} />
                                 </div>
-                                <div className="text-lg font-black text-slate-800">Mục Anime đang rỗng</div>
+                                <div className="text-lg font-black text-slate-800">Mục này đang rỗng</div>
                                 <div className="mt-1 text-sm font-bold text-slate-500">
                                     Chưa có tranh nào trong mục này.
                                 </div>

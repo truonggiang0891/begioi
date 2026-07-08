@@ -58,7 +58,7 @@ const playSound = (type, volumePercent) => {
 // --- HẰNG SỐ ---
 const MAX_TIME = 90 * 60; // 90 phút (giây)
 const MIN_TIME = 0;
-const ADMIN_PIN = 'Truonggiang1@';
+const ADMIN_PIN = '270891';
 const SETTINGS_KEY = 'math_settings';
 const USER_NAME_KEY = 'math_userName';
 const USER_AVATAR_KEY = 'math_userAvatar';
