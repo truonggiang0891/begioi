@@ -8,7 +8,7 @@ import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 
 const API = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
-const IMAGE_SLIDESHOW_MS = 2500; // ảnh: mỗi 2.5s (video thì chờ phát hết)
+const IMAGE_SLIDESHOW_MS = 2000; // ảnh: mỗi 2s (video thì chờ phát hết)
 
 // Gọi Drive API list. Chỉ cần API key vì folder đã chia sẻ công khai.
 const driveList = async (query, extra = {}) => {
@@ -320,6 +320,16 @@ export default function AlbumApp({ onBack }) {
           <span className="min-w-0 flex-1 truncate text-sm font-bold opacity-80">{item.name}</span>
           <span className="shrink-0 text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>
           <div className="flex shrink-0 items-center gap-2">
+            {video && (
+              <button
+                type="button"
+                onClick={goNextLoop}
+                className="flex h-10 items-center gap-1 rounded-full bg-violet-500 px-3 text-sm font-black text-white shadow transition hover:bg-violet-600"
+                aria-label="Chiếu tiếp"
+              >
+                Tiếp <ChevronRight size={18} />
+              </button>
+            )}
             {current && (
               <button
                 type="button"
@@ -362,7 +372,7 @@ export default function AlbumApp({ onBack }) {
         </div>
 
         <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">
-          {lightbox > 0 && (
+          {!video && lightbox > 0 && (
             <button
               type="button"
               onClick={goPrev}
@@ -392,7 +402,7 @@ export default function AlbumApp({ onBack }) {
             />
           )}
 
-          {lightbox < media.length - 1 && (
+          {!video && lightbox < media.length - 1 && (
             <button
               type="button"
               onClick={goNext}
@@ -412,7 +422,7 @@ export default function AlbumApp({ onBack }) {
 
         {playing && video && (
           <div className="pointer-events-none absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
-            Xem xong bấm › để chiếu tiếp
+            Xem xong bấm nút "Tiếp" ở trên để chiếu tiếp
           </div>
         )}
       </div>
