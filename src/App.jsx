@@ -4513,19 +4513,19 @@ export default function App() {
     }`}>
       {/* ROLE LOGIN */}
       {!isSummary && (
-      <div className="w-full max-w-lg shrink-0 bg-white rounded-3xl shadow-lg border-4 border-white mb-4 p-2 md:p-2.5">
-        <div className="grid grid-cols-3 gap-2 md:gap-2.5">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-3xl shadow-lg border-4 border-white mb-3 p-1.5 md:p-2.5">
+        <div className="grid grid-cols-3 gap-1.5 md:gap-2.5">
           <button
             type="button"
             onClick={handleAlbumMenuClick}
-            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showAlbumPanel
                 ? 'bg-violet-500 text-white shadow-[0_5px_0_rgb(109,40,217)]'
                 : 'bg-violet-50 text-violet-700 hover:bg-violet-100 border-2 border-violet-100 shadow-[0_4px_0_rgb(237,233,254)]'
             }`}
           >
-            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float">
-              <CameraSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            <span className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float">
+              <CameraSticker className="h-8 w-8 md:h-10 md:w-10 drop-shadow-sm" />
             </span>
             <span className="truncate">Khoảnh khắc</span>
           </button>
@@ -4533,14 +4533,14 @@ export default function App() {
           <button
             type="button"
             onClick={toggleReadingPanel}
-            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showReadingPanel
                 ? 'bg-emerald-500 text-white shadow-[0_5px_0_rgb(5,150,105)]'
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-100 shadow-[0_4px_0_rgb(209,250,229)]'
             }`}
           >
-            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.4s'}}>
-              <BookSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            <span className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.4s'}}>
+              <BookSticker className="h-8 w-8 md:h-10 md:w-10 drop-shadow-sm" />
             </span>
             <span className="truncate">Tập đọc</span>
           </button>
@@ -4548,31 +4548,31 @@ export default function App() {
           <button
             type="button"
             onClick={handleDrawingMenuClick}
-            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showDrawingPanel || showDrawingAccessPanel
                 ? 'bg-pink-500 text-white shadow-[0_5px_0_rgb(190,24,93)]'
                 : 'border-2 border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100 shadow-[0_4px_0_rgb(252,231,243)]'
             }`}
           >
-            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.8s'}}>
-              <BrushSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            <span className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.8s'}}>
+              <BrushSticker className="h-8 w-8 md:h-10 md:w-10 drop-shadow-sm" />
             </span>
             <span className="truncate">Học vẽ</span>
           </button>
         </div>
 
-        <div className="mt-2 grid grid-cols-3 gap-2 md:mt-2.5 md:gap-2.5">
+        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2.5 md:gap-2.5">
           <button
             type="button"
             onClick={handleColoringMenuClick}
-            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showColoringPanel || showColoringAccessPanel
                 ? 'bg-amber-500 text-white shadow-[0_5px_0_rgb(217,119,6)]'
                 : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100 shadow-[0_4px_0_rgb(254,243,199)]'
             }`}
           >
-            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.2s'}}>
-              <PencilSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            <span className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.2s'}}>
+              <PencilSticker className="h-8 w-8 md:h-10 md:w-10 drop-shadow-sm" />
             </span>
             <span className="truncate">Tô màu</span>
           </button>
@@ -4580,14 +4580,14 @@ export default function App() {
           <button
             type="button"
             onClick={handleGamesMenuClick}
-            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showGamesPanel || showGameAccessPanel
                 ? 'bg-orange-500 text-white shadow-[0_5px_0_rgb(194,65,12)]'
                 : 'border-2 border-orange-100 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-[0_4px_0_rgb(255,237,213)]'
             }`}
           >
-            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.6s'}}>
-              <GamepadSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            <span className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.6s'}}>
+              <GamepadSticker className="h-8 w-8 md:h-10 md:w-10 drop-shadow-sm" />
             </span>
             <span className="truncate">Game</span>
           </button>
@@ -4595,14 +4595,14 @@ export default function App() {
           <button
             type="button"
             onClick={toggleRobuxMode}
-            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               rewardMode === 'robux'
                 ? 'bg-yellow-400 text-yellow-950 shadow-[0_5px_0_rgb(202,138,4)]'
                 : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 shadow-[0_4px_0_rgb(254,249,195)]'
             }`}
           >
-            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '1s'}}>
-              <GemSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            <span className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '1s'}}>
+              <GemSticker className="h-8 w-8 md:h-10 md:w-10 drop-shadow-sm" />
             </span>
             <span className="truncate">{rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}</span>
           </button>
@@ -5533,7 +5533,7 @@ export default function App() {
 
       {/* HEADER */}
       {!isSummary && (
-      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-3">
         <div className="bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 text-white py-3 md:py-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none"
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
@@ -5615,7 +5615,7 @@ export default function App() {
       <div className={`w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white relative flex flex-col justify-center ${
         isSummary
           ? 'p-2 md:p-4'
-          : `${isFeedbackPaused ? 'min-h-[300px]' : 'min-h-[240px]'} md:min-h-[390px] p-2.5 md:p-6`
+          : `${isFeedbackPaused ? 'min-h-[280px]' : 'min-h-[215px]'} md:min-h-[390px] p-2.5 md:p-6`
       }`}>
         {stageNotice && (
           <div className="absolute left-1/2 top-10 z-30 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-green-200 bg-white px-4 py-1.5 text-sm font-black text-green-600 shadow-lg animate-bounce-in md:top-14 md:text-lg">
@@ -5625,7 +5625,7 @@ export default function App() {
         
         {gameState === 'idle' ? (
           <div className="text-center">
-            <div className="relative mx-auto mb-2 md:mb-4 flex h-16 w-full items-center justify-center md:h-24">
+            <div className="relative mx-auto mb-1 md:mb-4 flex h-11 w-full items-center justify-center md:h-24">
               <Star className="pointer-events-none absolute left-1/2 top-1 -translate-x-16 h-5 w-5 md:h-6 md:w-6 fill-yellow-300 text-yellow-300 animate-twinkle" />
               <Sparkles className="pointer-events-none absolute left-1/2 top-3 translate-x-14 h-4 w-4 md:h-5 md:w-5 fill-sky-300 text-sky-300 animate-twinkle" style={{animationDelay: '0.7s'}} />
               <Cloud className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-24 h-6 w-6 md:h-9 md:w-9 fill-sky-100 text-sky-200 animate-cloud-drift" />
@@ -5637,7 +5637,7 @@ export default function App() {
             <div className="grid gap-2 md:gap-3">
               <button
                 onClick={() => startPracticeSession(rewardMode)}
-                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3.5 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
+                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
               >
                 <span className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-white/25">
                   <Play fill="white" className="w-5 h-5 md:w-7 md:h-7 translate-x-[1px]" />
