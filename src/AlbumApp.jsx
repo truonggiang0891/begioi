@@ -565,12 +565,12 @@ export default function AlbumApp({ onBack }) {
                   <Camera size={16} />
                 </span>
                 {parts.length > 0 && (
-                  <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-bold text-white/90 backdrop-blur-sm">
+                  <span className="absolute bottom-1 right-2 text-[9px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
                     {parts.join(' · ')}
                   </span>
                 )}
               </div>
-              <span className="truncate px-2 py-2 text-center text-sm font-black text-slate-700">
+              <span className="truncate px-2 py-1 text-center text-[13px] font-black text-slate-700">
                 {cleanName(a.name)}
               </span>
             </button>
