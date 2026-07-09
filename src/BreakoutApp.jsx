@@ -5,7 +5,7 @@ import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
 import { SoundToggle, SkillHUD, SkillToast } from './gameUI';
 import { SKILLS, skillMeta, randomSkill } from './gameSkills';
-import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake } from './gameFx';
+import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake , setupCanvas } from './gameFx';
 import { useFitSize } from './useFitSize';
 import { useScoreRewards } from './gameRewards';
 
@@ -122,7 +122,7 @@ export default function BreakoutApp({ onBack, onReward, robuxBalance = 0 }) {
   useEffect(() => {
     newGame();
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = setupCanvas(canvas, W, H);
     let raf = 0;
     let curScore = 0;
     let curLives = 3;

@@ -4,6 +4,20 @@
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
+// Dựng canvas SẮC NÉT trên màn hình retina: backing store lớn hơn kích thước logic
+// (W×H) theo tỉ lệ supersample, rồi scale context 1 lần để code vẫn vẽ theo toạ độ W×H.
+// Dùng: thay `const ctx = canvasRef.current.getContext('2d')` bằng
+//        `const ctx = setupCanvas(canvasRef.current, W, H)`.
+export function setupCanvas(canvas, W, H) {
+  const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+  const ss = Math.min(4, Math.max(2, Math.round(dpr) + 1)); // 2..4
+  canvas.width = Math.round(W * ss);
+  canvas.height = Math.round(H * ss);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ss, ss);
+  return ctx;
+}
+
 // ---- PARTICLE ----
 // Bắn 1 chùm mảnh vỡ tại (x,y). colors: 1 màu hoặc mảng màu.
 export const spawnBurst = (list, x, y, colors, count = 12, opts = {}) => {

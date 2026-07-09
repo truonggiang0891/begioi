@@ -3,7 +3,7 @@ import { ChevronLeft, RotateCcw, Trophy, Heart, Gem } from 'lucide-react';
 import GameHelp from './GameHelp';
 import { playSound, startMusic, killMusic } from './gameAudio';
 import { SoundToggle } from './gameUI';
-import { spawnBurst, stepParticles, drawParticles, makeShake, addShake, applyShake } from './gameFx';
+import { spawnBurst, stepParticles, drawParticles, makeShake, addShake, applyShake, setupCanvas } from './gameFx';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import { useScoreRewards } from './gameRewards';
@@ -282,7 +282,7 @@ export default function FruitSliceApp({ onBack, onReward, robuxBalance = 0 }) {
 
   useEffect(() => {
     newGame();
-    const ctx = canvasRef.current.getContext('2d');
+    const ctx = setupCanvas(canvasRef.current, W, H);
     let raf = 0;
 
     const spawnWave = (g) => {

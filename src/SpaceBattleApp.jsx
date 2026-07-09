@@ -3,7 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Rocket, Z
 import { playSound, startMusic, killMusic } from './gameAudio';
 import Fireworks from './Fireworks';
 import { SoundToggle } from './gameUI';
-import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake } from './gameFx';
+import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake , setupCanvas } from './gameFx';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
 import { useScoreRewards } from './gameRewards';
@@ -111,7 +111,7 @@ export default function SpaceBattleApp({ onBack, onReward, robuxBalance = 0 }) {
 
   useEffect(() => {
     newGame();
-    const ctx = canvasRef.current.getContext('2d');
+    const ctx = setupCanvas(canvasRef.current, W, H);
     let raf = 0;
     let curScore = 0;
     let curLives = 3;

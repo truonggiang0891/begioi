@@ -4,7 +4,7 @@ import { playSound, startMusic, killMusic } from './gameAudio';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
 import { SoundToggle } from './gameUI';
-import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake } from './gameFx';
+import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake , setupCanvas } from './gameFx';
 import { useFitSize } from './useFitSize';
 import { useScoreRewards } from './gameRewards';
 
@@ -105,7 +105,7 @@ export default function AnswerShooterApp({ onBack, mode = 'math', onReward, robu
 
   useEffect(() => {
     newGame();
-    const ctx = canvasRef.current.getContext('2d');
+    const ctx = setupCanvas(canvasRef.current, W, H);
     let raf = 0;
     let curScore = 0;
     let curLives = 3;
