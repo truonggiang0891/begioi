@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, X, Play, Folder, Camera } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Camera } from 'lucide-react';
 import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 
-// --- ALBUM CỦA BÉ ---
+// --- ALBUM CỦA BÉ ("Khoảnh khắc") ---
 // Xem lại ảnh/video kỷ niệm, đọc trực tiếp từ Google Drive (xem albumConfig.js).
 // Mỗi folder con của folder mẹ = 1 album. Không cần backend.
 
 const API = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
+const SLIDESHOW_MS = 3500;
 
 // Gọi Drive API list. Chỉ cần API key vì folder đã chia sẻ công khai.
 const driveList = async (query, extra = {}) => {
@@ -33,24 +34,112 @@ const driveList = async (query, extra = {}) => {
   return Array.isArray(data.files) ? data.files : [];
 };
 
+const MEDIA_QUERY = (folderId) =>
+  `'${folderId}' in parents and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/')`;
+
 const isVideo = (m) => typeof m === 'string' && m.startsWith('video/');
 const thumbUrl = (id, w = 600) => `https://drive.google.com/thumbnail?id=${id}&sz=w${w}`;
 const fullImgUrl = (id) => `https://lh3.googleusercontent.com/d/${id}=w1600`;
 const videoEmbedUrl = (id) => `https://drive.google.com/file/d/${id}/preview`;
+const downloadUrl = (id) => `https://drive.google.com/uc?export=download&id=${id}`;
 
-// Ảnh Drive thỉnh thoảng hỏng link — thử lại bằng endpoint thumbnail.
+// Ẩn tiền tố số dùng để sắp thứ tự (VD "1. Siro" -> "Siro"), vẫn giữ trên Drive.
+const cleanName = (n) => (n || '').replace(/^\s*\d+\s*[.)\-–]\s*/, '') || n;
+
+const fadeIn = (e) => e.currentTarget.classList.remove('opacity-0');
 const handleImgError = (e, id, w) => {
   const el = e.currentTarget;
+  el.classList.remove('opacity-0');
   if (el.dataset.fallback) return;
   el.dataset.fallback = '1';
   el.src = thumbUrl(id, w);
 };
 
-// Bộ nhớ đệm trong phiên: giữ dữ liệu đã tải để mở lại album là hiện ngay,
-// không phải chờ tải lại. Cache tự xóa khi tải lại trang (F5) -> ảnh mới thêm
-// vào Drive sẽ xuất hiện lại sau khi reload.
-let albumsCache = null;         // danh sách album + ảnh bìa đã tải
-const mediaCache = new Map();   // albumId -> mảng ảnh/video đã tải
+// Bộ nhớ đệm trong phiên: mở lại album là hiện ngay, không phải chờ tải lại.
+// Cache tự xóa khi tải lại trang (F5) -> ảnh mới thêm vào Drive hiện lại sau reload.
+let albumsCache = null;         // danh sách album + ảnh bìa + số lượng
+const mediaCache = new Map();   // albumId -> mảng ảnh/video (cũ -> mới)
+
+// ----- Ảnh xem to: vuốt qua lại, chụm để phóng to, nhấp đúp để zoom -----
+function ZoomableImage({ src, alt, onError, onPrev, onNext }) {
+  const [scale, setScale] = useState(1);
+  const [tx, setTx] = useState(0);
+  const [ty, setTy] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const g = useRef({});
+
+  useEffect(() => { setScale(1); setTx(0); setTy(0); }, [src]);
+
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+  const onTouchStart = (e) => {
+    const t = e.touches;
+    if (t.length === 2) {
+      g.current.mode = 'pinch';
+      g.current.startDist = dist(t) || 1;
+      g.current.startScale = scale;
+      setDragging(true);
+      return;
+    }
+    const now = Date.now();
+    if (g.current.lastTap && now - g.current.lastTap < 300) {
+      g.current.lastTap = 0;
+      g.current.mode = null;
+      if (scale > 1) { setScale(1); setTx(0); setTy(0); } else { setScale(2.4); }
+      return;
+    }
+    g.current.lastTap = now;
+    g.current.mode = scale > 1 ? 'pan' : 'swipe';
+    g.current.startX = t[0].clientX;
+    g.current.startY = t[0].clientY;
+    g.current.startTx = tx;
+    g.current.startTy = ty;
+  };
+
+  const onTouchMove = (e) => {
+    const t = e.touches;
+    if (g.current.mode === 'pinch' && t.length === 2) {
+      setScale(Math.min(4, Math.max(1, g.current.startScale * (dist(t) / g.current.startDist))));
+    } else if (g.current.mode === 'pan' && t.length === 1) {
+      setTx(g.current.startTx + (t[0].clientX - g.current.startX));
+      setTy(g.current.startTy + (t[0].clientY - g.current.startY));
+    }
+  };
+
+  const onTouchEnd = (e) => {
+    if (g.current.mode === 'swipe') {
+      const dx = e.changedTouches[0].clientX - g.current.startX;
+      const dy = e.changedTouches[0].clientY - g.current.startY;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) onNext?.(); else onPrev?.();
+      }
+    } else if (g.current.mode === 'pinch' && scale < 1.05) {
+      setScale(1); setTx(0); setTy(0);
+    }
+    g.current.mode = null;
+    setDragging(false);
+  };
+
+  return (
+    <img
+      key={src}
+      src={src}
+      alt={alt}
+      onError={onError}
+      onLoad={fadeIn}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      draggable={false}
+      className="max-h-full max-w-full select-none rounded-xl object-contain opacity-0"
+      style={{
+        transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+        transition: dragging ? 'none' : 'transform 0.22s ease, opacity 0.45s ease',
+        touchAction: 'none',
+      }}
+    />
+  );
+}
 
 function NeedConfig({ onBack }) {
   return (
@@ -83,14 +172,15 @@ export default function AlbumApp({ onBack }) {
   const [albumsLoading, setAlbumsLoading] = useState(() => !albumsCache);
   const [albumsError, setAlbumsError] = useState('');
 
-  const [current, setCurrent] = useState(null); // album đang mở {id, name}
+  const [current, setCurrent] = useState(null); // album đang mở
   const [media, setMedia] = useState([]);
   const [mediaLoading, setMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState('');
 
   const [lightbox, setLightbox] = useState(null); // index trong media
+  const [playing, setPlaying] = useState(false);  // đang trình chiếu
 
-  // Tải danh sách album (folder con) + ảnh bìa. Nếu đã có trong bộ nhớ đệm thì bỏ qua.
+  // Tải danh sách album + ảnh bìa + số lượng, đồng thời cache media để mở album là hiện ngay.
   useEffect(() => {
     if (albumsCache) return undefined;
     let alive = true;
@@ -102,20 +192,25 @@ export default function AlbumApp({ onBack }) {
           `'${ALBUM_CONFIG.rootFolderId}' in parents and mimeType = '${FOLDER_MIME}' and trashed = false`,
           { orderBy: 'name' }
         );
-        const withCovers = await Promise.all(
+        const built = await Promise.all(
           folders.map(async (f) => {
             try {
-              const first = await driveList(
-                `'${f.id}' in parents and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/')`,
-                { orderBy: 'createdTime desc', pageSize: '1' }
-              );
-              return { id: f.id, name: f.name, cover: first[0]?.id || null, count: first.length };
+              const files = await driveList(MEDIA_QUERY(f.id), { orderBy: 'createdTime desc' });
+              mediaCache.set(f.id, [...files].reverse()); // cũ -> mới cho lúc mở album
+              const videoCount = files.filter((x) => isVideo(x.mimeType)).length;
+              return {
+                id: f.id,
+                name: f.name,
+                cover: files[0]?.id || null,
+                imageCount: files.length - videoCount,
+                videoCount,
+              };
             } catch {
-              return { id: f.id, name: f.name, cover: null, count: 0 };
+              return { id: f.id, name: f.name, cover: null, imageCount: 0, videoCount: 0 };
             }
           })
         );
-        if (alive) { setAlbums(withCovers); albumsCache = withCovers; }
+        if (alive) { setAlbums(built); albumsCache = built; }
       } catch (err) {
         if (alive) setAlbumsError(err.message || 'Không tải được album');
       } finally {
@@ -128,7 +223,7 @@ export default function AlbumApp({ onBack }) {
   const openAlbum = useCallback(async (album) => {
     setCurrent(album);
     setLightbox(null);
-    // Đã tải album này trong phiên -> hiện ngay từ bộ nhớ đệm.
+    setPlaying(false);
     if (mediaCache.has(album.id)) {
       setMedia(mediaCache.get(album.id));
       setMediaError('');
@@ -139,10 +234,7 @@ export default function AlbumApp({ onBack }) {
     setMediaError('');
     setMediaLoading(true);
     try {
-      const files = await driveList(
-        `'${album.id}' in parents and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/')`,
-        { orderBy: 'createdTime' }
-      );
+      const files = await driveList(MEDIA_QUERY(album.id), { orderBy: 'createdTime' });
       setMedia(files);
       mediaCache.set(album.id, files);
     } catch (err) {
@@ -152,19 +244,38 @@ export default function AlbumApp({ onBack }) {
     }
   }, []);
 
-  const closeAlbum = () => { setCurrent(null); setMedia([]); setLightbox(null); };
+  const closeAlbum = () => { setCurrent(null); setMedia([]); setLightbox(null); setPlaying(false); };
+  const closeLightbox = useCallback(() => { setLightbox(null); setPlaying(false); }, []);
+  const goPrev = useCallback(() => setLightbox((i) => (i > 0 ? i - 1 : i)), []);
+  const goNext = useCallback(() => setLightbox((i) => (i < media.length - 1 ? i + 1 : i)), [media.length]);
 
-  // Điều hướng trong lightbox bằng bàn phím.
+  // Bàn phím trong lightbox.
   useEffect(() => {
     if (lightbox === null) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') setLightbox(null);
-      else if (e.key === 'ArrowLeft') setLightbox((i) => (i > 0 ? i - 1 : i));
-      else if (e.key === 'ArrowRight') setLightbox((i) => (i < media.length - 1 ? i + 1 : i));
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') goPrev();
+      else if (e.key === 'ArrowRight') goNext();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [lightbox, media.length]);
+  }, [lightbox, goPrev, goNext, closeLightbox]);
+
+  // Trình chiếu tự động (lặp lại). Không phụ thuộc lightbox để bộ đếm chạy đều 1 nhịp.
+  useEffect(() => {
+    if (!playing || media.length < 2) return undefined;
+    const id = setInterval(() => setLightbox((i) => (i === null ? i : (i + 1) % media.length)), SLIDESHOW_MS);
+    return () => clearInterval(id);
+  }, [playing, media.length]);
+
+  // Tải sẵn ảnh kế/trước để lướt cho nhanh.
+  useEffect(() => {
+    if (lightbox === null) return;
+    [lightbox + 1, lightbox - 1].forEach((j) => {
+      const it = media[j];
+      if (it && !isVideo(it.mimeType)) { const im = new Image(); im.src = fullImgUrl(it.id); }
+    });
+  }, [lightbox, media]);
 
   if (!isAlbumConfigured()) return <NeedConfig onBack={onBack} />;
 
@@ -175,13 +286,32 @@ export default function AlbumApp({ onBack }) {
     const video = isVideo(item.mimeType);
     return (
       <div className="fixed inset-0 z-[70] flex flex-col bg-black/95">
-        <div className="flex shrink-0 items-center justify-between px-4 py-3 text-white">
-          <span className="truncate text-sm font-bold opacity-80">{item.name}</span>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>
+        <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-3 text-white">
+          <span className="min-w-0 flex-1 truncate text-sm font-bold opacity-80">{item.name}</span>
+          <span className="shrink-0 text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            {media.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setPlaying((p) => !p)}
+                className="grid h-10 w-10 place-items-center rounded-full bg-white/15 transition hover:bg-white/25"
+                aria-label={playing ? 'Tạm dừng trình chiếu' : 'Trình chiếu'}
+              >
+                {playing ? <Pause size={20} className="fill-white" /> : <Play size={20} className="translate-x-0.5 fill-white" />}
+              </button>
+            )}
+            <a
+              href={downloadUrl(item.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-10 w-10 place-items-center rounded-full bg-white/15 transition hover:bg-white/25"
+              aria-label="Tải về máy"
+            >
+              <Download size={20} />
+            </a>
             <button
               type="button"
-              onClick={() => setLightbox(null)}
+              onClick={closeLightbox}
               className="grid h-10 w-10 place-items-center rounded-full bg-white/15 transition hover:bg-white/25"
               aria-label="Đóng"
             >
@@ -194,7 +324,7 @@ export default function AlbumApp({ onBack }) {
           {lightbox > 0 && (
             <button
               type="button"
-              onClick={() => setLightbox((i) => i - 1)}
+              onClick={goPrev}
               className="absolute left-2 z-10 grid h-12 w-12 place-items-center rounded-full bg-white/15 text-white transition hover:bg-white/30"
               aria-label="Trước"
             >
@@ -212,19 +342,19 @@ export default function AlbumApp({ onBack }) {
               allowFullScreen
             />
           ) : (
-            <img
-              key={item.id}
+            <ZoomableImage
               src={fullImgUrl(item.id)}
-              onError={(e) => handleImgError(e, item.id, 1600)}
               alt={item.name}
-              className="max-h-full max-w-full rounded-xl object-contain"
+              onError={(e) => handleImgError(e, item.id, 1600)}
+              onPrev={goPrev}
+              onNext={goNext}
             />
           )}
 
           {lightbox < media.length - 1 && (
             <button
               type="button"
-              onClick={() => setLightbox((i) => i + 1)}
+              onClick={goNext}
               className="absolute right-2 z-10 grid h-12 w-12 place-items-center rounded-full bg-white/15 text-white transition hover:bg-white/30"
               aria-label="Sau"
             >
@@ -244,14 +374,24 @@ export default function AlbumApp({ onBack }) {
           <button
             type="button"
             onClick={closeAlbum}
-            className="flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-600 shadow transition hover:bg-slate-50"
+            className="flex shrink-0 items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-600 shadow transition hover:bg-slate-50"
           >
             <ChevronLeft size={18} /> Khoảnh khắc
           </button>
           <h1 className="min-w-0 flex-1 truncate text-center text-xl font-black text-slate-700 md:text-2xl">
-            {current.name}
+            {cleanName(current.name)}
           </h1>
-          <div className="w-[92px]" />
+          {media.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => { setLightbox(0); setPlaying(true); }}
+              className="flex shrink-0 items-center gap-1 rounded-full bg-violet-500 px-4 py-2 text-sm font-black text-white shadow transition hover:bg-violet-600"
+            >
+              <Play size={16} className="fill-white" /> Chiếu
+            </button>
+          ) : (
+            <div className="w-[92px]" />
+          )}
         </div>
 
         {mediaLoading && <p className="mt-10 font-black text-slate-500">Đang tải ảnh… ⏳</p>}
@@ -273,12 +413,13 @@ export default function AlbumApp({ onBack }) {
                 <img
                   src={thumbUrl(item.id, 600)}
                   onError={(e) => handleImgError(e, item.id, 600)}
+                  onLoad={fadeIn}
                   alt={item.name}
                   loading="lazy"
-                  className="h-full w-full object-cover transition group-hover:scale-105"
+                  className="h-full w-full object-cover opacity-0 transition-all duration-500 group-hover:scale-105"
                 />
                 {video && (
-                  <span className="absolute inset-0 grid place-items-center">
+                  <span className="pointer-events-none absolute inset-0 grid place-items-center">
                     <span className="grid h-12 w-12 place-items-center rounded-full bg-black/55 text-white">
                       <Play size={22} className="translate-x-0.5 fill-white" />
                     </span>
@@ -326,36 +467,45 @@ export default function AlbumApp({ onBack }) {
       )}
 
       <div className="grid w-full max-w-3xl grid-cols-3 gap-2 pb-8 sm:gap-3 md:grid-cols-4">
-        {albums.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => openAlbum(a)}
-            className="group flex flex-col overflow-hidden rounded-3xl bg-white shadow-[0_4px_0_rgba(0,0,0,0.08)] transition active:translate-y-1"
-          >
-            <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-violet-100 to-sky-200">
-              {a.cover ? (
-                <img
-                  src={thumbUrl(a.cover, 600)}
-                  onError={(e) => handleImgError(e, a.cover, 600)}
-                  alt={a.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition group-hover:scale-105"
-                />
-              ) : (
-                <span className="grid h-full w-full place-items-center text-violet-400">
-                  <Folder size={44} />
+        {albums.map((a) => {
+          const parts = [];
+          if (a.imageCount) parts.push(`${a.imageCount} ảnh`);
+          if (a.videoCount) parts.push(`${a.videoCount} video`);
+          return (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => openAlbum(a)}
+              className="group flex flex-col overflow-hidden rounded-3xl bg-white shadow-[0_4px_0_rgba(0,0,0,0.08)] transition active:translate-y-1"
+            >
+              <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-violet-100 to-sky-200">
+                {a.cover ? (
+                  <img
+                    src={thumbUrl(a.cover, 600)}
+                    onError={(e) => handleImgError(e, a.cover, 600)}
+                    onLoad={fadeIn}
+                    alt={cleanName(a.name)}
+                    loading="lazy"
+                    className="h-full w-full object-cover opacity-0 transition-all duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <span className="grid h-full w-full place-items-center text-violet-400">
+                    <Folder size={44} />
+                  </span>
+                )}
+                <span className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/80 text-violet-500 shadow">
+                  <Camera size={16} />
                 </span>
-              )}
-              <span className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/80 text-violet-500 shadow">
-                <Camera size={16} />
+              </div>
+              <span className="truncate px-3 pt-2 text-center text-sm font-black text-slate-700">
+                {cleanName(a.name)}
               </span>
-            </div>
-            <span className="truncate px-3 py-2 text-center text-sm font-black text-slate-700">
-              {a.name}
-            </span>
-          </button>
-        ))}
+              <span className="truncate px-3 pb-2 text-center text-[11px] font-bold text-slate-400">
+                {parts.join(' · ') || 'Trống'}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
