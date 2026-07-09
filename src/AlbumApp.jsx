@@ -126,15 +126,14 @@ function ZoomableImage({ src, alt, onError, onPrev, onNext }) {
       src={src}
       alt={alt}
       onError={onError}
-      onLoad={fadeIn}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       draggable={false}
-      className="max-h-full max-w-full select-none rounded-xl object-contain opacity-0"
+      className="max-h-full max-w-full select-none rounded-xl object-contain"
       style={{
         transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-        transition: dragging ? 'none' : 'transform 0.22s ease, opacity 0.45s ease',
+        transition: dragging ? 'none' : 'transform 0.22s ease',
         touchAction: 'none',
       }}
     />
