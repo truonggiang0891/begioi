@@ -20,6 +20,7 @@ import WhackApp from './WhackApp';
 import FruitSliceApp from './FruitSliceApp';
 import MazeApp from './MazeApp';
 import Match3App from './Match3App';
+import RobotArenaApp from './RobotArenaApp';
 import { playSound, emojiFont } from './gameAudio';
 
 // --- KHU VUI CHƠI ---
@@ -107,6 +108,7 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
   if (screen === 'fruit') return wrap(<FruitSliceApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'maze') return wrap(<MazeApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'match3') return wrap(<Match3App onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'arena') return wrap(<RobotArenaApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
 
   const cards = [
     { id: 'puzzle', emoji: '🧩', title: 'Ghép hình', desc: 'Chạm 2 ô để đổi chỗ', bg: 'from-orange-100 to-amber-200' },
@@ -123,6 +125,7 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
     { id: 'mathshoot', emoji: '➕', title: 'Bắn đáp án', desc: 'Bắn số đúng, ôn toán', bg: 'from-teal-100 to-emerald-200' },
     { id: 'lettershoot', emoji: '🔤', title: 'Bắn chữ', desc: 'Bắn đúng chữ cái', bg: 'from-amber-100 to-yellow-200' },
     { id: 'battle', emoji: '✈️', title: 'Không chiến', desc: 'Địch bắn lại — né & bắn hạ', bg: 'from-rose-100 to-red-200' },
+    { id: 'arena', emoji: '🤖', title: 'Đấu trường Robot', desc: 'Một mình chọi cả bầy robot', bg: 'from-slate-200 to-cyan-200' },
     { id: 'flappy', emoji: '🐤', title: 'Chim bay', desc: 'Chạm để bay né ống', bg: 'from-sky-100 to-yellow-100' },
     { id: 'doodle', emoji: '🦘', title: 'Nhảy cao', desc: 'Nảy lên bậc, leo cao', bg: 'from-lime-100 to-green-200' },
     { id: 'catch', emoji: '🧺', title: 'Hứng đồ', desc: 'Hứng đồ tốt, né bom', bg: 'from-amber-100 to-orange-200' },
