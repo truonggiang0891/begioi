@@ -565,7 +565,7 @@ export default function AlbumApp({ onBack }) {
                   <Camera size={16} />
                 </span>
                 {parts.length > 0 && (
-                  <span className="absolute bottom-1 right-2 text-[9px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
+                  <span className="absolute bottom-1 right-2 text-[11px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
                     {parts.join(' · ')}
                   </span>
                 )}
