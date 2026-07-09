@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Heart, Trophy, Gem, Zap } from 'lucide-react';
 import { playSound, startMusic, killMusic, emojiFont } from './gameAudio';
-import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import GameOverModal from './GameOverModal';
+import { useJoystick, drawJoystick } from './gameJoystick';
 import { SoundToggle, SkillHUD, SkillToast } from './gameUI';
 import { SKILLS, skillMeta, randomSkill } from './gameSkills';
 import {
@@ -56,7 +57,6 @@ const makeEnemy = (wave, boss = false) => {
 export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
-  const joyRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   useScoreRewards(score, onReward);
@@ -74,6 +74,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
   const setOverBoth = (v) => { overRef.current = v; setOver(v); };
   const musicRef = useRef(false);
   const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('tense'); } };
+  const { joyRef, handlers } = useJoystick(canvasRef, W, H, JOY_R, { blocked: () => overRef.current, onStart: ensureMusic });
 
   const startWave = (g, w) => {
     g.wave = w; setWave(w);
@@ -281,12 +282,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
       });
       if (gg.timers.shield > 0) { ctx.strokeStyle = 'rgba(56,189,248,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(gg.player.x, gg.player.y, PLAYER_R + 9, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
       if (!(gg.invuln > 0 && Math.floor(gg.frame / 4) % 2 === 0)) drawPlane(gg.player.x, gg.player.y, PLAYER_R, '#38bdf8', true);
-      if (joyRef.current) {
-        const j = joyRef.current; ctx.globalAlpha = 0.5; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(j.ox, j.oy, JOY_R, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(j.ox + j.dx, j.oy + j.dy, 18, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1; ctx.lineWidth = 1;
-      }
+      drawJoystick(ctx, joyRef.current, JOY_R);
       drawFloaters(ctx, gg.floaters);
       ctx.restore();
     };
@@ -297,10 +293,6 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toCanvas = (e) => { const rect = canvasRef.current.getBoundingClientRect(); return { x: (e.clientX - rect.left) / rect.width * W, y: (e.clientY - rect.top) / rect.height * H }; };
-  const onDown = (e) => { if (overRef.current) return; ensureMusic(); const p = toCanvas(e); joyRef.current = { ox: p.x, oy: p.y, dx: 0, dy: 0 }; };
-  const onMove = (e) => { const j = joyRef.current; if (!j || !(e.buttons || e.pointerType === 'touch')) return; const p = toCanvas(e); let dx = p.x - j.ox; let dy = p.y - j.oy; const len = Math.hypot(dx, dy); if (len > JOY_R) { dx = dx / len * JOY_R; dy = dy / len * JOY_R; } j.dx = dx; j.dy = dy; };
-  const onUp = () => { joyRef.current = null; };
   const restart = () => newGame();
 
   return (
@@ -356,7 +348,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
         <div
           ref={fitRef}
           className="relative flex min-h-0 w-full flex-1 items-center justify-center px-1 touch-none"
-          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+          {...handlers}
         >
           <canvas
             ref={canvasRef} width={W} height={H}
@@ -368,22 +360,10 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
         </div>
       </div>
 
-      {over && newRecord && <Fireworks />}
-      {over && (
-        <div className="absolute inset-0 z-[55] flex items-center justify-center bg-black/50 px-6">
-          <div className="flex w-full max-w-xs flex-col items-center gap-3 rounded-3xl bg-white px-6 py-6 text-center shadow-2xl">
-            <div className="text-4xl">{newRecord ? '🏆' : '✈️'}</div>
-            <h2 className="text-2xl font-black text-slate-700">{newRecord ? 'Kỷ lục mới!' : 'Rơi mất rồi!'}</h2>
-            <p className="text-sm font-bold text-slate-500">
-              Bé trụ tới <span className="text-orange-500">đợt {wave}</span> · <span className="text-orange-500">{score}</span> điểm
-              {newRecord ? ' — giỏi nhất từ trước tới giờ! 🎉' : `. Cao nhất: ${best}`}
-            </p>
-            <button type="button" onClick={restart} className="mt-1 rounded-full bg-gradient-to-b from-orange-400 to-orange-500 px-7 py-3 text-lg font-black text-white shadow-[0_4px_0_rgb(234,88,12)] transition active:translate-y-0.5">
-              Chơi lại 🔁
-            </button>
-          </div>
-        </div>
-      )}
+      <GameOverModal over={over} newRecord={newRecord} emoji="✈️" loseTitle="Rơi mất rồi!" onRestart={restart}>
+        Bé trụ tới <span className="text-orange-500">đợt {wave}</span> · <span className="text-orange-500">{score}</span> điểm
+        {newRecord ? ' — giỏi nhất từ trước tới giờ! 🎉' : `. Cao nhất: ${best}`}
+      </GameOverModal>
     </div>
   );
 }

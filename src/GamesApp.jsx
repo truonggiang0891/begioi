@@ -1,31 +1,33 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { ChevronLeft, Clock, Heart, Gem } from 'lucide-react';
-import GameApp from './GameApp';
-import MemoryApp from './MemoryApp';
-import BlockPuzzleApp from './BlockPuzzleApp';
-import TetrisApp from './TetrisApp';
-import SnakeApp from './SnakeApp';
-import BreakoutApp from './BreakoutApp';
-import ShooterApp from './ShooterApp';
-import BubbleShooterApp from './BubbleShooterApp';
-import BalloonPopApp from './BalloonPopApp';
-import TargetShootApp from './TargetShootApp';
-import CannonApp from './CannonApp';
-import AnswerShooterApp from './AnswerShooterApp';
-import SpaceBattleApp from './SpaceBattleApp';
-import FlappyApp from './FlappyApp';
-import DoodleJumpApp from './DoodleJumpApp';
-import CatchApp from './CatchApp';
-import WhackApp from './WhackApp';
-import FruitSliceApp from './FruitSliceApp';
-import MazeApp from './MazeApp';
-import Match3App from './Match3App';
-import RobotArenaApp from './RobotArenaApp';
-import DogfightApp from './DogfightApp';
-import SurvivorApp from './SurvivorApp';
-import StackApp from './StackApp';
-import SpotDiffApp from './SpotDiffApp';
 import { playSound, emojiFont } from './gameAudio';
+// Lazy-load từng game: mỗi game thành 1 chunk riêng, chỉ tải khi bé mở game đó
+// -> chunk chính nhẹ đi, app mở nhanh hơn (nhất là khi chưa vào khu Game).
+const GameApp = lazy(() => import('./GameApp'));
+const MemoryApp = lazy(() => import('./MemoryApp'));
+const BlockPuzzleApp = lazy(() => import('./BlockPuzzleApp'));
+const TetrisApp = lazy(() => import('./TetrisApp'));
+const SnakeApp = lazy(() => import('./SnakeApp'));
+const BreakoutApp = lazy(() => import('./BreakoutApp'));
+const ShooterApp = lazy(() => import('./ShooterApp'));
+const BubbleShooterApp = lazy(() => import('./BubbleShooterApp'));
+const BalloonPopApp = lazy(() => import('./BalloonPopApp'));
+const TargetShootApp = lazy(() => import('./TargetShootApp'));
+const CannonApp = lazy(() => import('./CannonApp'));
+const AnswerShooterApp = lazy(() => import('./AnswerShooterApp'));
+const SpaceBattleApp = lazy(() => import('./SpaceBattleApp'));
+const FlappyApp = lazy(() => import('./FlappyApp'));
+const DoodleJumpApp = lazy(() => import('./DoodleJumpApp'));
+const CatchApp = lazy(() => import('./CatchApp'));
+const WhackApp = lazy(() => import('./WhackApp'));
+const FruitSliceApp = lazy(() => import('./FruitSliceApp'));
+const MazeApp = lazy(() => import('./MazeApp'));
+const Match3App = lazy(() => import('./Match3App'));
+const RobotArenaApp = lazy(() => import('./RobotArenaApp'));
+const DogfightApp = lazy(() => import('./DogfightApp'));
+const SurvivorApp = lazy(() => import('./SurvivorApp'));
+const StackApp = lazy(() => import('./StackApp'));
+const SpotDiffApp = lazy(() => import('./SpotDiffApp'));
 
 // --- KHU VUI CHƠI ---
 // Hub chứa toàn bộ mini-game cho bé, mở từ nút "Game" trong app.
@@ -89,7 +91,18 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
     </div>
   );
 
-  const wrap = (node) => <div className="fixed inset-0 z-[60] bg-slate-900">{node}{rewardToastEl}</div>;
+  const loadingFallback = (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-slate-900 text-white">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-cyan-300" />
+      <div className="text-sm font-black text-white/70">Đang tải trò chơi…</div>
+    </div>
+  );
+  const wrap = (node) => (
+    <div className="fixed inset-0 z-[60] bg-slate-900">
+      <Suspense fallback={loadingFallback}>{node}</Suspense>
+      {rewardToastEl}
+    </div>
+  );
 
   if (screen === 'puzzle') return wrap(<GameApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'memory') return wrap(<MemoryApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);

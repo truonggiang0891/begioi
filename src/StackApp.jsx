@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, RotateCcw, Trophy, Gem, Flame } from 'lucide-react';
 import { playSound, startMusic, killMusic } from './gameAudio';
-import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import GameOverModal from './GameOverModal';
 import { SoundToggle } from './gameUI';
 import {
   spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters,
@@ -220,22 +220,10 @@ export default function StackApp({ onBack, onReward, robuxBalance = 0 }) {
         👆 Chạm bất kỳ đâu để thả khối
       </div>
 
-      {over && newRecord && <Fireworks />}
-      {over && (
-        <div className="absolute inset-0 z-[55] flex items-center justify-center bg-black/50 px-6">
-          <div className="flex w-full max-w-xs flex-col items-center gap-3 rounded-3xl bg-white px-6 py-6 text-center shadow-2xl">
-            <div className="text-4xl">{newRecord ? '🏆' : '🗼'}</div>
-            <h2 className="text-2xl font-black text-slate-700">{newRecord ? 'Kỷ lục mới!' : 'Đổ mất rồi!'}</h2>
-            <p className="text-sm font-bold text-slate-500">
-              Bé xếp được <span className="text-orange-500">{score}</span> tầng
-              {newRecord ? ' — cao nhất từ trước tới giờ! 🎉' : `. Cao nhất: ${best}`}
-            </p>
-            <button type="button" onClick={restart} className="mt-1 rounded-full bg-gradient-to-b from-orange-400 to-orange-500 px-7 py-3 text-lg font-black text-white shadow-[0_4px_0_rgb(234,88,12)] transition active:translate-y-0.5">
-              Chơi lại 🔁
-            </button>
-          </div>
-        </div>
-      )}
+      <GameOverModal over={over} newRecord={newRecord} emoji="🗼" loseTitle="Đổ mất rồi!" onRestart={restart}>
+        Bé xếp được <span className="text-orange-500">{score}</span> tầng
+        {newRecord ? ' — cao nhất từ trước tới giờ! 🎉' : `. Cao nhất: ${best}`}
+      </GameOverModal>
     </div>
   );
 }
