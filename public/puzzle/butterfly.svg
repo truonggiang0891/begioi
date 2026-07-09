@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ecfccb"/>
+      <stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+    <g id="wing">
+      <!-- cánh trên -->
+      <path d="M200 196 C 232 108, 330 66, 366 118 C 392 158, 344 214, 200 202 Z" fill="#a78bfa"/>
+      <!-- cánh dưới -->
+      <path d="M200 206 C 292 220, 352 292, 320 346 C 286 388, 224 332, 200 214 Z" fill="#f472b6"/>
+      <!-- đốm trang trí -->
+      <circle cx="302" cy="150" r="23" fill="#fde68a"/>
+      <circle cx="322" cy="176" r="9"  fill="#7c3aed"/>
+      <circle cx="292" cy="304" r="17" fill="#fef08a"/>
+      <circle cx="300" cy="268" r="8"  fill="#be185d"/>
+      <!-- viền cánh -->
+      <path d="M200 196 C 232 108, 330 66, 366 118 C 392 158, 344 214, 200 202 Z" fill="none" stroke="#7c3aed" stroke-width="4" opacity="0.5"/>
+      <path d="M200 206 C 292 220, 352 292, 320 346 C 286 388, 224 332, 200 214 Z" fill="none" stroke="#db2777" stroke-width="4" opacity="0.5"/>
+    </g>
+  </defs>
+  <rect width="400" height="400" fill="url(#bbg)"/>
+  <use href="#wing"/>
+  <use href="#wing" transform="translate(400,0) scale(-1,1)"/>
+  <!-- thân -->
+  <ellipse cx="200" cy="210" rx="15" ry="74" fill="#4c1d95"/>
+  <circle cx="200" cy="140" r="19" fill="#4c1d95"/>
+  <g stroke="#c4b5fd" stroke-width="3" stroke-linecap="round">
+    <line x1="189" y1="175" x2="211" y2="175"/>
+    <line x1="189" y1="200" x2="211" y2="200"/>
+    <line x1="189" y1="225" x2="211" y2="225"/>
+    <line x1="191" y1="250" x2="209" y2="250"/>
+  </g>
+  <!-- râu -->
+  <path d="M192 126 q-20 -32 -36 -38" stroke="#4c1d95" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M208 126 q20 -32 36 -38"  stroke="#4c1d95" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="154" cy="86" r="8" fill="#4c1d95"/>
+  <circle cx="246" cy="86" r="8" fill="#4c1d95"/>
+  <!-- mắt -->
+  <circle cx="192" cy="137" r="4" fill="#ffffff"/>
+  <circle cx="208" cy="137" r="4" fill="#ffffff"/>
+</svg>

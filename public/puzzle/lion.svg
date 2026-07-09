@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <radialGradient id="lbg" cx="50%" cy="42%" r="72%">
+      <stop offset="0" stop-color="#fffbeb"/>
+      <stop offset="1" stop-color="#fde68a"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#lbg)"/>
+  <!-- bờm sư tử: vòng cánh hoa 2 tông -->
+  <g>
+    <circle cx="350" cy="200" r="55" fill="#c2410c"/>
+    <circle cx="330" cy="275" r="55" fill="#ea580c"/>
+    <circle cx="275" cy="330" r="55" fill="#c2410c"/>
+    <circle cx="200" cy="350" r="55" fill="#ea580c"/>
+    <circle cx="125" cy="330" r="55" fill="#c2410c"/>
+    <circle cx="70"  cy="275" r="55" fill="#ea580c"/>
+    <circle cx="50"  cy="200" r="55" fill="#c2410c"/>
+    <circle cx="70"  cy="125" r="55" fill="#ea580c"/>
+    <circle cx="125" cy="70"  r="55" fill="#c2410c"/>
+    <circle cx="200" cy="50"  r="55" fill="#ea580c"/>
+    <circle cx="275" cy="70"  r="55" fill="#c2410c"/>
+    <circle cx="330" cy="125" r="55" fill="#ea580c"/>
+  </g>
+  <circle cx="200" cy="200" r="142" fill="#fb923c"/>
+  <!-- tai -->
+  <circle cx="116" cy="150" r="30" fill="#fbbf24"/>
+  <circle cx="284" cy="150" r="30" fill="#fbbf24"/>
+  <circle cx="116" cy="150" r="15" fill="#f9a8d4"/>
+  <circle cx="284" cy="150" r="15" fill="#f9a8d4"/>
+  <!-- mặt -->
+  <circle cx="200" cy="205" r="114" fill="#fbbf24"/>
+  <circle cx="200" cy="212" r="97"  fill="#fcd34d"/>
+  <!-- mày -->
+  <path d="M136 166 q23 -11 46 -2" stroke="#b45309" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M218 164 q23 -9 46 2"  stroke="#b45309" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- mắt -->
+  <ellipse cx="160" cy="196" rx="24" ry="28" fill="#ffffff"/>
+  <ellipse cx="240" cy="196" rx="24" ry="28" fill="#ffffff"/>
+  <circle cx="163" cy="201" r="13" fill="#3b2f2f"/>
+  <circle cx="237" cy="201" r="13" fill="#3b2f2f"/>
+  <circle cx="168" cy="196" r="4.5" fill="#ffffff"/>
+  <circle cx="242" cy="196" r="4.5" fill="#ffffff"/>
+  <!-- mõm -->
+  <ellipse cx="200" cy="260" rx="60" ry="47" fill="#fffbeb"/>
+  <!-- mũi -->
+  <path d="M181 247 h38 l-19 19 z" fill="#7c2d12"/>
+  <!-- miệng -->
+  <path d="M200 266 v12" stroke="#7c2d12" stroke-width="5" stroke-linecap="round"/>
+  <path d="M200 278 q-16 12 -33 5" stroke="#7c2d12" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M200 278 q16 12 33 5"  stroke="#7c2d12" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- ria -->
+  <g stroke="#92400e" stroke-width="3.5" stroke-linecap="round">
+    <line x1="150" y1="253" x2="96"  y2="245"/>
+    <line x1="150" y1="263" x2="94"  y2="267"/>
+    <line x1="250" y1="253" x2="304" y2="245"/>
+    <line x1="250" y1="263" x2="306" y2="267"/>
+  </g>
+</svg>

@@ -14,9 +14,9 @@ const HINTS_PER_GAME = 3;
 // Không cần kéo thả nên rất nhẹ nhàng cho bé nhỏ.
 
 const PICTURES = [
-  { id: 'lion', emoji: '🦁', name: 'Sư tử', bg: 'from-amber-100 to-orange-200' },
-  { id: 'elephant', emoji: '🐘', name: 'Voi con', bg: 'from-sky-100 to-blue-200' },
-  { id: 'butterfly', emoji: '🦋', name: 'Bươm bướm', bg: 'from-fuchsia-100 to-purple-200' },
+  { id: 'lion', emoji: '🦁', name: 'Sư tử', bg: 'from-amber-100 to-orange-200', img: '/puzzle/lion.svg' },
+  { id: 'elephant', emoji: '🐘', name: 'Voi con', bg: 'from-sky-100 to-blue-200', img: '/puzzle/elephant.svg' },
+  { id: 'butterfly', emoji: '🦋', name: 'Bươm bướm', bg: 'from-fuchsia-100 to-purple-200', img: '/puzzle/butterfly.svg' },
   { id: 'rainbow', emoji: '🌈', name: 'Cầu vồng', bg: 'from-pink-100 to-indigo-200' },
   { id: 'train', emoji: '🚂', name: 'Tàu hỏa', bg: 'from-emerald-100 to-teal-200' },
   { id: 'fish', emoji: '🐠', name: 'Cá vàng', bg: 'from-cyan-100 to-sky-200' },
@@ -291,11 +291,16 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, 
                     height: `${n * 100}%`,
                     left: `${-col * 100}%`,
                     top: `${-row * 100}%`,
+                    ...(picture.img
+                      ? { backgroundImage: `url(${picture.img})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }
+                      : {}),
                   }}
                 >
-                  <span style={{ fontSize: 'var(--emoji)', lineHeight: 1, ...emojiFont }}>
-                    {picture.emoji}
-                  </span>
+                  {!picture.img && (
+                    <span style={{ fontSize: 'var(--emoji)', lineHeight: 1, ...emojiFont }}>
+                      {picture.emoji}
+                    </span>
+                  )}
                 </div>
               </button>
             );
@@ -304,10 +309,14 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, 
 
         {/* Lớp xem gợi ý */}
         {peek && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-white/95">
-            <span style={{ fontSize: 'min(78vw, 360px)', lineHeight: 1, ...emojiFont }}>
-              {picture.emoji}
-            </span>
+          <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-white/95 p-2">
+            {picture.img ? (
+              <img src={picture.img} alt={picture.name} className="h-full w-full rounded-2xl object-contain" />
+            ) : (
+              <span style={{ fontSize: 'min(78vw, 360px)', lineHeight: 1, ...emojiFont }}>
+                {picture.emoji}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -505,7 +514,11 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
                 onClick={() => openPicture(p.id)}
                 className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-b ${p.bg} p-2 shadow-[0_4px_0_rgba(0,0,0,0.08)] transition active:translate-y-0.5`}
               >
-                <span style={{ fontSize: '2.6rem', lineHeight: 1, ...emojiFont }}>{p.emoji}</span>
+                {p.img ? (
+                  <img src={p.img} alt={p.name} className="h-14 w-14 rounded-xl object-contain" />
+                ) : (
+                  <span style={{ fontSize: '2.6rem', lineHeight: 1, ...emojiFont }}>{p.emoji}</span>
+                )}
                 <span className="text-xs font-black text-slate-600">{p.name}</span>
               </button>
             ))}
