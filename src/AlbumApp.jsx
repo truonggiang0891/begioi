@@ -9,7 +9,8 @@ import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 const API = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 const IMAGE_SLIDESHOW_MS = 2000; // ảnh: mỗi 2s (video thì chờ phát hết)
-const MUSIC_TRACKS = ['/music/track1.mp3', '/music/track2.mp3']; // nhạc nền gốc (không bản quyền)
+// Nhạc nền: "Fluffing a Duck" — Kevin MacLeod (incompetech.com), giấy phép CC BY 4.0.
+const MUSIC_TRACKS = ['/music/funny.mp3'];
 
 // Gọi Drive API list. Chỉ cần API key vì folder đã chia sẻ công khai.
 const driveList = async (query, extra = {}) => {
@@ -626,6 +627,10 @@ export default function AlbumApp({ onBack }) {
           );
         })}
       </div>
+
+      <p className="mt-auto w-full max-w-3xl px-3 pb-4 pt-2 text-center text-[10px] font-semibold text-slate-400">
+        🎵 Nhạc nền: "Fluffing a Duck" — Kevin MacLeod (incompetech.com) · CC BY 4.0
+      </p>
     </div>
   );
 }
