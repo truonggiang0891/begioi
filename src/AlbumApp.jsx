@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Star, Volume2, VolumeX } from 'lucide-react';
 import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 
 // --- ALBUM CỦA BÉ ("Khoảnh khắc") ---
@@ -9,6 +9,7 @@ import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 const API = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 const IMAGE_SLIDESHOW_MS = 2000; // ảnh: mỗi 2s (video thì chờ phát hết)
+const MUSIC_TRACKS = ['/music/track1.mp3', '/music/track2.mp3']; // nhạc nền gốc (không bản quyền)
 
 // Gọi Drive API list. Chỉ cần API key vì folder đã chia sẻ công khai.
 const driveList = async (query, extra = {}) => {
@@ -189,6 +190,10 @@ export default function AlbumApp({ onBack }) {
   const [playing, setPlaying] = useState(false);  // đang trình chiếu
   const [covers, setCovers] = useState(loadCovers); // ảnh bìa tự chọn
   const [toast, setToast] = useState('');
+  const [musicOn, setMusicOn] = useState(() => {
+    try { return localStorage.getItem('album_music') !== '0'; } catch { return true; }
+  });
+  const audioRef = useRef(null);
 
   // GĐ1: hiện danh sách album NGAY với ảnh bìa (chỉ tải 1 file/album — rất nhẹ).
   // GĐ2: đếm số lượng ảnh/video ở NỀN (không chặn, không tải ảnh bên trong).
@@ -316,6 +321,34 @@ export default function AlbumApp({ onBack }) {
     setToast('Đã đặt ảnh này làm bìa 👍');
   }, []);
 
+  // Nhạc nền: chỉ phát khi ĐANG trình chiếu ẢNH và người dùng bật nhạc.
+  // Tới video thì tạm dừng (khỏi chồng tiếng), qua ảnh lại phát tiếp.
+  useEffect(() => {
+    if (!audioRef.current) {
+      const a = new Audio();
+      a.loop = true;
+      a.volume = 0.45;
+      audioRef.current = a;
+    }
+    const a = audioRef.current;
+    const item = lightbox !== null ? media[lightbox] : null;
+    if (playing && musicOn && item) {
+      if (!a.src) a.src = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
+      if (isVideo(item.mimeType)) a.pause();
+      else a.play().catch(() => { /* trình duyệt chặn thì bỏ qua */ });
+    } else {
+      a.pause();
+      if (!playing) { try { a.removeAttribute('src'); a.load(); } catch { /* ignore */ } }
+    }
+  }, [playing, musicOn, lightbox, media]);
+
+  // Dừng hẳn nhạc khi rời khỏi Album.
+  useEffect(() => () => { try { audioRef.current?.pause(); } catch { /* ignore */ } }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('album_music', musicOn ? '1' : '0'); } catch { /* ignore */ }
+  }, [musicOn]);
+
   if (!isAlbumConfigured()) return <NeedConfig onBack={onBack} />;
 
   // ----- LIGHTBOX -----
@@ -329,6 +362,15 @@ export default function AlbumApp({ onBack }) {
           <span className="min-w-0 flex-1 truncate text-sm font-bold opacity-80">{item.name}</span>
           <span className="shrink-0 text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>
           <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMusicOn((v) => !v)}
+              className="grid h-10 w-10 place-items-center rounded-full bg-white/15 transition hover:bg-white/25"
+              aria-label={musicOn ? 'Tắt nhạc nền' : 'Bật nhạc nền'}
+              title={musicOn ? 'Tắt nhạc nền' : 'Bật nhạc nền'}
+            >
+              {musicOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            </button>
             {video && (
               <button
                 type="button"
