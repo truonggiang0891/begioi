@@ -3,7 +3,8 @@ import ColoringApp from './ColoringApp';
 import DrawingApp from './DrawingApp';
 import GamesApp from './GamesApp';
 import AlbumApp from './AlbumApp';
-import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home, Camera } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home, Camera, Rocket, Sparkles, Cloud } from 'lucide-react';
+import { CameraSticker, BookSticker, BrushSticker, PencilSticker, GamepadSticker, GemSticker } from './MenuIcons.jsx';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -4512,80 +4513,98 @@ export default function App() {
     }`}>
       {/* ROLE LOGIN */}
       {!isSummary && (
-      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-white mb-4 p-1.5 md:p-2">
-        <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-3xl shadow-lg border-4 border-white mb-4 p-2 md:p-2.5">
+        <div className="grid grid-cols-3 gap-2 md:gap-2.5">
           <button
             type="button"
             onClick={handleAlbumMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showAlbumPanel
-                ? 'bg-violet-500 text-white shadow-[0_4px_0_rgb(109,40,217)]'
-                : 'bg-violet-50 text-violet-700 hover:bg-violet-100 border-2 border-violet-100'
+                ? 'bg-violet-500 text-white shadow-[0_5px_0_rgb(109,40,217)]'
+                : 'bg-violet-50 text-violet-700 hover:bg-violet-100 border-2 border-violet-100 shadow-[0_4px_0_rgb(237,233,254)]'
             }`}
           >
-            <Camera size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Khoảnh khắc</span>
+            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float">
+              <CameraSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            </span>
+            <span className="truncate">Khoảnh khắc</span>
           </button>
 
           <button
             type="button"
             onClick={toggleReadingPanel}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showReadingPanel
-                ? 'bg-emerald-500 text-white shadow-[0_4px_0_rgb(5,150,105)]'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-100'
+                ? 'bg-emerald-500 text-white shadow-[0_5px_0_rgb(5,150,105)]'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-100 shadow-[0_4px_0_rgb(209,250,229)]'
             }`}
           >
-            <BookOpen size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Tập đọc</span>
+            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.4s'}}>
+              <BookSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            </span>
+            <span className="truncate">Tập đọc</span>
           </button>
 
           <button
             type="button"
             onClick={handleDrawingMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showDrawingPanel || showDrawingAccessPanel
-                ? 'bg-pink-500 text-white shadow-[0_4px_0_rgb(190,24,93)]'
-                : 'border-2 border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100'
+                ? 'bg-pink-500 text-white shadow-[0_5px_0_rgb(190,24,93)]'
+                : 'border-2 border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100 shadow-[0_4px_0_rgb(252,231,243)]'
             }`}
           >
-            <Brush size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Học vẽ</span>
+            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.8s'}}>
+              <BrushSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            </span>
+            <span className="truncate">Học vẽ</span>
           </button>
         </div>
 
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
+        <div className="mt-2 grid grid-cols-3 gap-2 md:mt-2.5 md:gap-2.5">
           <button
             type="button"
             onClick={handleColoringMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showColoringPanel || showColoringAccessPanel
-                ? 'bg-amber-500 text-white shadow-[0_4px_0_rgb(217,119,6)]'
-                : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                ? 'bg-amber-500 text-white shadow-[0_5px_0_rgb(217,119,6)]'
+                : 'border-2 border-amber-100 bg-amber-50 text-amber-700 hover:bg-amber-100 shadow-[0_4px_0_rgb(254,243,199)]'
             }`}
           >
-            <PencilLine size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Tô màu</span>
+            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.2s'}}>
+              <PencilSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            </span>
+            <span className="truncate">Tô màu</span>
           </button>
 
           <button
             type="button"
             onClick={handleGamesMenuClick}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               showGamesPanel || showGameAccessPanel
-                ? 'bg-orange-500 text-white shadow-[0_4px_0_rgb(194,65,12)]'
-                : 'border-2 border-orange-100 bg-orange-50 text-orange-700 hover:bg-orange-100'
+                ? 'bg-orange-500 text-white shadow-[0_5px_0_rgb(194,65,12)]'
+                : 'border-2 border-orange-100 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-[0_4px_0_rgb(255,237,213)]'
             }`}
           >
-            <Gamepad2 size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">Game</span>
+            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '0.6s'}}>
+              <GamepadSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            </span>
+            <span className="truncate">Game</span>
           </button>
 
           <button
             type="button"
             onClick={toggleRobuxMode}
-            className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 text-[13px] font-extrabold transition-all sm:text-base md:text-xl ${
+            className={`group flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 md:px-2 font-extrabold text-[13px] sm:text-base md:text-lg transition-all active:scale-95 ${
               rewardMode === 'robux'
-                ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
-                : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+                ? 'bg-yellow-400 text-yellow-950 shadow-[0_5px_0_rgb(202,138,4)]'
+                : 'border-2 border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 shadow-[0_4px_0_rgb(254,249,195)]'
             }`}
           >
-            <Gem size={16} className="shrink-0 md:h-5 md:w-5" /> <span className="truncate">{rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}</span>
+            <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-white shadow-sm animate-menu-float" style={{animationDelay: '1s'}}>
+              <GemSticker className="h-9 w-9 md:h-10 md:w-10 drop-shadow-sm" />
+            </span>
+            <span className="truncate">{rewardMode === 'robux' ? 'Tắt Robux' : 'Kiếm Robux'}</span>
           </button>
         </div>
 
@@ -5515,65 +5534,78 @@ export default function App() {
       {/* HEADER */}
       {!isSummary && (
       <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-4">
-        <div className="bg-blue-500 text-white text-center py-1.5 md:py-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
+        <div className="bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 text-white py-3 md:py-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none"
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
-          <div className="relative z-10 flex items-center justify-center gap-2 px-3">
-            <div className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-white/20">
+          {/* Sao & mây trang trí */}
+          <Star className="pointer-events-none absolute right-5 top-2 h-5 w-5 md:h-6 md:w-6 fill-yellow-300 text-yellow-300 animate-twinkle" />
+          <Sparkles className="pointer-events-none absolute right-16 top-5 h-3.5 w-3.5 md:h-4 md:w-4 fill-white text-white animate-twinkle" style={{animationDelay: '0.8s'}} />
+          <Cloud className="pointer-events-none absolute right-3 bottom-1 h-6 w-6 md:h-8 md:w-8 fill-white/90 text-white/90 animate-cloud-drift" />
+          <Star className="pointer-events-none absolute left-1/2 top-1 h-3 w-3 md:h-3.5 md:w-3.5 fill-white text-white animate-twinkle" style={{animationDelay: '1.4s'}} />
+          <div className="relative z-10 flex items-center gap-3 px-4 md:px-5">
+            <div className="flex h-14 w-14 md:h-16 md:w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-white/25 shadow-md">
               {userAvatar ? (
                 <img src={userAvatar} alt="Ảnh đại diện" className="h-full w-full object-cover" />
               ) : (
-                <UserRound size={24} className="text-white" />
+                <UserRound size={30} className="text-white" />
               )}
             </div>
-            <h1 className="min-w-0 text-lg sm:text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
-              Xin chào {displayName}
-            </h1>
+            <div className="min-w-0 flex-1 text-left">
+              <h1 className="min-w-0 text-xl sm:text-2xl md:text-4xl font-extrabold leading-tight drop-shadow-md break-words">
+                Xin chào {displayName}
+              </h1>
+              <p className="text-xs md:text-base font-semibold text-white/85 leading-snug mt-0.5 truncate">
+                Cùng hoàn thành nhiệm vụ nhé!
+              </p>
+            </div>
           </div>
         </div>
         
         {/* STATS */}
         <div className="p-1.5 md:p-4 grid grid-cols-3 gap-1.5 md:gap-3 bg-white">
-          <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-green-100 rounded-xl md:rounded-2xl border-2 border-green-200">
-            <div className="flex items-center gap-1 text-green-700 font-bold text-[11px] sm:text-xs md:text-base">
-              <CheckCircle size={16} className="md:w-5 md:h-5" /> Đã đúng
+          {/* 3 thẻ học tập — cùng một hệ, tông nhạt dịu mắt, giữ màu ngữ nghĩa ở icon & số */}
+          <div className="flex flex-col items-center justify-center gap-0.5 p-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+            <div className="flex items-center gap-1 text-green-600 font-bold text-[11px] sm:text-xs md:text-base">
+              <CheckCircle size={15} className="md:w-5 md:h-5" /> Đã đúng
             </div>
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-green-600">{correctTotal}</div>
           </div>
-          
-          <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-amber-100 rounded-xl md:rounded-2xl border-2 border-amber-200">
-            <div className="flex items-center gap-1 text-amber-700 font-bold text-[11px] sm:text-xs md:text-base">
-              <BookOpen size={16} className="md:w-5 md:h-5" /> Cần ôn
+
+          <div className="flex flex-col items-center justify-center gap-0.5 p-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+            <div className="flex items-center gap-1 text-amber-600 font-bold text-[11px] sm:text-xs md:text-base">
+              <BookOpen size={15} className="md:w-5 md:h-5" /> Cần ôn
             </div>
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600">{activeReviewList.length}</div>
           </div>
 
-          <div className="flex flex-col items-center justify-center p-1 md:p-2 bg-blue-100 rounded-xl md:rounded-2xl border-2 border-blue-200">
-            <div className="flex items-center gap-1 text-blue-700 font-bold text-[11px] sm:text-xs md:text-base">
-              <Star size={16} className="md:w-5 md:h-5" /> Chưa làm
+          <div className="flex flex-col items-center justify-center gap-0.5 p-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+            <div className="flex items-center gap-1 text-blue-600 font-bold text-[11px] sm:text-xs md:text-base">
+              <Star size={15} className="md:w-5 md:h-5" /> Chưa làm
             </div>
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{activeUnseenList.length}</div>
           </div>
-          
-          <div className="relative col-span-2 flex flex-col items-center justify-center p-1.5 md:p-2 bg-purple-100 rounded-xl md:rounded-2xl border-2 border-purple-200">
+
+          <div className="relative col-span-2 flex flex-col items-center justify-center gap-0.5 p-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
             {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
               <div className="absolute right-2 top-1 text-[9px] font-semibold text-gray-400 md:right-3 md:top-2 md:text-[11px]">
                 {stageLabel}
               </div>
             )}
-            <div className="flex items-center gap-1 md:gap-2 text-purple-700 font-bold text-sm md:text-lg">
-              <Smartphone size={20} className="md:w-6 md:h-6 animate-pulse" /> Giờ xem điện thoại
+            <div className="flex items-center gap-1 md:gap-2 text-purple-600 font-bold text-sm md:text-lg">
+              <Smartphone size={19} className="md:w-6 md:h-6 animate-pulse" /> Giờ xem điện thoại
             </div>
             <div className="text-lg md:text-3xl font-black text-purple-600 text-center">
               {formatTime(screenTime)} <span className="text-lg md:text-xl text-purple-400">/ 90p</span>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center p-1.5 md:p-2 bg-yellow-100 rounded-xl md:rounded-2xl border-2 border-yellow-200">
-            <div className="flex items-center gap-1 text-yellow-700 font-bold text-[11px] sm:text-xs md:text-base">
-              <Gem size={16} className="md:w-5 md:h-5" /> Robux
+          {/* Robux — phần thưởng, nổi bật bằng gradient vàng gold */}
+          <div className="relative flex flex-col items-center justify-center gap-0.5 overflow-hidden p-1.5 md:p-2.5 rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-300 to-yellow-400 border-2 border-amber-300 shadow-[0_3px_0_rgb(217,119,6)]">
+            <div className="pointer-events-none absolute -right-2 -top-3 h-9 w-9 rounded-full bg-white/25" />
+            <div className="relative flex items-center gap-1 text-yellow-900 font-extrabold text-[11px] sm:text-xs md:text-base">
+              <Gem size={15} className="md:w-5 md:h-5" /> Robux
             </div>
-            <div className="text-lg sm:text-2xl md:text-3xl font-black text-yellow-600">{robuxBalance}</div>
+            <div className="relative text-lg sm:text-2xl md:text-3xl font-black text-yellow-950 drop-shadow-sm">{robuxBalance}</div>
           </div>
         </div>
       </div>
@@ -5593,19 +5625,29 @@ export default function App() {
         
         {gameState === 'idle' ? (
           <div className="text-center">
-            <div className="text-5xl md:text-8xl mb-2 md:mb-6">🚀</div>
-            <h2 className="text-lg md:text-2xl font-bold text-gray-700 mb-3 md:mb-8">Bé đã sẵn sàng chưa?</h2>
+            <div className="relative mx-auto mb-2 md:mb-4 flex h-16 w-full items-center justify-center md:h-24">
+              <Star className="pointer-events-none absolute left-1/2 top-1 -translate-x-16 h-5 w-5 md:h-6 md:w-6 fill-yellow-300 text-yellow-300 animate-twinkle" />
+              <Sparkles className="pointer-events-none absolute left-1/2 top-3 translate-x-14 h-4 w-4 md:h-5 md:w-5 fill-sky-300 text-sky-300 animate-twinkle" style={{animationDelay: '0.7s'}} />
+              <Cloud className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-24 h-6 w-6 md:h-9 md:w-9 fill-sky-100 text-sky-200 animate-cloud-drift" />
+              <Cloud className="pointer-events-none absolute left-1/2 bottom-1 translate-x-20 h-5 w-5 md:h-7 md:w-7 fill-sky-100 text-sky-200 animate-cloud-drift" style={{animationDelay: '1.2s'}} />
+              <Rocket className="h-12 w-12 md:h-20 md:w-20 text-blue-500 fill-blue-100 animate-rocket-hover" strokeWidth={2} />
+            </div>
+            <h2 className="text-lg md:text-2xl font-black text-gray-700 mb-0.5 md:mb-1">Bé đã sẵn sàng chưa?</h2>
+            <p className="text-xs md:text-base font-semibold text-gray-400 mb-3 md:mb-6">Hoàn thành nhiệm vụ để nhận thưởng nhé!</p>
             <div className="grid gap-2 md:gap-3">
               <button
                 onClick={() => startPracticeSession(rewardMode)}
-                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
+                className="bg-green-500 hover:bg-green-600 active:transform active:scale-95 text-white text-xl md:text-3xl font-extrabold py-3.5 px-8 md:py-5 md:px-10 rounded-full shadow-[0_5px_0_rgb(21,128,61)] md:shadow-[0_8px_0_rgb(21,128,61)] transition-all flex items-center justify-center mx-auto gap-2 md:gap-3 w-full"
               >
-                <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" /> BẮT ĐẦU
+                <span className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-white/25">
+                  <Play fill="white" className="w-5 h-5 md:w-7 md:h-7 translate-x-[1px]" />
+                </span>
+                BẮT ĐẦU
               </button>
               <button
                 type="button"
                 onClick={toggleRobuxMode}
-                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-2.5 text-base font-extrabold transition-all active:translate-y-1 active:shadow-none md:text-2xl ${
+                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-extrabold transition-all active:translate-y-1 active:shadow-none md:text-2xl ${
                   rewardMode === 'robux'
                     ? 'bg-yellow-400 text-yellow-950 shadow-[0_4px_0_rgb(202,138,4)]'
                     : 'bg-yellow-50 text-yellow-700 shadow-[0_4px_0_rgb(250,204,21)]'
@@ -5618,7 +5660,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleReviewPractice}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-2.5 text-base md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(180,83,9)] active:translate-y-1 active:shadow-none transition-all"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-base md:text-2xl font-extrabold text-white shadow-[0_4px_0_rgb(194,65,12)] active:translate-y-1 active:shadow-none transition-all"
                 >
                   <BookOpen size={21} className="md:w-6 md:h-6" />
                   Ôn câu sai
@@ -6826,6 +6868,37 @@ export default function App() {
         }
         .animate-bounce-in {
           animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes menu-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .animate-menu-float {
+          animation: menu-float 2.8s ease-in-out infinite;
+        }
+        @keyframes soft-twinkle {
+          0%, 100% { opacity: 0.35; transform: scale(0.85); }
+          50% { opacity: 1; transform: scale(1.15); }
+        }
+        .animate-twinkle {
+          animation: soft-twinkle 2.4s ease-in-out infinite;
+        }
+        @keyframes cloud-drift {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(6px); }
+        }
+        .animate-cloud-drift {
+          animation: cloud-drift 5s ease-in-out infinite;
+        }
+        @keyframes rocket-hover {
+          0%, 100% { transform: translateY(0) rotate(-4deg); }
+          50% { transform: translateY(-8px) rotate(4deg); }
+        }
+        .animate-rocket-hover {
+          animation: rocket-hover 3s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-menu-float, .animate-twinkle, .animate-cloud-drift, .animate-rocket-hover { animation: none; }
         }
       `}} />
     </div>
