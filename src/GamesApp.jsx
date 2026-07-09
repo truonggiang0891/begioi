@@ -23,6 +23,8 @@ import Match3App from './Match3App';
 import RobotArenaApp from './RobotArenaApp';
 import DogfightApp from './DogfightApp';
 import SurvivorApp from './SurvivorApp';
+import StackApp from './StackApp';
+import SpotDiffApp from './SpotDiffApp';
 import { playSound, emojiFont } from './gameAudio';
 
 // --- KHU VUI CHƠI ---
@@ -113,6 +115,8 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
   if (screen === 'arena') return wrap(<RobotArenaApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'dogfight') return wrap(<DogfightApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'survivor') return wrap(<SurvivorApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'stack') return wrap(<StackApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'spotdiff') return wrap(<SpotDiffApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
 
   const cards = [
     { id: 'puzzle', emoji: '🧩', title: 'Ghép hình', desc: 'Chạm 2 ô để đổi chỗ', bg: 'from-orange-100 to-amber-200' },
@@ -132,6 +136,8 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
     { id: 'arena', emoji: '🤖', title: 'Đấu trường Robot', desc: 'Một mình chọi cả bầy robot', bg: 'from-slate-200 to-cyan-200' },
     { id: 'dogfight', emoji: '🛩️', title: 'Không chiến hỗn chiến', desc: 'Bay né & bắn hạ cả bầy', bg: 'from-sky-200 to-indigo-200' },
     { id: 'survivor', emoji: '🧟', title: 'Sinh tồn chọi bầy', desc: 'Sống sót, lên cấp mạnh dần', bg: 'from-violet-200 to-fuchsia-200' },
+    { id: 'stack', emoji: '🗼', title: 'Xếp tháp', desc: 'Canh nhịp thả khối cho khít', bg: 'from-sky-200 to-cyan-200' },
+    { id: 'spotdiff', emoji: '🧩', title: 'Tìm điểm khác', desc: 'Tìm chỗ khác giữa 2 tranh', bg: 'from-violet-200 to-pink-200' },
     { id: 'flappy', emoji: '🐤', title: 'Chim bay', desc: 'Chạm để bay né ống', bg: 'from-sky-100 to-yellow-100' },
     { id: 'doodle', emoji: '🦘', title: 'Nhảy cao', desc: 'Nảy lên bậc, leo cao', bg: 'from-lime-100 to-green-200' },
     { id: 'catch', emoji: '🧺', title: 'Hứng đồ', desc: 'Hứng đồ tốt, né bom', bg: 'from-amber-100 to-orange-200' },
