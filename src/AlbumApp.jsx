@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Camera } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Camera, Star } from 'lucide-react';
 import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 
 // --- ALBUM CỦA BÉ ("Khoảnh khắc") ---
@@ -59,6 +59,15 @@ const handleImgError = (e, id, w) => {
 // Cache tự xóa khi tải lại trang (F5) -> ảnh mới thêm vào Drive hiện lại sau reload.
 let albumsCache = null;         // danh sách album + ảnh bìa + số lượng
 const mediaCache = new Map();   // albumId -> mảng ảnh/video (cũ -> mới)
+
+// Ảnh bìa do người dùng tự chọn (lưu trên máy này). { albumId: fileId }
+const COVERS_KEY = 'album_covers';
+const loadCovers = () => {
+  try {
+    const o = JSON.parse(localStorage.getItem(COVERS_KEY) || '{}');
+    return o && typeof o === 'object' ? o : {};
+  } catch { return {}; }
+};
 
 // ----- Ảnh xem to: vuốt qua lại, chụm để phóng to, nhấp đúp để zoom -----
 function ZoomableImage({ src, alt, onError, onPrev, onNext }) {
@@ -178,6 +187,8 @@ export default function AlbumApp({ onBack }) {
 
   const [lightbox, setLightbox] = useState(null); // index trong media
   const [playing, setPlaying] = useState(false);  // đang trình chiếu
+  const [covers, setCovers] = useState(loadCovers); // ảnh bìa tự chọn
+  const [toast, setToast] = useState('');
 
   // Tải danh sách album + ảnh bìa + số lượng, đồng thời cache media để mở album là hiện ngay.
   useEffect(() => {
@@ -276,6 +287,22 @@ export default function AlbumApp({ onBack }) {
     });
   }, [lightbox, media]);
 
+  // Lưu lựa chọn ảnh bìa lên máy.
+  useEffect(() => {
+    try { localStorage.setItem(COVERS_KEY, JSON.stringify(covers)); } catch { /* ignore */ }
+  }, [covers]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const t = setTimeout(() => setToast(''), 1600);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const setAlbumCover = useCallback((albumId, fileId) => {
+    setCovers((prev) => ({ ...prev, [albumId]: fileId }));
+    setToast('Đã đặt ảnh này làm bìa 👍');
+  }, []);
+
   if (!isAlbumConfigured()) return <NeedConfig onBack={onBack} />;
 
   // ----- LIGHTBOX -----
@@ -289,6 +316,17 @@ export default function AlbumApp({ onBack }) {
           <span className="min-w-0 flex-1 truncate text-sm font-bold opacity-80">{item.name}</span>
           <span className="shrink-0 text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>
           <div className="flex shrink-0 items-center gap-2">
+            {current && (
+              <button
+                type="button"
+                onClick={() => setAlbumCover(current.id, item.id)}
+                className="grid h-10 w-10 place-items-center rounded-full bg-white/15 transition hover:bg-white/25"
+                aria-label="Đặt làm ảnh bìa"
+                title="Đặt làm ảnh bìa"
+              >
+                <Star size={20} className={covers[current.id] === item.id ? 'fill-yellow-300 text-yellow-300' : ''} />
+              </button>
+            )}
             {media.length > 1 && (
               <button
                 type="button"
@@ -361,6 +399,12 @@ export default function AlbumApp({ onBack }) {
             </button>
           )}
         </div>
+
+        {toast && (
+          <div className="pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 rounded-full bg-black/75 px-4 py-2 text-sm font-bold text-white shadow-lg">
+            {toast}
+          </div>
+        )}
       </div>
     );
   };
@@ -470,6 +514,10 @@ export default function AlbumApp({ onBack }) {
           const parts = [];
           if (a.imageCount) parts.push(`${a.imageCount} ảnh`);
           if (a.videoCount) parts.push(`${a.videoCount} video`);
+          // Ưu tiên ảnh bìa người dùng chọn (nếu còn tồn tại trong album), nếu không thì ảnh mới nhất.
+          const chosen = covers[a.id];
+          const list = mediaCache.get(a.id);
+          const coverId = chosen && (!list || list.some((x) => x.id === chosen)) ? chosen : a.cover;
           return (
             <button
               key={a.id}
@@ -478,10 +526,11 @@ export default function AlbumApp({ onBack }) {
               className="group flex flex-col overflow-hidden rounded-3xl bg-white shadow-[0_4px_0_rgba(0,0,0,0.08)] transition active:translate-y-1"
             >
               <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-violet-100 to-sky-200">
-                {a.cover ? (
+                {coverId ? (
                   <img
-                    src={thumbUrl(a.cover, 600)}
-                    onError={(e) => handleImgError(e, a.cover, 600)}
+                    key={coverId}
+                    src={thumbUrl(coverId, 600)}
+                    onError={(e) => handleImgError(e, coverId, 600)}
                     onLoad={fadeIn}
                     alt={cleanName(a.name)}
                     loading="lazy"
