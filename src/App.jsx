@@ -5,6 +5,10 @@ import GamesApp from './GamesApp';
 import AlbumApp from './AlbumApp';
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home, Camera, Rocket, Sparkles, Cloud } from 'lucide-react';
 import { CameraSticker, BookSticker, BrushSticker, PencilSticker, GamepadSticker, GemSticker } from './MenuIcons.jsx';
+import { loadStats, saveStats, applyAnswer, applyStudyTime, LEARN_STATS_KEY } from './statsStore';
+import { BADGE_MAP } from './achievements';
+import AchievementsPanel, { BadgeToast } from './AchievementsPanel';
+import ParentReport from './ParentReport';
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -2652,6 +2656,11 @@ export default function App() {
     return !initialSessionExpired && savedTimeout ? parseInt(savedTimeout, 10) : 0;
   });
   const [sessionHistory, setSessionHistory] = useState(() => loadSessionHistory());
+  const [learnStats, setLearnStats] = useState(() => loadStats());
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showParentReport, setShowParentReport] = useState(false);
+  const [newBadge, setNewBadge] = useState(null);
+  const prevUnlockedRef = useRef(null);
   const [endSessionGuard, setEndSessionGuard] = useState(() => loadEndSessionGuard());
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
@@ -3798,6 +3807,30 @@ export default function App() {
     });
   }
 
+  // Ghi lại 1 câu trả lời vào kho thống kê tích luỹ (thành tích + báo cáo).
+  const recordAnswerStat = useCallback((lessonType, isCorrect) => {
+    setLearnStats(prev => applyAnswer(prev, lessonType, isCorrect));
+  }, []);
+
+  // Lưu kho thống kê xuống localStorage mỗi khi thay đổi.
+  useEffect(() => {
+    saveStats(learnStats);
+  }, [learnStats]);
+
+  // Phát hiện huy hiệu mới mở khoá -> hiện chúc mừng (bỏ qua lần mount đầu).
+  useEffect(() => {
+    const current = learnStats.unlockedBadges;
+    if (prevUnlockedRef.current === null) {
+      prevUnlockedRef.current = current;
+      return;
+    }
+    const newly = current.filter(id => !prevUnlockedRef.current.includes(id));
+    prevUnlockedRef.current = current;
+    if (newly.length > 0 && BADGE_MAP[newly[0]]) {
+      setNewBadge(BADGE_MAP[newly[0]]);
+    }
+  }, [learnStats.unlockedBadges]);
+
   function handleTimeout() {
     if (!currentQ) return;
 
@@ -3805,6 +3838,7 @@ export default function App() {
     setGameState('timeout_paused');
     applyLearningReward(false);
     setTimeoutTotal(prev => prev + 1);
+    recordAnswerStat(currentQ.lessonType, false);
     if (currentQ?.isUnseen) {
       // Loại khỏi danh sách chưa làm
       const currentKey = getQuestionKey(currentQ);
@@ -3858,9 +3892,10 @@ export default function App() {
       playSound('correct', settings.soundVolumePercent);
       setGameState('celebrating');
       setCorrectTotal(prev => prev + 1);
+      recordAnswerStat(currentQ.lessonType, true);
       markStagedQuestionCorrect(currentQ);
       applyLearningReward(true);
-      
+
       if (currentQ.isUnseen) {
         setUnseenList(prev => {
           const newList = prev.filter(q => getQuestionKey(q) !== currentKey);
@@ -3889,6 +3924,7 @@ export default function App() {
       setGameState('wrong_paused');
       applyLearningReward(false);
       setWrongTotal(prev => prev + 1);
+      recordAnswerStat(currentQ.lessonType, false);
       if (currentQ.isUnseen) {
         // Loại khỏi danh sách chưa làm
         setUnseenList(prev => prev.filter(q => getQuestionKey(q) !== currentKey));
@@ -3911,6 +3947,7 @@ export default function App() {
     const currentKey = getQuestionKey(currentQ);
     playSound('correct', settings.soundVolumePercent);
     setCorrectTotal(prev => prev + 1);
+    recordAnswerStat(currentQ.lessonType, true);
     markStagedQuestionCorrect(currentQ);
     applyLearningReward(true);
     setShowFlashcardAnswer(false);
@@ -3937,6 +3974,7 @@ export default function App() {
 
     const currentKey = getQuestionKey(currentQ);
     setWrongTotal(prev => prev + 1);
+    recordAnswerStat(currentQ.lessonType, false);
     if (rewardMode === 'robux') {
       playSound('wrong', settings.soundVolumePercent);
       applyLearningReward(false);
@@ -4060,6 +4098,7 @@ export default function App() {
       },
       ...prev.filter(entry => entry.id !== startedAt),
     ]));
+    setLearnStats(prev => applyStudyTime(prev, nextSummary.durationSec));
     setGameState('summary');
   }, [
     activeReviewList.length,
@@ -4452,6 +4491,7 @@ export default function App() {
     localStorage.removeItem(ROBUX_BALANCE_KEY);
     localStorage.removeItem(ROBUX_UNLOCKED_COLORING_KEY);
     localStorage.removeItem(COLORING_TIME_LEFT_KEY);
+    localStorage.removeItem(LEARN_STATS_KEY);
     window.location.reload();
   };
 
@@ -4609,7 +4649,7 @@ export default function App() {
         </div>
 
         {showAccountButtons && (
-          <div className="mt-1.5 grid grid-cols-3 gap-1.5 md:mt-2 md:gap-2">
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5 md:mt-2 md:gap-2">
             <button
               type="button"
               onClick={() => {
@@ -4636,6 +4676,24 @@ export default function App() {
               }`}
             >
               <BarChart size={16} className="shrink-0 md:w-5 md:h-5" /> <span className="truncate">Lịch sử</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAchievements(true)}
+              aria-label="Mở bảng thành tích của bé"
+              className={`flex min-w-0 items-center justify-center gap-0.5 md:gap-2 rounded-xl md:rounded-2xl py-2 px-0.5 md:px-2 font-extrabold text-[13px] sm:text-base md:text-xl transition-all ${
+                showAchievements
+                  ? 'bg-amber-400 text-amber-950 shadow-[0_4px_0_rgb(202,138,4)]'
+                  : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-2 border-amber-100'
+              }`}
+            >
+              <span className="text-base md:text-xl" aria-hidden>🏆</span> <span className="truncate">Thành tích</span>
+              {learnStats.unlockedBadges.length > 0 && (
+                <span className="ml-0.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-black text-white md:text-xs">
+                  {learnStats.unlockedBadges.length}
+                </span>
+              )}
             </button>
 
             <button
@@ -4683,11 +4741,11 @@ export default function App() {
         <button
           type="button"
           onClick={() => setShowAccountButtons(prev => !prev)}
-          aria-label={showAccountButtons ? 'Thu gọn nút Lịch sử, Người dùng và Admin' : 'Hiện nút Lịch sử, Người dùng và Admin'}
+          aria-label={showAccountButtons ? 'Thu gọn nút Lịch sử, Người dùng, Admin và Thành tích' : 'Hiện nút Lịch sử, Người dùng, Admin và Thành tích'}
           className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-xl bg-slate-100 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-200 md:mt-2 md:text-xs"
         >
           <ChevronDown size={15} className={`transition-transform ${showAccountButtons ? 'rotate-180' : ''}`} />
-          <span>{showAccountButtons ? 'Thu gọn' : 'Lịch sử · Người dùng · Admin'}</span>
+          <span>{showAccountButtons ? 'Thu gọn' : 'Lịch sử · Người dùng · Admin · Thành tích'}</span>
         </button>
 
         {showUserNameForm && (
@@ -4783,6 +4841,14 @@ export default function App() {
           <div className="flex items-center gap-2 text-purple-700 font-black text-lg md:text-xl mb-3">
             <Settings size={22} className="md:w-6 md:h-6" /> Cài đặt Admin
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowParentReport(true)}
+            className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-sky-100 py-2.5 text-sm font-black text-indigo-700 shadow-[0_4px_0_rgb(199,210,254)] transition hover:from-indigo-100 hover:to-sky-200 active:scale-[0.99] md:text-base"
+          >
+            <BarChart size={20} /> Xem báo cáo học tập của bé
+          </button>
 
           <form onSubmit={saveAdminSettings} className="space-y-4 md:space-y-5">
             <div className="rounded-xl border-2 border-slate-100 bg-slate-50 p-2">
@@ -6859,6 +6925,20 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showAchievements && (
+        <AchievementsPanel stats={learnStats} onClose={() => setShowAchievements(false)} />
+      )}
+
+      {isAdmin && showParentReport && (
+        <ParentReport
+          stats={learnStats}
+          studentName={displayName}
+          onClose={() => setShowParentReport(false)}
+        />
+      )}
+
+      <BadgeToast badge={newBadge} onDone={() => setNewBadge(null)} />
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes bounce-in {
