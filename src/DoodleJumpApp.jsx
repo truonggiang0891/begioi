@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy, Rocket } from 'lucide-react';
-import { playSound, emojiFont } from './gameAudio';
+import { ChevronLeft, RotateCcw, ArrowLeft, ArrowRight, Trophy, Rocket, Gem } from 'lucide-react';
+import { playSound, startMusic, killMusic, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
+import { SoundToggle } from './gameUI';
+import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake } from './gameFx';
 import { useScoreRewards } from './gameRewards';
 
 // --- GAME: NHẢY CAO (kiểu Doodle Jump) ---
@@ -31,10 +33,12 @@ const SCROLL_Y = H * 0.42;
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
-export default function DoodleJumpApp({ onBack, onReward }) {
+export default function DoodleJumpApp({ onBack, onReward, robuxBalance = 0 }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0); // -1 trái, 1 phải, 0 đứng yên
+  const musicRef = useRef(false); // đã bật nhạc nền chưa
+  const ensureMusic = () => { if (!musicRef.current) { startMusic('arcade'); musicRef.current = true; } };
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
 
   const [score, setScore] = useState(0);
@@ -55,12 +59,17 @@ export default function DoodleJumpApp({ onBack, onReward }) {
     const x = rand(0, W - PLAT_W);
     const movingChance = Math.min(0.32, 0.08 + difficulty / 3000);
     const isMoving = difficulty > 150 && Math.random() < movingChance;
-    const isSpring = !isMoving && Math.random() < 0.14;
+    // Bệ VỠ: giẫm 1 lần là gãy, không nảy được — xuất hiện khi đã leo cao.
+    const isBroken = !isMoving && difficulty > 250 && Math.random() < 0.12;
+    const isSpring = !isMoving && !isBroken && Math.random() < 0.14;
     g.platforms.push({
       x, y, w: PLAT_W, h: PLAT_H,
       moving: isMoving,
       vx: isMoving ? (Math.random() < 0.5 ? -1 : 1) * rand(1, 1 + Math.min(2, difficulty / 900)) : 0,
       spring: isSpring,
+      broken: isBroken, // loại bệ vỡ
+      broke: false,     // đã gãy hay chưa
+      squash: 0,        // số frame nén khi bị giẫm
     });
     // Sao trôi nổi giữa 2 bệ.
     if (Math.random() < 0.35) {
@@ -82,12 +91,15 @@ export default function DoodleJumpApp({ onBack, onReward }) {
         vy: 0,
         prevBottom: startPlatY,
       },
-      platforms: [{ x: W / 2 - PLAT_W / 2, y: startPlatY, w: PLAT_W, h: PLAT_H, moving: false, vx: 0, spring: false }],
+      platforms: [{ x: W / 2 - PLAT_W / 2, y: startPlatY, w: PLAT_W, h: PLAT_H, moving: false, vx: 0, spring: false, broken: false, broke: false, squash: 0 }],
       stars: [],
       jetpacks: [],
       jetpackFrames: 0,
       distance: 0,
       frame: 0,
+      particles: [], // mảnh vỡ / bụi / tia lửa
+      floaters: [],  // số điểm bay lên
+      shake: makeShake(),
     };
     let topY = startPlatY;
     while (topY > -60) {
@@ -109,6 +121,10 @@ export default function DoodleJumpApp({ onBack, onReward }) {
 
     const draw = () => {
       const g = gRef.current;
+      ctx.save();
+      const [ox, oy] = applyShake(g.shake); // rung màn hình
+      ctx.translate(ox, oy);
+
       // bầu trời
       const sky = ctx.createLinearGradient(0, 0, 0, H);
       sky.addColorStop(0, '#7dd3fc');
@@ -129,17 +145,32 @@ export default function DoodleJumpApp({ onBack, onReward }) {
 
       // bệ
       g.platforms.forEach((p) => {
-        ctx.fillStyle = p.spring ? '#c084fc' : p.moving ? '#fb923c' : '#4ade80';
+        if (p.broke) ctx.globalAlpha = Math.max(0, 1 - (p.fall || 0) / 60); // bệ vỡ mờ dần khi rơi
+        ctx.fillStyle = p.broken ? (p.broke ? '#78350f' : '#b45309') : p.spring ? '#c084fc' : p.moving ? '#fb923c' : '#4ade80';
+        // Hiệu ứng nén (squash): vẽ bệ dẹt xuống khi vừa bị giẫm.
+        const sq = Math.min(6, p.squash * 1.5);
+        const ph = p.h - sq;
+        const py = p.y + sq;
         ctx.beginPath();
-        ctx.roundRect(p.x, p.y, p.w, p.h, 6);
+        ctx.roundRect(p.x, py, p.w, ph, 6);
         ctx.fill();
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillRect(p.x + 3, p.y + 2, p.w - 6, 3);
+        ctx.fillRect(p.x + 3, py + 2, p.w - 6, 3);
+        // vết nứt cho bệ vỡ (báo hiệu mong manh)
+        if (p.broken && !p.broke) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(p.x + p.w / 2, py);
+          ctx.lineTo(p.x + p.w / 2 - 4, py + ph);
+          ctx.stroke();
+        }
         if (p.spring) {
           ctx.font = '20px sans-serif';
           ctx.fillStyle = '#111';
           ctx.fillText('🌀', p.x + p.w / 2, p.y - 6);
         }
+        ctx.globalAlpha = 1;
       });
 
       // sao
@@ -153,6 +184,11 @@ export default function DoodleJumpApp({ onBack, onReward }) {
       // nhân vật
       ctx.font = `${PLAYER_H}px ${emojiFont.fontFamily}`;
       ctx.fillText(g.jetpackFrames > 0 ? '🚀' : '🦘', g.player.x + PLAYER_W / 2, g.player.y + PLAYER_H / 2);
+
+      // particle (bụi/tia lửa) & số điểm bay lên — vẽ sau cùng
+      drawParticles(ctx, g.particles);
+      drawFloaters(ctx, g.floaters);
+      ctx.restore();
     };
 
     const update = () => {
@@ -171,6 +207,8 @@ export default function DoodleJumpApp({ onBack, onReward }) {
       if (g.jetpackFrames > 0) {
         g.jetpackFrames -= 1;
         p.vy = JETPACK_VY;
+        // vệt lửa phản lực phun ra liên tục dưới chân
+        spawnBurst(g.particles, p.x + PLAYER_W / 2, p.y + PLAYER_H, ['#f97316', '#fbbf24', '#ef4444'], 3, { spread: 1.8, gravity: 0.02, size: [2, 4] });
         if (g.frame % 6 === 0 || g.jetpackFrames === 0) {
           setJetpackLeft(Math.max(0, Math.round((g.jetpackFrames / 60) * 10) / 10));
         }
@@ -179,18 +217,21 @@ export default function DoodleJumpApp({ onBack, onReward }) {
       }
       p.y += p.vy;
 
-      // bệ di chuyển ngang
+      // bệ di chuyển ngang + hoạt cảnh nén / bệ vỡ rơi
       g.platforms.forEach((plat) => {
-        if (plat.moving) {
+        if (plat.moving && !plat.broke) {
           plat.x += plat.vx;
           if (plat.x <= 0) { plat.x = 0; plat.vx = Math.abs(plat.vx); }
           else if (plat.x + plat.w >= W) { plat.x = W - plat.w; plat.vx = -Math.abs(plat.vx); }
         }
+        if (plat.squash > 0) plat.squash -= 1; // hết nén dần
+        if (plat.broke) { plat.fall = (plat.fall || 0) + 1; plat.y += 3; } // bệ vỡ rơi khuất
       });
 
       // va chạm bệ (chỉ khi đang rơi xuống)
       if (p.vy > 0) {
         for (const plat of g.platforms) {
+          if (plat.broke) continue; // bệ đã gãy thì rơi xuyên qua
           const bottom = p.y + PLAYER_H;
           if (
             prevBottom <= plat.y + 6 &&
@@ -199,8 +240,21 @@ export default function DoodleJumpApp({ onBack, onReward }) {
             p.x + PLAYER_W > plat.x + 4 &&
             p.x < plat.x + plat.w - 4
           ) {
+            if (plat.broken) {
+              // Bệ VỠ: gãy, không nảy — rơi tiếp xuyên qua.
+              plat.broke = true;
+              plat.fall = 0;
+              spawnBurst(g.particles, plat.x + plat.w / 2, plat.y + plat.h / 2, ['#b45309', '#78350f', '#ffffff'], 12, { spread: 3.2 });
+              addShake(g.shake, 5);
+              playSound('break');
+              // KHÔNG set vy -> tiếp tục rơi, tìm bệ khác
+              continue;
+            }
             p.vy = plat.spring ? SPRING_VY : BOUNCE_VY;
-            playSound(plat.spring ? 'correct' : 'pop');
+            plat.squash = 4; // nén bệ 1-2 frame
+            // bụi khi nảy
+            spawnBurst(g.particles, p.x + PLAYER_W / 2, plat.y + plat.h, ['#ffffff', '#bbf7d0'], 6, { spread: 2, gravity: 0.05, size: [1.5, 3.5] });
+            playSound(plat.spring ? 'correct' : 'jump');
             break;
           }
         }
@@ -213,7 +267,8 @@ export default function DoodleJumpApp({ onBack, onReward }) {
           curScore += 5;
           setScore(curScore);
           setStarsCollected((n) => n + 1);
-          playSound('correct');
+          spawnFloater(g.floaters, s.x, s.y, '+5', '#fde047', { size: 18 }); // số điểm bay lên
+          playSound('coin');
           if (curScore > best) { setBest(curScore); try { localStorage.setItem(BEST_KEY, String(curScore)); } catch { /* ignore */ } }
         }
       });
@@ -250,10 +305,17 @@ export default function DoodleJumpApp({ onBack, onReward }) {
         topY = spawnPlatform(g, topY, curScore);
       }
 
+      // cập nhật particle & số điểm bay lên
+      stepParticles(g.particles);
+      stepFloaters(g.floaters);
+
       // rơi khỏi màn hình -> thua
       if (p.y > H + PLAYER_H) {
         setStatusBoth('over');
-        if (curScore > best) setNewRecord(true); else playSound('wrong');
+        addShake(g.shake, 8);
+        killMusic();
+        musicRef.current = false; // để lần chơi sau bật lại nhạc
+        if (curScore > best) setNewRecord(true); else playSound('lose');
       }
     };
 
@@ -264,14 +326,14 @@ export default function DoodleJumpApp({ onBack, onReward }) {
     };
     draw();
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); killMusic(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === 'ArrowLeft') moveRef.current = -1;
-      else if (e.key === 'ArrowRight') moveRef.current = 1;
+      if (e.key === 'ArrowLeft') { moveRef.current = -1; ensureMusic(); }
+      else if (e.key === 'ArrowRight') { moveRef.current = 1; ensureMusic(); }
     };
     const onKeyUp = (e) => {
       if ((e.key === 'ArrowLeft' && moveRef.current === -1) || (e.key === 'ArrowRight' && moveRef.current === 1)) {
@@ -288,12 +350,13 @@ export default function DoodleJumpApp({ onBack, onReward }) {
     if (!(e.buttons || e.pointerType === 'touch')) return;
     const g = gRef.current;
     if (!g) return;
+    ensureMusic();
     const rect = canvasRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * W;
     g.player.x = x - PLAYER_W / 2;
   };
 
-  const hold = (v) => ({ onPointerDown: () => { moveRef.current = v; }, onPointerUp: () => { moveRef.current = 0; }, onPointerLeave: () => { moveRef.current = 0; } });
+  const hold = (v) => ({ onPointerDown: () => { moveRef.current = v; ensureMusic(); }, onPointerUp: () => { moveRef.current = 0; }, onPointerLeave: () => { moveRef.current = 0; } });
 
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-800 to-slate-900">
@@ -304,8 +367,9 @@ export default function DoodleJumpApp({ onBack, onReward }) {
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🦘 Nhảy cao</h1>
         <div className="flex items-center gap-1.5">
           <GameHelp>
-            Giữ nút, gõ phím ← → hoặc kéo trên màn hình để lái
+            Giữ nút, gõ phím ← → hoặc kéo trên màn hình để lái. Coi chừng <b>bệ vỡ</b> 🟫 — giẫm 1 lần là gãy!
           </GameHelp>
+          <SoundToggle />
           <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
             <RotateCcw size={16} /> Mới
           </button>
@@ -325,6 +389,10 @@ export default function DoodleJumpApp({ onBack, onReward }) {
           <div className="flex items-center gap-1.5 rounded-2xl bg-yellow-300/15 px-4 py-1.5 text-center">
             <span className="text-base">⭐</span>
             <div className="text-lg font-black text-yellow-300">{starsCollected}</div>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-2xl bg-yellow-400/15 px-4 py-1.5 text-center" title="Tổng Robux của bé">
+            <Gem size={15} className="fill-yellow-300/40 text-yellow-300" />
+            <div className="text-lg font-black text-yellow-300">{robuxBalance}</div>
           </div>
           {jetpackLeft > 0 && (
             <div className="flex items-center gap-1.5 rounded-2xl bg-sky-400/20 px-4 py-1.5 text-center">

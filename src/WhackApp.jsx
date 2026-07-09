@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, RotateCcw, Heart, Trophy } from 'lucide-react';
-import { playSound } from './gameAudio';
+import { ChevronLeft, RotateCcw, Heart, Trophy, Gem } from 'lucide-react';
+import { playSound, startMusic, killMusic } from './gameAudio';
 import Fireworks from './Fireworks';
 import GameHelp from './GameHelp';
+import { SoundToggle } from './gameUI';
 import { useScoreRewards } from './gameRewards';
 
 // --- GAME: ĐẬP CHUỘT CHŨI (Whack-a-mole) ---
@@ -20,13 +21,26 @@ const MAX_LIVES = 5;
 const emptyHoles = () => Array.from({ length: HOLE_COUNT }, () => null);
 const comboMultiplier = (combo) => Math.min(5, 1 + Math.floor(combo / 3));
 
-export default function WhackApp({ onBack, onReward }) {
+// Emoji hiển thị theo loại ô (hàm thuần, đặt ngoài component để dùng ở mọi nơi).
+const holeEmoji = (h) => {
+  if (!h) return '🐹';
+  if (h.type === 'bomb') return '💣';
+  if (h.type === 'gold') return '⭐';
+  if (h.type === 'heart') return '❤️';
+  return '🐹';
+};
+const SPARK_ANGLES = [0, 72, 144, 216, 288]; // hướng văng của sao ✨
+
+export default function WhackApp({ onBack, onReward, robuxBalance = 0 }) {
   const [holes, setHoles] = useState(emptyHoles);
   const [score, setScore] = useState(0);
   useScoreRewards(score, onReward);
   const [lives, setLives] = useState(3);
   const [combo, setCombo] = useState(0);
   const [over, setOver] = useState(false);
+  const [sparks, setSparks] = useState([]);   // {id,idx,emoji} — sao ✨ văng + emoji nảy khi đập trúng
+  const [shakeKey, setShakeKey] = useState(0); // đổi -> rung màn khi trúng bom
+  const [flashKey, setFlashKey] = useState(0); // đổi -> flash đỏ khi trúng bom
   const [best, setBest] = useState(() => {
     try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch { return 0; }
   });
@@ -41,6 +55,25 @@ export default function WhackApp({ onBack, onReward }) {
   const overRef = useRef(false);
   const frame = useRef(0);
   const nextSpawnTick = useRef(3);
+  const musicRef = useRef(false);   // nhạc nền đã bật chưa
+  const fxSeq = useRef(0);          // id tăng dần cho hiệu ứng
+
+  // Bật nhạc nền 'arcade' lần tương tác (đập) đầu tiên.
+  const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('arcade'); } };
+
+  // Bắn ✨ văng ra tại hang idx + emoji vừa đập nảy/rung lên.
+  const burstSpark = (idx, emoji) => {
+    fxSeq.current += 1;
+    const id = fxSeq.current;
+    setSparks((s) => [...s, { id, idx, emoji }]);
+    setTimeout(() => setSparks((s) => s.filter((e) => e.id !== id)), 520);
+  };
+
+  // Flash đỏ + rung màn khi trúng bom.
+  const bombFx = () => {
+    setShakeKey((k) => k + 1);
+    setFlashKey((k) => k + 1);
+  };
 
   const syncHoles = () => setHoles(holesRef.current.slice());
 
@@ -55,8 +88,12 @@ export default function WhackApp({ onBack, onReward }) {
   const endGame = () => {
     overRef.current = true;
     setOver(true);
+    killMusic(); // tắt nhạc khi hết mạng
     if (scoreRef.current > startBestRef.current) setNewRecord(true);
   };
+
+  // Tắt nhạc khi rời game.
+  useEffect(() => () => killMusic(), []);
 
   const restart = () => {
     holesRef.current = emptyHoles();
@@ -73,6 +110,7 @@ export default function WhackApp({ onBack, onReward }) {
     setCombo(0);
     setOver(false);
     setNewRecord(false);
+    setSparks([]);
   };
 
   // Vòng lặp: ngoi lên / ẩn xuống / sinh chuột & bom mới. Toàn bộ tính trên holesRef.
@@ -119,6 +157,7 @@ export default function WhackApp({ onBack, onReward }) {
 
   const whack = useCallback((idx) => {
     if (overRef.current) return;
+    ensureMusic();
     const h = holesRef.current[idx];
     if (!h) return;
     holesRef.current[idx] = null;
@@ -126,7 +165,8 @@ export default function WhackApp({ onBack, onReward }) {
     if (h.type === 'bomb') {
       comboRef.current = 0;
       setCombo(0);
-      playSound('wrong');
+      bombFx();                 // flash đỏ + rung màn
+      playSound('explode');     // âm nổ bom
       livesRef.current -= 1;
       setLives(livesRef.current);
       if (livesRef.current <= 0) { syncHoles(); endGame(); return; }
@@ -142,20 +182,16 @@ export default function WhackApp({ onBack, onReward }) {
         livesRef.current = Math.min(MAX_LIVES, livesRef.current + 1);
         setLives(livesRef.current);
       }
-      playSound(h.type === 'gold' || h.type === 'heart' ? 'correct' : 'pop');
+      burstSpark(idx, holeEmoji(h)); // ✨ văng ra + emoji nảy lên
+      // Âm riêng: ⭐ vàng -> coin, ❤️ tim -> powerup, chuột thường -> pop/hit
+      if (h.type === 'gold') playSound('coin');
+      else if (h.type === 'heart') playSound('powerup');
+      else playSound(comboRef.current % 2 ? 'pop' : 'hit');
     }
     syncHoles();
   }, []);
 
   const mult = comboMultiplier(combo);
-
-  const holeEmoji = (h) => {
-    if (!h) return '🐹';
-    if (h.type === 'bomb') return '💣';
-    if (h.type === 'gold') return '⭐';
-    if (h.type === 'heart') return '❤️';
-    return '🐹';
-  };
 
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-emerald-700 to-emerald-900">
@@ -168,6 +204,7 @@ export default function WhackApp({ onBack, onReward }) {
           <GameHelp>
             Chạm vào 🐹 để đập, tránh 💣 nhé!
           </GameHelp>
+          <SoundToggle />
           <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/20 px-3 py-2 text-sm font-black text-white transition hover:bg-white/30">
             <RotateCcw size={16} /> Mới
           </button>
@@ -188,14 +225,30 @@ export default function WhackApp({ onBack, onReward }) {
           <Trophy size={16} className="text-amber-400" />
           <div className="text-xl font-black text-amber-300">{best}</div>
         </div>
+        <div className="flex items-center gap-1.5 rounded-2xl bg-white/20 px-4 py-1.5" title="Tổng Robux của bé">
+          <Gem size={15} className="fill-yellow-300 text-yellow-500" />
+          <div className="text-xl font-black text-amber-300">{robuxBalance}</div>
+        </div>
         {combo >= 2 && (
-          <div className="flex items-center gap-1 rounded-2xl bg-amber-400/90 px-4 py-1.5 text-sm font-black text-amber-950 shadow">
+          <div
+            key={mult >= 3 ? `big-${combo}` : 'small'}
+            className={`flex items-center gap-1 rounded-2xl px-4 py-1.5 font-black shadow ${
+              mult >= 3
+                ? 'bg-fuchsia-500 text-white text-base'
+                : 'bg-amber-400/90 text-amber-950 text-sm'
+            }`}
+            style={mult >= 3 ? { animation: 'whack-combo 0.4s ease-out' } : undefined}
+          >
             🔥 Combo {combo} · x{mult}
           </div>
         )}
       </div>
 
-      <div className="mx-auto grid w-full max-w-[420px] flex-1 grid-cols-3 grid-rows-3 place-items-center gap-3 px-4 py-2">
+      <div
+        key={shakeKey}
+        className="mx-auto grid w-full max-w-[420px] flex-1 grid-cols-3 grid-rows-3 place-items-center gap-3 px-4 py-2"
+        style={shakeKey ? { animation: 'whack-shake 0.4s ease' } : undefined}
+      >
         {holes.map((h, i) => (
           <button
             key={i}
@@ -208,9 +261,43 @@ export default function WhackApp({ onBack, onReward }) {
             <span className="select-none text-5xl leading-none drop-shadow" style={{ transform: h ? 'translateY(0)' : 'translateY(60%)', opacity: h ? 1 : 0, transition: 'transform 80ms ease-out, opacity 80ms' }}>
               {holeEmoji(h)}
             </span>
+            {/* hiệu ứng đập trúng: emoji nảy/rung + sao ✨ văng ra */}
+            {sparks.filter((s) => s.idx === i).map((s) => (
+              <span key={s.id} className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="absolute select-none text-5xl leading-none" style={{ animation: 'whack-hit 0.4s ease-out forwards' }}>
+                  {s.emoji}
+                </span>
+                {SPARK_ANGLES.map((deg) => (
+                  <span
+                    key={deg}
+                    className="absolute select-none text-lg"
+                    style={{
+                      '--dx': `${Math.cos((deg * Math.PI) / 180) * 42}px`,
+                      '--dy': `${Math.sin((deg * Math.PI) / 180) * 42}px`,
+                      animation: 'whack-spark 0.5s ease-out forwards',
+                    }}
+                  >
+                    ✨
+                  </span>
+                ))}
+              </span>
+            ))}
           </button>
         ))}
       </div>
+
+      {/* flash đỏ toàn màn khi trúng bom */}
+      {flashKey > 0 && (
+        <div key={flashKey} className="pointer-events-none absolute inset-0 z-40 bg-red-600" style={{ animation: 'whack-flash 0.4s ease-out forwards' }} />
+      )}
+
+      <style>{`
+        @keyframes whack-spark { from { transform: translate(0,0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0.4); opacity: 0; } }
+        @keyframes whack-hit { 0% { transform: scale(1); opacity: 1; } 35% { transform: scale(1.4) rotate(-10deg); opacity: 1; } 70% { transform: scale(1.1) rotate(8deg); opacity: 0.9; } 100% { transform: scale(1.5) rotate(0deg); opacity: 0; } }
+        @keyframes whack-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
+        @keyframes whack-flash { from { opacity: 0.55; } to { opacity: 0; } }
+        @keyframes whack-combo { 0% { transform: scale(0.6); } 55% { transform: scale(1.3); } 100% { transform: scale(1); } }
+      `}</style>
 
       {over && newRecord && <Fireworks />}
       {over && (

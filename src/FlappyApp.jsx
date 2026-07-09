@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RotateCcw, Trophy, Shield } from 'lucide-react';
-import { playSound, emojiFont } from './gameAudio';
+import { ChevronLeft, RotateCcw, Trophy, Shield, Gem } from 'lucide-react';
+import { playSound, startMusic, killMusic, emojiFont } from './gameAudio';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
+import { SoundToggle } from './gameUI';
+import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake } from './gameFx';
 import { useScoreRewards } from './gameRewards';
 
 // --- GAME: CHIM BAY (Flappy Bird kiểu dễ cho bé) ---
@@ -29,19 +31,36 @@ const INVULN_FRAMES = 45;
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
-const makePipe = (x) => {
-  const gapY = rand(46, H - GROUND_H - GAP_H - 46);
+// --- Độ khó tăng dần theo điểm ---
+// Khe hẹp lại từ từ (nhưng không dưới GAP_MIN) và ống trôi nhanh hơn chút.
+const GAP_MIN = 92;
+const SPEED_MAX = 3.4;
+const gapForScore = (s) => Math.max(GAP_MIN, GAP_H - Math.floor(s / 4) * 4);
+const speedForScore = (s) => Math.min(SPEED_MAX, PIPE_SPEED + s * 0.03);
+
+const makePipe = (x, gap = GAP_H) => {
+  const gapY = rand(46, H - GROUND_H - gap - 46);
   return {
     x,
     gapY,
+    gap, // mỗi ống nhớ khe riêng để độ khó thay đổi mượt
     passed: false,
-    coin: Math.random() < 0.55 ? { x: x + PIPE_W / 2, y: gapY + GAP_H / 2, taken: false } : null,
+    coin: Math.random() < 0.55 ? { x: x + PIPE_W / 2, y: gapY + gap / 2, taken: false } : null,
   };
 };
 
-export default function FlappyApp({ onBack, onReward }) {
+// Huy chương theo điểm cuối màn (đồng / bạc / vàng).
+const medalForScore = (s) => {
+  if (s >= 30) return { emoji: '🥇', label: 'Huy chương Vàng', color: 'text-amber-500' };
+  if (s >= 15) return { emoji: '🥈', label: 'Huy chương Bạc', color: 'text-slate-400' };
+  if (s >= 6) return { emoji: '🥉', label: 'Huy chương Đồng', color: 'text-orange-700' };
+  return null;
+};
+
+export default function FlappyApp({ onBack, onReward, robuxBalance = 0 }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
+  const musicRef = useRef(false); // đã bật nhạc nền chưa
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
   const [score, setScore] = useState(0);
   useScoreRewards(score, onReward);
@@ -63,21 +82,33 @@ export default function FlappyApp({ onBack, onReward }) {
       bird: { y: H / 2, vy: 0 },
       pipes: [makePipe(W + 60)],
       floats: [], // bong bóng khiên
+      particles: [], // mảnh vỡ / tia lửa
+      floaters: [],  // số điểm bay lên
+      shake: makeShake(),
       frame: 0,
       nextShieldAt: Math.round(rand(SHIELD_EVERY * 0.6, SHIELD_EVERY * 1.4)),
       invuln: 0,
     };
     shieldRef.current = 0;
+    musicRef.current = false; // cho phép nhạc bật lại ở ván mới
     setShields(0);
     setScore(0);
     setNewRecord(false);
     setStatusBoth('ready');
   };
 
+  // Bật nhạc nền lần tương tác đầu tiên (chính sách autoplay của trình duyệt).
+  const ensureMusic = () => {
+    if (musicRef.current) return;
+    musicRef.current = true;
+    startMusic('arcade');
+  };
+
   const flap = () => {
     if (statusRef.current === 'over') return;
     const g = gRef.current;
     if (!g) return;
+    ensureMusic();
     if (statusRef.current === 'ready') setStatusBoth('playing');
     g.bird.vy = FLAP_VY;
     playSound('pop');
@@ -104,12 +135,15 @@ export default function FlappyApp({ onBack, onReward }) {
 
     const draw = () => {
       const g = gRef.current;
-      // trời
+      ctx.save();
+      const [ox, oy] = applyShake(g.shake);
+      ctx.translate(ox, oy);
+      // trời (phủ rộng hơn khung để lúc rung không lộ mép)
       const sky = ctx.createLinearGradient(0, 0, 0, H);
       sky.addColorStop(0, '#7dd3fc');
       sky.addColorStop(1, '#bae6fd');
       ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(-16, -16, W + 32, H + 32);
 
       // mây trang trí
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
@@ -130,7 +164,7 @@ export default function FlappyApp({ onBack, onReward }) {
         ctx.fillRect(p.x, 0, PIPE_W, p.gapY);
         ctx.strokeRect(p.x, 0, PIPE_W, p.gapY);
         // ống dưới
-        const bottomY = p.gapY + GAP_H;
+        const bottomY = p.gapY + p.gap;
         ctx.fillRect(p.x, bottomY, PIPE_W, H - GROUND_H - bottomY);
         ctx.strokeRect(p.x, bottomY, PIPE_W, H - GROUND_H - bottomY);
 
@@ -151,13 +185,17 @@ export default function FlappyApp({ onBack, onReward }) {
         ctx.fillText('🛡️', f.x, f.y);
       });
 
-      // đất
+      // đất (phủ rộng hơn để lúc rung không lộ mép)
       ctx.fillStyle = '#a16207';
-      ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+      ctx.fillRect(-16, H - GROUND_H, W + 32, GROUND_H + 16);
       ctx.fillStyle = '#4ade80';
-      ctx.fillRect(0, H - GROUND_H, W, 6);
+      ctx.fillRect(-16, H - GROUND_H, W + 32, 6);
 
       drawBirdEmoji(g);
+
+      // particle & số điểm bay lên vẽ sau cùng
+      drawParticles(ctx, g.particles);
+      drawFloaters(ctx, g.floaters);
 
       if (statusRef.current === 'ready') {
         ctx.fillStyle = 'rgba(15,23,42,0.55)';
@@ -165,17 +203,25 @@ export default function FlappyApp({ onBack, onReward }) {
         ctx.textAlign = 'center';
         ctx.fillText('Chạm để bay 👆', W / 2, H / 2 - 60);
       }
+
+      ctx.restore();
     };
 
-    const endGame = () => {
+    const endGame = (g) => {
       setStatusBoth('over');
+      // nổ tung tại chỗ chim va + rung mạnh
+      spawnBurst(g.particles, BIRD_X, g.bird.y, ['#f97316', '#fde047', '#ffffff'], 22, { spread: 5 });
+      addShake(g.shake, 14);
+      playSound('explode');
+      killMusic();
+      musicRef.current = false;
       if (curScore > bestRef.current) {
         setBest(curScore);
         bestRef.current = curScore;
         try { localStorage.setItem(BEST_KEY, String(curScore)); } catch { /* ignore */ }
         setNewRecord(true);
       } else {
-        playSound('wrong');
+        playSound('lose');
       }
     };
 
@@ -186,9 +232,12 @@ export default function FlappyApp({ onBack, onReward }) {
         setShields(shieldRef.current);
         g.invuln = INVULN_FRAMES;
         g.bird.vy = FLAP_VY * 0.7;
-        playSound('correct');
+        // mất khiên: tia sáng xanh + rung nhẹ
+        spawnBurst(g.particles, BIRD_X, g.bird.y, ['#38bdf8', '#ffffff'], 14, { spread: 4 });
+        addShake(g.shake, 8);
+        playSound('hit');
       } else {
-        endGame();
+        endGame(g);
       }
     };
 
@@ -219,15 +268,18 @@ export default function FlappyApp({ onBack, onReward }) {
         hitObstacle(g);
       }
 
-      // ống di chuyển + sinh ống mới
-      g.pipes.forEach((p) => { p.x -= PIPE_SPEED; });
+      // tốc độ trôi tăng dần theo điểm
+      const speed = speedForScore(curScore);
+
+      // ống di chuyển + sinh ống mới (khe hẹp dần theo điểm)
+      g.pipes.forEach((p) => { p.x -= speed; });
       if (g.pipes.length === 0 || W - g.pipes[g.pipes.length - 1].x >= PIPE_EVERY) {
-        g.pipes.push(makePipe(W + 20));
+        g.pipes.push(makePipe(W + 20, gapForScore(curScore)));
       }
       g.pipes = g.pipes.filter((p) => p.x + PIPE_W > -10);
 
       // bong bóng khiên di chuyển + sinh mới
-      g.floats.forEach((f) => { f.x -= PIPE_SPEED; });
+      g.floats.forEach((f) => { f.x -= speed; });
       g.floats = g.floats.filter((f) => f.x > -20 && !f.taken);
       if (g.frame >= g.nextShieldAt && shieldRef.current < MAX_SHIELD) {
         g.floats.push({ x: W + 20, y: rand(60, H - GROUND_H - 60), taken: false });
@@ -239,13 +291,17 @@ export default function FlappyApp({ onBack, onReward }) {
         const withinX = BIRD_X + BIRD_R > p.x && BIRD_X - BIRD_R < p.x + PIPE_W;
         if (withinX) {
           const hitsTop = g.bird.y - BIRD_R < p.gapY;
-          const hitsBottom = g.bird.y + BIRD_R > p.gapY + GAP_H;
+          const hitsBottom = g.bird.y + BIRD_R > p.gapY + p.gap;
           if (hitsTop || hitsBottom) hitObstacle(g);
         }
         if (!p.passed && p.x + PIPE_W < BIRD_X - BIRD_R) {
           p.passed = true;
           curScore += 1;
           setScore(curScore);
+          // vượt ống ghi điểm: âm "coin" + số +1 lấp lánh tại chim
+          playSound('coin');
+          spawnFloater(g.floaters, BIRD_X, g.bird.y - BIRD_R - 6, '+1', '#fde047', { size: 18 });
+          spawnBurst(g.particles, BIRD_X, g.bird.y, ['#fde047', '#ffffff'], 6, { spread: 2.6 });
         }
         if (p.coin && !p.coin.taken) {
           const dx = p.coin.x - BIRD_X;
@@ -255,6 +311,8 @@ export default function FlappyApp({ onBack, onReward }) {
             curScore += 3;
             setScore(curScore);
             playSound('correct');
+            spawnFloater(g.floaters, p.coin.x, p.coin.y - 8, '+3', '#facc15', { size: 20 });
+            spawnBurst(g.particles, p.coin.x, p.coin.y, ['#facc15', '#fff7ae', '#ffffff'], 14, { spread: 4 });
           }
         }
       });
@@ -270,19 +328,27 @@ export default function FlappyApp({ onBack, onReward }) {
             shieldRef.current += 1;
             setShields(shieldRef.current);
           }
-          playSound('correct');
+          playSound('powerup');
+          spawnFloater(g.floaters, f.x, f.y - 8, 'Khiên!', '#7dd3fc', { size: 15 });
+          spawnBurst(g.particles, f.x, f.y, ['#38bdf8', '#bae6fd', '#ffffff'], 14, { spread: 4 });
         }
       });
+
+      // cập nhật hiệu ứng
+      stepParticles(g.particles);
+      stepFloaters(g.floaters);
     };
 
     const loop = () => {
+      const g = gRef.current;
       if (statusRef.current !== 'over') update();
+      else if (g) { stepParticles(g.particles); stepFloaters(g.floaters); } // vẫn chạy hiệu ứng nổ khi kết thúc
       draw();
       raf = requestAnimationFrame(loop);
     };
     draw();
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); killMusic(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -309,6 +375,7 @@ export default function FlappyApp({ onBack, onReward }) {
           <GameHelp>
             Chạm màn hình hoặc bấm Space / ↑ để bay
           </GameHelp>
+          <SoundToggle />
           <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
             <RotateCcw size={16} /> Mới
           </button>
@@ -328,6 +395,10 @@ export default function FlappyApp({ onBack, onReward }) {
           <div className="flex items-center gap-1.5 rounded-2xl bg-sky-400/15 px-5 py-1.5 text-center">
             <Shield size={16} className="text-sky-300" />
             <div className="text-xl font-black text-sky-200">{shields}</div>
+          </div>
+          <div className="flex items-center gap-1 rounded-2xl bg-yellow-400/15 px-3 py-1.5 text-center" title="Tổng Robux của bé">
+            <Gem size={15} className="fill-yellow-300/40 text-yellow-300" />
+            <div className="text-xl font-black text-yellow-300">{robuxBalance}</div>
           </div>
         </div>
 
@@ -352,6 +423,16 @@ export default function FlappyApp({ onBack, onReward }) {
                 Bé được <span className="text-orange-500">{score}</span> điểm
                 {newRecord ? ' — giỏi nhất từ trước tới giờ! 🎉' : `. Cao nhất: ${best}`}
               </p>
+              {(() => {
+                const medal = medalForScore(score);
+                if (!medal) return null;
+                return (
+                  <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2">
+                    <span className="text-3xl">{medal.emoji}</span>
+                    <span className={`text-sm font-black ${medal.color}`}>{medal.label}</span>
+                  </div>
+                );
+              })()}
               <button type="button" onClick={newGame} className="mt-1 rounded-full bg-gradient-to-b from-orange-400 to-orange-500 px-7 py-3 text-lg font-black text-white shadow-[0_4px_0_rgb(234,88,12)] transition active:translate-y-0.5">
                 Chơi lại 🔁
               </button>

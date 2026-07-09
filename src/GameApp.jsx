@@ -1,9 +1,13 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
-import { ChevronLeft, RotateCcw, Eye, EyeOff, Sparkles, Lock, ArrowRight } from 'lucide-react';
-import { playSound, emojiFont, loadUnlocked, saveUnlocked } from './gameAudio';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { ChevronLeft, RotateCcw, Eye, EyeOff, Sparkles, Lock, ArrowRight, Lightbulb, Timer, Move, Trophy, Gem } from 'lucide-react';
+import { playSound, startMusic, killMusic, emojiFont, loadUnlocked, saveUnlocked } from './gameAudio';
+import { SoundToggle } from './gameUI';
 import Fireworks from './Fireworks';
 
 const PUZZLE_UNLOCK_KEY = 'game_puzzle_unlockedLevel';
+// Kỷ lục ít nước nhất — key riêng theo cỡ lưới.
+const bestMovesKey = (n) => `game_puzzle_best_moves_${n}`;
+const HINTS_PER_GAME = 3;
 
 // --- GAME 1: GHÉP HÌNH (chạm 2 ô để đổi chỗ) ---
 // Bé chạm vào 1 ô rồi chạm ô khác -> hai ô đổi chỗ cho nhau.
@@ -46,7 +50,10 @@ const shuffled = (n) => {
   return arr;
 };
 
-function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
+// mm:ss cho đồng hồ.
+const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, onNext, ensureMusic }) {
   const [order, setOrder] = useState(() => shuffled(n));
   const [selected, setSelected] = useState(null);
   const [moves, setMoves] = useState(0);
@@ -55,16 +62,64 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
   // "Cửa ải" hiện tại khi board này được mở — đóng băng để không đổi khi mở khóa mức mới.
   const [frozenFrontier] = useState(frontier);
 
+  // Đồng hồ + trạng thái đã bắt đầu ván (bắt đầu tính khi bé chạm ô đầu tiên).
+  const [seconds, setSeconds] = useState(0);
+  const [started, setStarted] = useState(false);
+  // Kỷ lục ít nước nhất cho cỡ lưới này.
+  const [best, setBest] = useState(() => {
+    try { const v = parseInt(localStorage.getItem(bestMovesKey(n)), 10); return Number.isFinite(v) ? v : null; } catch { return null; }
+  });
+  const [newRecord, setNewRecord] = useState(false);
+  // Gợi ý: cặp ô nên đổi chỗ đang nhấp sáng + số lần còn lại.
+  const [hintPair, setHintPair] = useState(null); // [a, b] hoặc null
+  const [hintsLeft, setHintsLeft] = useState(HINTS_PER_GAME);
+  // Các ô vừa về đúng vị trí -> nhấp sáng scale nhẹ.
+  const [pulse, setPulse] = useState([]);
+  const hintTimer = useRef(null);
+  const pulseTimer = useRef(null);
+
+  // Đồng hồ chạy khi đã bắt đầu và chưa xong.
+  useEffect(() => {
+    if (!started || solved) return undefined;
+    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [started, solved]);
+
+  // Dọn timer khi rời board.
+  useEffect(() => () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    if (pulseTimer.current) clearTimeout(pulseTimer.current);
+  }, []);
+
   const reset = useCallback(() => {
     setOrder(shuffled(n));
     setSelected(null);
     setMoves(0);
     setSolved(false);
     setPeek(false);
+    setSeconds(0);
+    setStarted(false);
+    setNewRecord(false);
+    setHintPair(null);
+    setHintsLeft(HINTS_PER_GAME);
+    setPulse([]);
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    if (pulseTimer.current) clearTimeout(pulseTimer.current);
   }, [n]);
+
+  // Nhấp sáng các ô vừa về đúng vị trí.
+  const flashCorrect = (positions) => {
+    if (!positions.length) return;
+    setPulse(positions);
+    if (pulseTimer.current) clearTimeout(pulseTimer.current);
+    pulseTimer.current = setTimeout(() => setPulse([]), 650);
+  };
 
   const handleTap = (pos) => {
     if (solved || peek) return;
+    ensureMusic?.();
+    if (!started) setStarted(true);
+    if (hintPair) setHintPair(null); // chạm là tắt gợi ý
     if (selected === null) {
       setSelected(pos);
       playSound('pop');
@@ -74,8 +129,11 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
       setSelected(null);
       return;
     }
+    const a = selected;
+    const wasA = order[a] === a;
+    const wasB = order[pos] === pos;
     const next = order.slice();
-    [next[selected], next[pos]] = [next[pos], next[selected]];
+    [next[a], next[pos]] = [next[pos], next[a]];
     setSelected(null);
     setMoves((m) => m + 1);
     setOrder(next);
@@ -84,21 +142,79 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
     if (done) {
       setSolved(true);
       playSound('win');
+      // Ghi nhận kỷ lục ít nước nhất.
+      const finalMoves = moves + 1;
+      if (best == null || finalMoves < best) {
+        setBest(finalMoves);
+        setNewRecord(true);
+        try { localStorage.setItem(bestMovesKey(n), String(finalMoves)); } catch { /* ignore */ }
+      }
       onSolved?.();
     } else {
-      playSound('pop');
+      // Ô nào vừa về đúng vị trí thì nhấp sáng.
+      const nowCorrect = [];
+      if (!wasA && next[a] === a) nowCorrect.push(a);
+      if (!wasB && next[pos] === pos) nowCorrect.push(pos);
+      if (nowCorrect.length) {
+        flashCorrect(nowCorrect);
+        playSound('correct');
+      } else {
+        playSound('whoosh');
+      }
     }
   };
 
-  const cellPercent = 100 / n;
+  // Gợi ý: tìm 1 ô đang sai + vị trí đúng của nó, nhấp sáng ~1.5s.
+  const showHint = () => {
+    if (solved || peek || hintsLeft <= 0) return;
+    ensureMusic?.();
+    // a: một ô đang sai; b: nơi đang giữ mảnh thuộc về vị trí a.
+    const a = order.findIndex((v, i) => v !== i);
+    if (a < 0) return;
+    const b = order.indexOf(a);
+    setSelected(null);
+    setHintPair([a, b]);
+    setHintsLeft((h) => h - 1);
+    playSound('powerup');
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = setTimeout(() => setHintPair(null), 1500);
+  };
+
+  const correctCount = order.reduce((acc, v, i) => acc + (v === i ? 1 : 0), 0);
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
-      {/* Thanh điều khiển nhỏ */}
-      <div className="flex items-center gap-2">
-        <span className="rounded-full bg-white/80 px-4 py-1.5 text-sm font-black text-slate-600 shadow-sm">
-          Số lần đổi: {moves}
+    <div className="flex w-full flex-col items-center gap-3">
+      {/* Hàng chỉ số: nước đi · thời gian · kỷ lục · robux */}
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-slate-600 shadow-sm" title="Số lần đổi chỗ">
+          <Move size={15} className="text-indigo-500" /> {moves}
         </span>
+        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-slate-600 shadow-sm" title="Thời gian chơi">
+          <Timer size={15} className="text-sky-500" /> {fmtTime(seconds)}
+        </span>
+        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-amber-700 shadow-sm" title="Kỷ lục ít nước nhất">
+          <Trophy size={15} className="text-amber-500" /> {best == null ? '—' : best}
+        </span>
+        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-amber-700 shadow-sm" title="Tổng Robux của bé">
+          <Gem size={15} className="fill-yellow-300 text-yellow-500" /> {robuxBalance}
+        </span>
+      </div>
+
+      {/* Thanh điều khiển: gợi ý · xem tranh · xáo lại */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={showHint}
+          disabled={hintsLeft <= 0 || solved}
+          className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-black shadow-sm transition ${
+            hintsLeft <= 0 || solved
+              ? 'cursor-not-allowed bg-white/50 text-slate-300'
+              : 'bg-white/80 text-amber-600 hover:bg-white'
+          }`}
+          title="Nhấp sáng cặp ô nên đổi chỗ"
+        >
+          <Lightbulb size={16} /> Gợi ý ({hintsLeft})
+        </button>
         <button
           type="button"
           onClick={() => setPeek((p) => !p)}
@@ -114,6 +230,17 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
         >
           <RotateCcw size={16} /> Xáo lại
         </button>
+      </div>
+
+      {/* Thanh tiến độ số ô đã đúng */}
+      <div className="flex w-full max-w-[440px] items-center gap-2 px-1">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/60">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300"
+            style={{ width: `${(correctCount / (n * n)) * 100}%` }}
+          />
+        </div>
+        <span className="text-xs font-black text-slate-500">{correctCount}/{n * n}</span>
       </div>
 
       {/* Bảng ghép hình */}
@@ -134,6 +261,8 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
           {order.map((pieceIndex, pos) => {
             const correct = pieceIndex === pos;
             const isSelected = selected === pos;
+            const isHint = hintPair && (hintPair[0] === pos || hintPair[1] === pos);
+            const isPulse = pulse.includes(pos);
             const col = pieceIndex % n;
             const row = Math.floor(pieceIndex / n);
             return (
@@ -143,8 +272,17 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
                 onClick={() => handleTap(pos)}
                 className={`relative overflow-hidden bg-white transition-all duration-150 ${
                   isSelected ? 'z-10 scale-95 ring-4 ring-sky-500' : ''
-                } ${correct && !solved && !isSelected ? 'ring-2 ring-emerald-300' : ''}`}
-                style={{ touchAction: 'manipulation' }}
+                } ${isHint ? 'z-20 ring-4 ring-amber-400' : ''} ${
+                  correct && !solved && !isSelected && !isHint ? 'ring-2 ring-emerald-300' : ''
+                }`}
+                style={{
+                  touchAction: 'manipulation',
+                  animation: isHint
+                    ? 'puzzle-hint 0.6s ease-in-out infinite'
+                    : isPulse
+                      ? 'puzzle-correct 0.6s ease-out'
+                      : undefined,
+                }}
               >
                 <div
                   className="pointer-events-none absolute flex items-center justify-center"
@@ -174,6 +312,11 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
         )}
       </div>
 
+      <style>{`
+        @keyframes puzzle-hint { 0%,100% { transform: scale(1); } 50% { transform: scale(0.9); } }
+        @keyframes puzzle-correct { 0% { transform: scale(1); } 35% { transform: scale(1.12); filter: brightness(1.25); } 100% { transform: scale(1); filter: none; } }
+      `}</style>
+
       {/* Chúc mừng khi hoàn thành */}
       {solved && <Fireworks />}
       {solved && (
@@ -184,8 +327,26 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
           <p className="text-sm font-bold text-slate-500">
             Bé đã ghép xong bức tranh {picture.name} rồi!
           </p>
+          {/* Thành tích ván này */}
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm font-black">
+            <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-indigo-700">
+              <Move size={14} /> {moves} nước
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-sky-700">
+              <Timer size={14} /> {fmtTime(seconds)}
+            </span>
+          </div>
+          {newRecord ? (
+            <p className="flex items-center gap-1 rounded-full bg-amber-100 px-4 py-1.5 text-sm font-black text-amber-700">
+              <Trophy size={15} className="text-amber-500" /> Kỷ lục mới! Ít nước nhất từ trước tới giờ 🎉
+            </p>
+          ) : (
+            best != null && (
+              <p className="text-xs font-bold text-slate-400">Kỷ lục ít nước: {best}</p>
+            )
+          )}
           {nextLevel && frozenFrontier && (
-            <p className="rounded-full bg-amber-100 px-4 py-1.5 text-sm font-black text-amber-700">
+            <p className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-black text-emerald-700">
               🎉 Mở khóa mức {nextLevel.label} ({nextLevel.n}×{nextLevel.n})!
             </p>
           )}
@@ -213,11 +374,17 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, onSolved, onNext }) {
   );
 }
 
-export default function GameApp({ onBack, onReward }) {
+export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
   const [selectedId, setSelectedId] = useState(null);
   const [levelId, setLevelId] = useState('easy');
   const [unlockedIndex, setUnlockedIndex] = useState(() => loadUnlocked(PUZZLE_UNLOCK_KEY));
   const rewardedRef = useRef(new Set()); // mỗi độ khó chỉ thưởng Robux 1 lần/phiên
+  const musicRef = useRef(false);
+
+  // Nhạc nền dịu 'calm' — bật ở lần tương tác đầu tiên.
+  const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('calm'); } };
+  // Dừng nhạc khi rời game.
+  useEffect(() => () => killMusic(), []);
 
   const picture = useMemo(
     () => PICTURES.find((p) => p.id === selectedId) || null,
@@ -232,6 +399,7 @@ export default function GameApp({ onBack, onReward }) {
 
   // Khi bé chọn tranh mới, luôn bắt đầu lại từ mức dễ nhất.
   const openPicture = (id) => {
+    ensureMusic();
     setSelectedId(id);
     setLevelId('easy');
     playSound('pop');
@@ -250,6 +418,9 @@ export default function GameApp({ onBack, onReward }) {
       const rb = [1, 2, 3, 5][levelIndex] || 1;
       onReward?.(rb, `Ghép xong ${level.label} (${level.n}×${level.n})`);
     }
+    // Dừng nhạc khi thắng; sẽ tự bật lại khi bé tương tác tiếp.
+    killMusic();
+    musicRef.current = false;
   };
   const goNext = () => {
     if (nextLevel) setLevelId(nextLevel.id);
@@ -272,7 +443,7 @@ export default function GameApp({ onBack, onReward }) {
         <h1 className="truncate text-lg font-black text-slate-700 md:text-2xl">
           {picture ? `Ghép hình: ${picture.name}` : '🧩 Ghép hình'}
         </h1>
-        <div className="w-[92px]" />
+        <SoundToggle />
       </div>
 
       {picture ? (
@@ -314,8 +485,10 @@ export default function GameApp({ onBack, onReward }) {
             n={level.n}
             nextLevel={nextLevel}
             frontier={levelIndex === unlockedIndex}
+            robuxBalance={robuxBalance}
             onSolved={handleSolved}
             onNext={goNext}
+            ensureMusic={ensureMusic}
           />
         </div>
       ) : (

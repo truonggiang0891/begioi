@@ -86,11 +86,11 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
 
   const wrap = (node) => <div className="fixed inset-0 z-[60] bg-slate-900">{node}{rewardToastEl}</div>;
 
-  if (screen === 'puzzle') return wrap(<GameApp onBack={back} onReward={reward} />);
-  if (screen === 'memory') return wrap(<MemoryApp onBack={back} onReward={reward} />);
-  if (screen === 'block') return wrap(<BlockPuzzleApp onBack={back} onReward={reward} />);
-  if (screen === 'tetris') return wrap(<TetrisApp onBack={back} onReward={reward} />);
-  if (screen === 'snake') return wrap(<SnakeApp onBack={back} onReward={reward} />);
+  if (screen === 'puzzle') return wrap(<GameApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'memory') return wrap(<MemoryApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'block') return wrap(<BlockPuzzleApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'tetris') return wrap(<TetrisApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'snake') return wrap(<SnakeApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'breakout') return wrap(<BreakoutApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'shooter') return wrap(<ShooterApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'bubble') return wrap(<BubbleShooterApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
@@ -100,13 +100,13 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
   if (screen === 'mathshoot') return wrap(<AnswerShooterApp mode="math" onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'lettershoot') return wrap(<AnswerShooterApp mode="letter" onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
   if (screen === 'battle') return wrap(<SpaceBattleApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
-  if (screen === 'flappy') return wrap(<FlappyApp onBack={back} onReward={reward} />);
-  if (screen === 'doodle') return wrap(<DoodleJumpApp onBack={back} onReward={reward} />);
-  if (screen === 'catch') return wrap(<CatchApp onBack={back} onReward={reward} />);
-  if (screen === 'whack') return wrap(<WhackApp onBack={back} onReward={reward} />);
-  if (screen === 'fruit') return wrap(<FruitSliceApp onBack={back} onReward={reward} />);
-  if (screen === 'maze') return wrap(<MazeApp onBack={back} onReward={reward} />);
-  if (screen === 'match3') return wrap(<Match3App onBack={back} onReward={reward} />);
+  if (screen === 'flappy') return wrap(<FlappyApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'doodle') return wrap(<DoodleJumpApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'catch') return wrap(<CatchApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'whack') return wrap(<WhackApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'fruit') return wrap(<FruitSliceApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'maze') return wrap(<MazeApp onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
+  if (screen === 'match3') return wrap(<Match3App onBack={back} onReward={reward} robuxBalance={robuxBalance} />);
 
   const cards = [
     { id: 'puzzle', emoji: '🧩', title: 'Ghép hình', desc: 'Chạm 2 ô để đổi chỗ', bg: 'from-orange-100 to-amber-200' },

@@ -1,9 +1,21 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
-import { ChevronLeft, RotateCcw, Trophy } from 'lucide-react';
-import { playSound } from './gameAudio';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { ChevronLeft, RotateCcw, Trophy, Gem } from 'lucide-react';
+import { playSound, startMusic, killMusic } from './gameAudio';
 import Fireworks from './Fireworks';
+import GameHelp from './GameHelp';
+import { SoundToggle } from './gameUI';
+import {
+  spawnBurst, stepParticles, drawParticles,
+  spawnFloater, stepFloaters, drawFloaters,
+  makeShake, addShake, applyShake,
+} from './gameFx';
 import { useFitSize } from './useFitSize';
 import { useScoreRewards } from './gameRewards';
+
+// Khoảng đệm/khe của lưới (khớp với p-1.5 = 6px và gap: 2px bên dưới) — dùng để
+// tính tâm mỗi ô khi bắn hiệu ứng lên lớp canvas phủ trên lưới.
+const PAD = 6;
+const GAP = 2;
 
 // --- GAME: XẾP KHỐI (Block Puzzle kiểu Block Blast / 1010) ---
 // Kéo khối vào lưới 8 cột x 11 hàng. Lấp đầy 1 hàng hoặc 1 cột -> hàng/cột đó nổ, được điểm.
@@ -113,14 +125,14 @@ const clearLines = (board) => {
     if (full) fullCols.push(c);
   }
   const cleared = fullRows.length + fullCols.length;
-  if (cleared === 0) return { board, cleared };
+  if (cleared === 0) return { board, cleared, rows: fullRows, cols: fullCols };
   const next = board.map((row) => row.slice());
   fullRows.forEach((r) => { for (let c = 0; c < COLS; c += 1) next[r][c] = null; });
   fullCols.forEach((c) => { for (let r = 0; r < ROWS; r += 1) next[r][c] = null; });
-  return { board: next, cleared };
+  return { board: next, cleared, rows: fullRows, cols: fullCols };
 };
 
-export default function BlockPuzzleApp({ onBack, onReward }) {
+export default function BlockPuzzleApp({ onBack, onReward, robuxBalance = 0 }) {
   const [board, setBoard] = useState(emptyBoard);
   const [tray, setTray] = useState(newTray);
   const [score, setScore] = useState(0);
@@ -134,7 +146,113 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
   const boardRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(COLS, ROWS);
 
+  // --- Hiệu ứng (particle nổ, số điểm bay lên, nháy sáng, rung) trên lớp canvas phủ ---
+  const fxCanvasRef = useRef(null);
+  const stageRef = useRef(null); // vùng bọc lưới — dùng để rung (CSS transform)
+  const fxRef = useRef({ particles: [], floaters: [], flashes: [], shake: makeShake() });
+  const fitRef2 = useRef(fitSize); // giữ kích thước mới nhất cho vòng lặp vẽ
+  fitRef2.current = fitSize;
+
+  // Nhạc nền — bật ở lần chạm đầu tiên (kéo khối), tắt khi thoát/thua.
+  const musicRef = useRef(false);
+  const ensureMusic = () => {
+    if (!musicRef.current) { musicRef.current = true; startMusic('arcade'); }
+  };
+  const stopMusic = () => { musicRef.current = false; killMusic(); };
+
+  // Tâm (x,y) của ô [r,c] trong hệ toạ độ canvas (khớp padding + gap của lưới).
+  const cellCenter = (r, c, w, h) => {
+    const cw = (w - PAD * 2 - (COLS - 1) * GAP) / COLS;
+    const ch = (h - PAD * 2 - (ROWS - 1) * GAP) / ROWS;
+    return { x: PAD + c * (cw + GAP) + cw / 2, y: PAD + r * (ch + GAP) + ch / 2, cw, ch };
+  };
+
+  // Vòng lặp vẽ hiệu ứng — chạy suốt vòng đời game, độc lập với React state.
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      const canvas = fxCanvasRef.current;
+      const fx = fxRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        stepParticles(fx.particles);
+        stepFloaters(fx.floaters);
+        for (let i = fx.flashes.length - 1; i >= 0; i -= 1) {
+          fx.flashes[i].life -= 0.06;
+          if (fx.flashes[i].life <= 0) fx.flashes.splice(i, 1);
+        }
+        // Rung: dời cả vùng lưới (lưới + canvas) bằng CSS transform cho khớp nhau.
+        const [ox, oy] = applyShake(fx.shake);
+        if (stageRef.current) {
+          stageRef.current.style.transform = (ox || oy) ? `translate(${ox}px, ${oy}px)` : '';
+        }
+        ctx.clearRect(0, 0, w, h);
+        // Nháy sáng theo hàng/cột vừa nổ.
+        for (const fl of fx.flashes) {
+          ctx.globalAlpha = Math.max(0, fl.life) * 0.55;
+          ctx.fillStyle = '#ffffff';
+          if (fl.type === 'row') {
+            const { y, ch } = cellCenter(fl.index, 0, w, h);
+            ctx.fillRect(0, y - ch / 2 - GAP, w, ch + GAP * 2);
+          } else {
+            const { x, cw } = cellCenter(0, fl.index, w, h);
+            ctx.fillRect(x - cw / 2 - GAP, 0, cw + GAP * 2, h);
+          }
+        }
+        ctx.globalAlpha = 1;
+        drawParticles(ctx, fx.particles);
+        drawFloaters(ctx, fx.floaters);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); stopMusic(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Bắn hiệu ứng khi có hàng/cột nổ: particle theo màu ô + nháy sáng + số điểm + combo + rung.
+  const triggerClearFx = (filledBoard, rows, cols, lines, gained) => {
+    const fx = fxRef.current;
+    const w = Math.round(fitRef2.current.w);
+    const h = Math.round(fitRef2.current.h);
+    const burstAt = (r, c) => {
+      const { x, y } = cellCenter(r, c, w, h);
+      const color = filledBoard[r][c] || '#ffffff';
+      spawnBurst(fx.particles, x, y, [color, '#ffffff'], 10, { spread: 3.6 });
+    };
+    rows.forEach((r) => {
+      fx.flashes.push({ type: 'row', index: r, life: 1 });
+      for (let c = 0; c < COLS; c += 1) burstAt(r, c);
+    });
+    cols.forEach((c) => {
+      fx.flashes.push({ type: 'col', index: c, life: 1 });
+      for (let r = 0; r < ROWS; r += 1) burstAt(r, c);
+    });
+    const cx = w / 2;
+    const cy = rows.length ? cellCenter(rows[0], 0, w, h).y : cellCenter(0, cols[0], w, h).y;
+    spawnFloater(fx.floaters, cx, cy, `+${gained}`, '#fde047', { size: 26 });
+    if (lines >= 2) {
+      spawnFloater(fx.floaters, cx, cy - 30, `Combo x${lines}`, '#f0abfc', { size: 22, decay: 0.014 });
+    }
+    addShake(fx.shake, 4 + lines * 3);
+  };
+
+  // Cảnh báo sắp bí: còn khối trong khay không thể đặt ở đâu (nhưng game chưa kết thúc).
+  const danger = useMemo(() => {
+    if (gameOver) return false;
+    const active = tray.filter((p) => p);
+    if (!active.length) return false;
+    return active.some((p) => !placeableAnywhere(board, p.shape));
+  }, [board, tray, gameOver]);
+
   const restart = useCallback(() => {
+    const fx = fxRef.current;
+    fx.particles.length = 0;
+    fx.floaters.length = 0;
+    fx.flashes.length = 0;
+    fx.shake.mag = 0;
     setBoard(emptyBoard());
     setTray(newTray());
     setScore(0);
@@ -169,6 +287,7 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
     if (gameOver) return;
     const piece = tray[slot];
     if (!piece) return;
+    ensureMusic();
     event.preventDefault();
     const a = computeAnchor(piece.shape, event.clientX, event.clientY);
     setDrag({
@@ -204,11 +323,13 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
       drag.shape.forEach(([r, c]) => { next[drag.anchor.r + r][drag.anchor.c + c] = drag.color; });
       const placedCells = drag.shape.length;
 
-      const { board: cleared, cleared: lines } = clearLines(next);
+      const { board: cleared, cleared: lines, rows, cols } = clearLines(next);
       let gained = placedCells;
       if (lines > 0) {
         gained += lines * 10 + (lines - 1) * 10; // thưởng combo
-        playSound('correct');
+        playSound('break'); // tiếng nổ hàng/cột
+        if (lines >= 2) playSound('combo', lines); // giai điệu combo leo thang
+        triggerClearFx(next, rows, cols, lines, gained); // particle + nháy + số điểm + rung
       } else {
         playSound('pop');
       }
@@ -225,6 +346,7 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
       // Kiểm tra kết thúc.
       if (!anyMove(cleared, refill)) {
         setGameOver(true);
+        stopMusic();
         if (nextScore > best) {
           setBest(nextScore);
           setNewRecord(true);
@@ -252,13 +374,22 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
           <ChevronLeft size={18} /> Thoát
         </button>
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🧱 Xếp khối</h1>
-        <button
-          type="button"
-          onClick={restart}
-          className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20"
-        >
-          <RotateCcw size={16} /> Mới
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <GameHelp>
+            <p className="mb-1.5">Kéo từng khối từ khay dưới lên <b>thả vào lưới</b>. Bóng khối theo ngón tay, buông tay để đặt.</p>
+            <p className="mb-1.5">Lấp đầy trọn <b>một hàng ngang</b> hoặc <b>một cột dọc</b> thì hàng/cột đó <b>nổ tung</b> và được điểm.</p>
+            <p className="mb-1 font-black text-fuchsia-300">Nổ nhiều dòng cùng lúc = Combo, điểm nhân lên! 💥</p>
+            <p>Hết chỗ đặt cả 3 khối là kết thúc — viền lưới sẽ <span className="text-rose-300 font-black">nháy đỏ</span> khi có khối bí chỗ.</p>
+          </GameHelp>
+          <SoundToggle />
+          <button
+            type="button"
+            onClick={restart}
+            className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20"
+          >
+            <RotateCcw size={16} /> Mới
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center gap-3 px-3 py-3">
@@ -275,13 +406,22 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
               <div className="text-2xl font-black text-amber-300">{best}</div>
             </div>
           </div>
+          <div className="flex items-center gap-1.5 rounded-2xl bg-yellow-400/15 px-4 py-2 text-center" title="Tổng Robux của bé">
+            <Gem size={18} className="fill-yellow-300/40 text-yellow-300" />
+            <div className="text-2xl font-black text-yellow-300">{robuxBalance}</div>
+          </div>
         </div>
 
         {/* Lưới — lấp đầy không gian còn lại */}
         <div ref={fitRef} className="flex min-h-0 w-full flex-1 items-center justify-center">
+        <div ref={stageRef} className="relative" style={{ width: fitSize.w, height: fitSize.h }}>
         <div
           ref={boardRef}
-          className="grid touch-none rounded-2xl bg-slate-950/70 p-1.5 shadow-[0_0_0_2px_rgba(96,165,250,0.4)]"
+          className={`grid touch-none rounded-2xl bg-slate-950/70 p-1.5 ${
+            danger
+              ? 'shadow-[0_0_0_3px_rgba(248,113,113,0.9)] animate-pulse'
+              : 'shadow-[0_0_0_2px_rgba(96,165,250,0.4)]'
+          }`}
           style={{
             width: fitSize.w,
             height: fitSize.h,
@@ -308,6 +448,15 @@ export default function BlockPuzzleApp({ onBack, onReward }) {
               );
             }),
           )}
+        </div>
+          {/* Lớp canvas phủ vẽ particle/số điểm/nháy sáng — không chặn thao tác kéo */}
+          <canvas
+            ref={fxCanvasRef}
+            width={Math.round(fitSize.w)}
+            height={Math.round(fitSize.h)}
+            className="pointer-events-none absolute inset-0 z-10"
+            style={{ width: fitSize.w, height: fitSize.h }}
+          />
         </div>
         </div>
 

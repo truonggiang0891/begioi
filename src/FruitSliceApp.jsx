@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RotateCcw, Trophy, Heart } from 'lucide-react';
+import { ChevronLeft, RotateCcw, Trophy, Heart, Gem } from 'lucide-react';
 import GameHelp from './GameHelp';
-import { playSound } from './gameAudio';
+import { playSound, startMusic, killMusic } from './gameAudio';
+import { SoundToggle } from './gameUI';
+import { spawnBurst, stepParticles, drawParticles, makeShake, addShake, applyShake } from './gameFx';
 import Fireworks from './Fireworks';
 import { useFitSize } from './useFitSize';
 import { useScoreRewards } from './gameRewards';
@@ -20,6 +22,9 @@ const FRUIT_COLORS = ['#ff3b3b', '#ff8a00', '#ffd000', '#7cf03a', '#00d9c0', '#f
 const FRUIT_R = 22;
 const FREEZE_MS = 3000;
 const FREEZE_FACTOR = 0.35;
+// Chế độ FRENZY: khi chuỗi chém trong 1 cú vuốt đủ dài -> vài giây nhiều quả + x2 điểm.
+const FRENZY_COMBO = 6;
+const FRENZY_MS = 4500;
 
 // Trộn màu với trắng/đen theo tỉ lệ p (âm = tối đi).
 const shade = (hex, p) => {
@@ -140,7 +145,7 @@ const makeFruit = () => {
   };
 };
 
-export default function FruitSliceApp({ onBack, onReward }) {
+export default function FruitSliceApp({ onBack, onReward, robuxBalance = 0 }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const { ref: fitRef, size: fitSize } = useFitSize(W, H);
@@ -156,6 +161,10 @@ export default function FruitSliceApp({ onBack, onReward }) {
   const freezeUntilRef = useRef(0);
   const freezeTimeoutRef = useRef(null);
   const comboTimeoutRef = useRef(null);
+  const musicRef = useRef(false);       // đã bật nhạc nền chưa
+  const whooshRef = useRef(0);          // chặn phát 'whoosh' quá dày
+  const frenzyUntilRef = useRef(0);     // thời điểm hết FRENZY
+  const frenzyTimeoutRef = useRef(null);
 
   const [score, setScore] = useState(0);
   useScoreRewards(score, onReward);
@@ -171,6 +180,7 @@ export default function FruitSliceApp({ onBack, onReward }) {
   const [newRecord, setNewRecord] = useState(false);
   const [freezeActive, setFreezeActive] = useState(false);
   const [comboText, setComboText] = useState('');
+  const [frenzyActive, setFrenzyActive] = useState(false);
 
   bestRef.current = best;
 
@@ -179,9 +189,18 @@ export default function FruitSliceApp({ onBack, onReward }) {
     setStatus(s);
   };
 
+  // Bật nhạc nền ở lần tương tác đầu (theo yêu cầu autoplay của trình duyệt).
+  const ensureMusic = () => {
+    if (musicRef.current) return;
+    musicRef.current = true;
+    startMusic('arcade');
+  };
+
   const addScore = (n) => {
+    // FRENZY -> nhân đôi điểm.
+    const mult = performance.now() < frenzyUntilRef.current ? 2 : 1;
     setScore((s) => {
-      const ns = s + n;
+      const ns = s + n * mult;
       scoreRef.current = ns;
       if (ns > bestRef.current) {
         bestRef.current = ns;
@@ -199,6 +218,8 @@ export default function FruitSliceApp({ onBack, onReward }) {
   const endGame = () => {
     setStatusBoth('over');
     setNewRecord(scoreRef.current > prevBestRef.current);
+    killMusic();
+    musicRef.current = false; // để lần chơi sau bật lại nhạc
   };
 
   const loseLife = () => {
@@ -222,16 +243,33 @@ export default function FruitSliceApp({ onBack, onReward }) {
     freezeTimeoutRef.current = setTimeout(() => setFreezeActive(false), FREEZE_MS);
   };
 
+  // Kích hoạt FRENZY: vài giây nhiều quả hơn + x2 điểm + chữ "FRENZY!".
+  const triggerFrenzy = () => {
+    const already = performance.now() < frenzyUntilRef.current;
+    frenzyUntilRef.current = performance.now() + FRENZY_MS;
+    setFrenzyActive(true);
+    if (!already) playSound('powerup');
+    clearTimeout(frenzyTimeoutRef.current);
+    frenzyTimeoutRef.current = setTimeout(() => setFrenzyActive(false), FRENZY_MS);
+  };
+
   const newGame = () => {
-    gRef.current = { fruits: [], halves: [], frame: 0, spawnTimer: 30, spawnEvery: 75, waveCount: 0 };
+    gRef.current = {
+      fruits: [], halves: [], particles: [], frame: 0,
+      spawnTimer: 30, spawnEvery: 75, waveCount: 0,
+      shake: makeShake(), flash: 0, // flash: cường độ chớp trắng khi nổ bom
+    };
     trailRef.current = [];
     pointerDownRef.current = false;
     lastPointRef.current = null;
     sliceRunRef.current = 0;
     clearTimeout(freezeTimeoutRef.current);
     clearTimeout(comboTimeoutRef.current);
+    clearTimeout(frenzyTimeoutRef.current);
     freezeUntilRef.current = 0;
+    frenzyUntilRef.current = 0;
     setFreezeActive(false);
+    setFrenzyActive(false);
     setComboText('');
     prevBestRef.current = bestRef.current;
     livesRef.current = 3;
@@ -248,7 +286,9 @@ export default function FruitSliceApp({ onBack, onReward }) {
     let raf = 0;
 
     const spawnWave = (g) => {
-      const count = scoreRef.current > 25 && Math.random() < 0.4 ? 2 : 1;
+      let count = scoreRef.current > 25 && Math.random() < 0.4 ? 2 : 1;
+      // FRENZY -> tung thêm quả cho rộn ràng.
+      if (performance.now() < frenzyUntilRef.current) count += 2;
       for (let i = 0; i < count; i += 1) g.fruits.push(makeFruit());
     };
 
@@ -284,16 +324,23 @@ export default function FruitSliceApp({ onBack, onReward }) {
         h.life -= 0.016;
       });
       g.halves = g.halves.filter((h) => h.life > 0 && h.y < H + 60);
+
+      // vụn nước/giọt màu + chớp trắng khi nổ bom
+      stepParticles(g.particles);
+      if (g.flash > 0) g.flash = Math.max(0, g.flash - 0.05);
     };
 
     const draw = () => {
       const g = gRef.current;
-      // nền
+      ctx.save();
+      const [ox, oy] = applyShake(g.shake); // rung màn hình khi nổ bom
+      ctx.translate(ox, oy);
+      // nền (phủ rộng hơn khung để lúc rung không lộ mép)
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, '#0c1a2e');
       grad.addColorStop(1, '#132743');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(-16, -16, W + 32, H + 32);
 
       // hào quang khi đóng băng
       if (performance.now() < freezeUntilRef.current) {
@@ -342,6 +389,9 @@ export default function FruitSliceApp({ onBack, onReward }) {
         ctx.restore();
       });
 
+      // vụn nước/giọt màu bắn ra khi chém (vẽ trên quả)
+      drawParticles(ctx, g.particles);
+
       // vệt lưỡi dao
       const trail = trailRef.current;
       if (trail.length > 1) {
@@ -363,6 +413,14 @@ export default function FruitSliceApp({ onBack, onReward }) {
         p.age += 1;
       });
       trailRef.current = trail.filter((p) => p.age < 10);
+
+      ctx.restore();
+
+      // chớp trắng toàn màn (không rung theo) khi nổ bom
+      if (g.flash > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${g.flash * 0.6})`;
+        ctx.fillRect(0, 0, W, H);
+      }
     };
 
     const loop = () => {
@@ -372,7 +430,7 @@ export default function FruitSliceApp({ onBack, onReward }) {
     };
     draw();
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); killMusic(); musicRef.current = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -380,7 +438,12 @@ export default function FruitSliceApp({ onBack, onReward }) {
     const g = gRef.current;
     g.fruits = g.fruits.filter((x) => x !== f);
     if (f.type === 'bomb') {
+      // Chém trúng bom: nổ, rung màn hình + chớp trắng.
       sliceRunRef.current = 0;
+      addShake(g.shake, 14);
+      g.flash = 1;
+      spawnBurst(g.particles, f.x, f.y, ['#ff8a00', '#ffd000', '#333333', '#777777'], 22, { spread: 6 });
+      playSound('explode');
       loseLife();
       return;
     }
@@ -404,12 +467,17 @@ export default function FruitSliceApp({ onBack, onReward }) {
         });
       });
     }
-    playSound('pop');
+    // Vụn nước/giọt màu theo màu quả (bổ sung cho 2 nửa quả).
+    const juice = f.type === 'fruit'
+      ? [f.color, shade(f.color, 0.5), '#ffffff']
+      : ['#ffffff', shade(f.color || '#7cf03a', 0.4)];
+    spawnBurst(g.particles, f.x, f.y, juice, 12, { spread: 5 });
+    playSound('break'); // tiếng chém quả
     addScore(1);
     sliceRunRef.current += 1;
     if (f.type === 'golden') {
       addScore(5);
-      playSound('correct');
+      playSound('coin'); // quả vàng
     } else if (f.type === 'freeze') {
       triggerFreeze();
     }
@@ -417,6 +485,8 @@ export default function FruitSliceApp({ onBack, onReward }) {
       addScore(sliceRunRef.current);
       triggerCombo(sliceRunRef.current);
     }
+    // Chuỗi chém đủ dài trong 1 cú vuốt -> FRENZY!
+    if (sliceRunRef.current >= FRENZY_COMBO) triggerFrenzy();
   };
 
   const toCanvasXY = (e) => {
@@ -429,7 +499,8 @@ export default function FruitSliceApp({ onBack, onReward }) {
 
   const onPointerDown = (e) => {
     if (statusRef.current !== 'playing') return;
-    canvasRef.current?.setPointerCapture?.(e.pointerId);
+    ensureMusic(); // lần vuốt đầu -> bật nhạc nền
+    try { canvasRef.current?.setPointerCapture?.(e.pointerId); } catch { /* pointer id không hợp lệ -> bỏ qua */ }
     const p = toCanvasXY(e);
     pointerDownRef.current = true;
     sliceRunRef.current = 0;
@@ -446,6 +517,13 @@ export default function FruitSliceApp({ onBack, onReward }) {
 
     const g = gRef.current;
     if (g && prev) {
+      // Âm 'whoosh' theo cú vuốt (chặn phát quá dày, chỉ khi vuốt đủ nhanh).
+      const speed = Math.hypot(p.x - prev.x, p.y - prev.y);
+      const now = performance.now();
+      if (speed > 14 && now - whooshRef.current > 160) {
+        whooshRef.current = now;
+        playSound('whoosh');
+      }
       const angle = Math.atan2(p.y - prev.y, p.x - prev.x);
       g.fruits.forEach((f) => {
         if (f.sliced) return;
@@ -478,8 +556,9 @@ export default function FruitSliceApp({ onBack, onReward }) {
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🍉 Chém hoa quả</h1>
         <div className="flex items-center gap-1.5">
           <GameHelp>
-            Vuốt qua trái cây để chém · né 💣 · ⭐ +5 điểm · ❄️ làm chậm thời gian
+            Vuốt qua trái cây để chém · né 💣 · ⭐ +5 điểm · ❄️ làm chậm thời gian · chém liền tay để vào FRENZY x2! 🔥
           </GameHelp>
+          <SoundToggle />
           <button
             type="button"
             onClick={newGame}
@@ -509,11 +588,20 @@ export default function FruitSliceApp({ onBack, onReward }) {
             <Trophy size={16} className="text-amber-400" />
             <div className="text-xl font-black text-amber-300">{best}</div>
           </div>
+          <div className="flex items-center gap-1 rounded-2xl bg-yellow-400/15 px-4 py-1.5 text-center" title="Tổng Robux của bé">
+            <Gem size={15} className="fill-yellow-300/40 text-yellow-300" />
+            <div className="text-xl font-black text-yellow-300">{robuxBalance}</div>
+          </div>
         </div>
 
         {freezeActive && (
           <div className="shrink-0 rounded-full bg-sky-400/20 px-4 py-1 text-xs font-black text-sky-300">
             ❄️ Đóng băng — chậm lại!
+          </div>
+        )}
+        {frenzyActive && (
+          <div className="shrink-0 animate-pulse rounded-full bg-orange-500/25 px-4 py-1 text-xs font-black text-orange-300">
+            🔥 FRENZY! Nhiều quả — điểm x2!
           </div>
         )}
 
@@ -534,6 +622,11 @@ export default function FruitSliceApp({ onBack, onReward }) {
             {comboText && (
               <div className="pointer-events-none absolute inset-x-0 top-6 text-center text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                 {comboText}
+              </div>
+            )}
+            {frenzyActive && (
+              <div className="pointer-events-none absolute inset-x-0 top-1/3 animate-bounce text-center text-4xl font-black tracking-wider text-orange-400 drop-shadow-[0_3px_6px_rgba(0,0,0,0.7)]">
+                FRENZY! 🔥
               </div>
             )}
           </div>
