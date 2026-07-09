@@ -190,7 +190,9 @@ export default function AlbumApp({ onBack }) {
   const [covers, setCovers] = useState(loadCovers); // ảnh bìa tự chọn
   const [toast, setToast] = useState('');
 
-  // Tải danh sách album + ảnh bìa + số lượng, đồng thời cache media để mở album là hiện ngay.
+  // GĐ1: hiện danh sách album NGAY với ảnh bìa (chỉ tải 1 file/album — rất nhẹ).
+  // GĐ2: đếm số lượng ảnh/video ở NỀN (không chặn, không tải ảnh bên trong).
+  // Ảnh bên trong album chỉ tải khi bạn mở album đó (openAlbum).
   useEffect(() => {
     if (albumsCache) return undefined;
     let alive = true;
@@ -202,29 +204,36 @@ export default function AlbumApp({ onBack }) {
           `'${ALBUM_CONFIG.rootFolderId}' in parents and mimeType = '${FOLDER_MIME}' and trashed = false`,
           { orderBy: 'name' }
         );
-        const built = await Promise.all(
+        // GĐ1: chỉ lấy ảnh bìa (1 file/album) -> hiện list ngay.
+        const withCovers = await Promise.all(
           folders.map(async (f) => {
             try {
-              const files = await driveList(MEDIA_QUERY(f.id), { orderBy: 'createdTime desc' });
-              mediaCache.set(f.id, [...files].reverse()); // cũ -> mới cho lúc mở album
-              const videoCount = files.filter((x) => isVideo(x.mimeType)).length;
-              return {
-                id: f.id,
-                name: f.name,
-                cover: files[0]?.id || null,
-                imageCount: files.length - videoCount,
-                videoCount,
-              };
+              const first = await driveList(MEDIA_QUERY(f.id), { orderBy: 'createdTime desc', pageSize: '1' });
+              return { id: f.id, name: f.name, cover: first[0]?.id || null };
             } catch {
-              return { id: f.id, name: f.name, cover: null, imageCount: 0, videoCount: 0 };
+              return { id: f.id, name: f.name, cover: null };
             }
           })
         );
-        if (alive) { setAlbums(built); albumsCache = built; }
+        if (!alive) return;
+        setAlbums(withCovers);
+        albumsCache = withCovers;
+        setAlbumsLoading(false);
+
+        // GĐ2 (nền): đếm số lượng + cache metadata (KHÔNG tải ảnh) cho từng album.
+        folders.forEach(async (f) => {
+          try {
+            const files = await driveList(MEDIA_QUERY(f.id), { orderBy: 'createdTime desc' });
+            if (!alive) return;
+            mediaCache.set(f.id, [...files].reverse());
+            const videoCount = files.filter((x) => isVideo(x.mimeType)).length;
+            const patch = { imageCount: files.length - videoCount, videoCount };
+            setAlbums((prev) => prev.map((a) => (a.id === f.id ? { ...a, ...patch } : a)));
+            if (albumsCache) albumsCache = albumsCache.map((a) => (a.id === f.id ? { ...a, ...patch } : a));
+          } catch { /* bỏ qua, không có số cũng không sao */ }
+        });
       } catch (err) {
-        if (alive) setAlbumsError(err.message || 'Không tải được album');
-      } finally {
-        if (alive) setAlbumsLoading(false);
+        if (alive) { setAlbumsError(err.message || 'Không tải được album'); setAlbumsLoading(false); }
       }
     })();
     return () => { alive = false; };
