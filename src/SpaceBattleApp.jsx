@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Rocket, Zap, Shield, CircleDot } from 'lucide-react';
-import { playSound } from './gameAudio';
+import { ChevronLeft, RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Rocket, Zap, Shield, CircleDot, Gem } from 'lucide-react';
+import { playSound, startMusic, killMusic } from './gameAudio';
 import Fireworks from './Fireworks';
+import { SoundToggle } from './gameUI';
+import { spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters, makeShake, addShake, applyShake } from './gameFx';
 import { useFitSize } from './useFitSize';
 import GameHelp from './GameHelp';
 import { useScoreRewards } from './gameRewards';
@@ -47,7 +49,7 @@ const makeWave = (rows) => {
   return enemies;
 };
 
-export default function SpaceBattleApp({ onBack, onReward }) {
+export default function SpaceBattleApp({ onBack, onReward, robuxBalance = 0 }) {
   const canvasRef = useRef(null);
   const gRef = useRef(null);
   const moveRef = useRef(0);
@@ -68,6 +70,8 @@ export default function SpaceBattleApp({ onBack, onReward }) {
   const [newRecord, setNewRecord] = useState(false);
   const overRef = useRef(false);
   const setOverBoth = (v) => { overRef.current = v; setOver(v); };
+  const musicRef = useRef(false);
+  const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('tense'); } };
 
   const newGame = () => {
     gRef.current = {
@@ -76,6 +80,11 @@ export default function SpaceBattleApp({ onBack, onReward }) {
       eBullets: [],
       powerups: [],
       explosions: [],
+      particles: [],
+      floaters: [],
+      shake: makeShake(),
+      combo: 0,
+      comboTimer: 0,
       enemies: makeWave(2),
       edir: 1,
       espeed: 0.45,
@@ -109,7 +118,13 @@ export default function SpaceBattleApp({ onBack, onReward }) {
 
     const draw = () => {
       const g = gRef.current;
-      ctx.fillStyle = '#0b1220';
+      ctx.save();
+      const [ox, oy] = applyShake(g.shake);
+      ctx.translate(ox, oy);
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0b1220');
+      bg.addColorStop(1, '#0f1830');
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
       // địch
       g.enemies.forEach((e) => {
@@ -225,6 +240,9 @@ export default function SpaceBattleApp({ onBack, onReward }) {
         ctx.stroke();
         ctx.lineWidth = 1;
       }
+      drawParticles(ctx, g.particles);
+      drawFloaters(ctx, g.floaters);
+      ctx.restore();
     };
 
     const onKill = (g, e) => {
@@ -232,7 +250,18 @@ export default function SpaceBattleApp({ onBack, onReward }) {
       curScore += 10;
       setScore(curScore);
       if (curScore > best) { setBest(curScore); try { localStorage.setItem(BEST_KEY, String(curScore)); } catch { /* ignore */ } }
-      playSound('pop');
+      // particle + combo
+      spawnBurst(g.particles, e.x + EW / 2, e.y + EH / 2, [e.color, '#ffffff', '#fde047'], 14, { spread: 4.2 });
+      addShake(g.shake, 3);
+      g.combo = (g.combo || 0) + 1;
+      g.comboTimer = 70;
+      playSound('break');
+      if (g.combo >= 3) {
+        playSound('combo', g.combo);
+        spawnFloater(g.floaters, e.x + EW / 2, e.y, `Combo x${g.combo}`, '#f0abfc', { size: 13 });
+      } else {
+        spawnFloater(g.floaters, e.x + EW / 2, e.y, '+10', '#fde047', { size: 13 });
+      }
       // cơ hội rớt phần thưởng (gun / rocket / shield / counter)
       if (Math.random() < 0.32 && g.powerups.length < 4) {
         const roll = Math.random();
@@ -264,6 +293,9 @@ export default function SpaceBattleApp({ onBack, onReward }) {
       const g = gRef.current;
       g.frame += 1;
       if (g.invuln > 0) g.invuln -= 1;
+      stepParticles(g.particles);
+      stepFloaters(g.floaters);
+      if (g.comboTimer > 0) { g.comboTimer -= 1; if (g.comboTimer === 0) g.combo = 0; }
 
       g.ship.x = Math.max(0, Math.min(W - SHIP_W, g.ship.x + moveRef.current * 4));
 
@@ -334,7 +366,8 @@ export default function SpaceBattleApp({ onBack, onReward }) {
               g.enemies.forEach((en) => {
                 if (en.alive && Math.hypot(en.x + EW / 2 - ex, en.y + EH / 2 - ey) < EXPLOSION_RADIUS) onKill(g, en);
               });
-              playSound('correct');
+              addShake(g.shake, 8);
+              playSound('explode');
             } else {
               onKill(g, e);
             }
@@ -394,8 +427,10 @@ export default function SpaceBattleApp({ onBack, onReward }) {
             } else {
               curLives -= 1;
               setLives(curLives);
-              playSound('wrong');
-              if (curLives <= 0) { setOverBoth(true); if (curScore > best) setNewRecord(true); }
+              g.combo = 0;
+              addShake(g.shake, 12);
+              playSound('lose');
+              if (curLives <= 0) { setOverBoth(true); killMusic(); if (curScore > best) setNewRecord(true); }
             }
             break;
           }
@@ -409,13 +444,16 @@ export default function SpaceBattleApp({ onBack, onReward }) {
         g.efireChance = Math.min(0.008, g.efireChance + 0.0009);
         g.enemies = makeWave(Math.min(6, 1 + g.wave));
         g.eBullets = [];
-        playSound('correct');
+        spawnFloater(g.floaters, W / 2, H / 3, `Đợt ${g.wave}!`, '#67e8f9', { size: 24, decay: 0.012 });
+        playSound('levelup');
       }
 
       // địch chạm tới thuyền -> thua
       if (alive.some((e) => e.y + EH >= SHIP_Y)) {
         setOverBoth(true);
-        if (curScore > best) setNewRecord(true); else playSound('wrong');
+        killMusic();
+        addShake(g.shake, 12);
+        if (curScore > best) setNewRecord(true); else playSound('lose');
       }
     };
 
@@ -426,7 +464,7 @@ export default function SpaceBattleApp({ onBack, onReward }) {
     };
     draw();
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); killMusic(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -441,16 +479,17 @@ export default function SpaceBattleApp({ onBack, onReward }) {
   const fireRocket = () => {
     const g = gRef.current;
     if (!g || overRef.current || g.rockets <= 0) return;
+    ensureMusic();
     g.rockets -= 1;
     setRockets(g.rockets);
     g.pBullets.push({ x: g.ship.x + SHIP_W / 2, y: SHIP_Y, vx: 0, vy: -ROCKET_SPEED, rocket: true });
-    playSound('correct');
+    playSound('shoot');
   };
 
   useEffect(() => {
     const onDown = (e) => {
-      if (e.key === 'ArrowLeft') moveRef.current = -1;
-      else if (e.key === 'ArrowRight') moveRef.current = 1;
+      if (e.key === 'ArrowLeft') { moveRef.current = -1; ensureMusic(); }
+      else if (e.key === 'ArrowRight') { moveRef.current = 1; ensureMusic(); }
       else if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); fireRocket(); }
     };
     const onUp = (e) => { if ((e.key === 'ArrowLeft' && moveRef.current === -1) || (e.key === 'ArrowRight' && moveRef.current === 1)) moveRef.current = 0; };
@@ -466,6 +505,7 @@ export default function SpaceBattleApp({ onBack, onReward }) {
     const isDown = e.type === 'pointerdown';
     if (!isDown && !(e.pointerType === 'touch' || e.buttons)) return;
     const g = gRef.current; if (!g) return;
+    if (isDown) ensureMusic();
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = rect.width ? W / rect.width : 1;
     if (isDown || !steerRef.current) {
@@ -476,7 +516,7 @@ export default function SpaceBattleApp({ onBack, onReward }) {
     g.ship.x = Math.max(0, Math.min(W - SHIP_W, steerRef.current.startShipX + dx));
   };
   const endSteer = () => { steerRef.current = null; };
-  const hold = (v) => ({ onPointerDown: () => { moveRef.current = v; }, onPointerUp: () => { moveRef.current = 0; }, onPointerLeave: () => { moveRef.current = 0; } });
+  const hold = (v) => ({ onPointerDown: () => { moveRef.current = v; ensureMusic(); }, onPointerUp: () => { moveRef.current = 0; }, onPointerLeave: () => { moveRef.current = 0; } });
 
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-800 to-slate-900">
@@ -487,8 +527,9 @@ export default function SpaceBattleApp({ onBack, onReward }) {
         <h1 className="truncate text-lg font-black text-white md:text-2xl">✈️ Không chiến</h1>
         <div className="flex items-center gap-1.5">
           <GameHelp>
-            Kéo <b>bên dưới</b> để lái thuyền · Bấm <span className="text-cyan-300">⚡Lv</span>/<span className="text-violet-300">💠Lv</span> để đổi loại đạn (chỉ bắn 1 loại) · <span className="text-green-300">🛡️ giáp</span> đỡ đạn · <span className="text-orange-300">🚀 tên lửa nổ lan</span>
+            Kéo <b>bên dưới</b> để lái thuyền · Bấm <span className="text-cyan-300">⚡Lv</span>/<span className="text-violet-300">💠Lv</span> để đổi loại đạn (chỉ bắn 1 loại) · <span className="text-green-300">🛡️ giáp</span> đỡ đạn · <span className="text-orange-300">🚀 tên lửa nổ lan</span>. Hạ địch liên tiếp để lên <b>combo</b>!
           </GameHelp>
+          <SoundToggle />
           <button type="button" onClick={newGame} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
             <RotateCcw size={16} /> Mới
           </button>
@@ -536,6 +577,10 @@ export default function SpaceBattleApp({ onBack, onReward }) {
         <div className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 px-3 py-1.5 text-center">
           <Trophy size={15} className="text-amber-400" />
           <div className="text-lg font-black text-amber-300">{best}</div>
+        </div>
+        <div className="flex items-center gap-1 rounded-2xl bg-yellow-400/15 px-3 py-1.5 text-center" title="Tổng Robux của bé">
+          <Gem size={15} className="fill-yellow-300/40 text-yellow-300" />
+          <div className="text-lg font-black text-yellow-300">{robuxBalance}</div>
         </div>
       </div>
 
