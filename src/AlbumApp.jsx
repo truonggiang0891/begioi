@@ -559,8 +559,8 @@ export default function AlbumApp({ onBack }) {
                 {coverId ? (
                   <img
                     key={coverId}
-                    src={thumbUrl(coverId, 600)}
-                    onError={(e) => handleImgError(e, coverId, 600)}
+                    src={thumbUrl(coverId, 400)}
+                    onError={(e) => handleImgError(e, coverId, 400)}
                     onLoad={fadeIn}
                     alt={cleanName(a.name)}
                     loading="lazy"
