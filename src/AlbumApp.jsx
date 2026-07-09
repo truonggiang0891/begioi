@@ -483,11 +483,12 @@ export default function AlbumApp({ onBack }) {
                 className="group relative aspect-square overflow-hidden rounded-2xl bg-slate-200 shadow transition active:scale-95"
               >
                 <img
-                  src={thumbUrl(item.id, 600)}
-                  onError={(e) => handleImgError(e, item.id, 600)}
+                  src={thumbUrl(item.id, 400)}
+                  onError={(e) => handleImgError(e, item.id, 400)}
                   onLoad={fadeIn}
                   alt={item.name}
                   loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover opacity-0 transition-all duration-500 group-hover:scale-105"
                 />
                 {video && (
