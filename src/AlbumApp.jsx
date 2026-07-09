@@ -564,12 +564,14 @@ export default function AlbumApp({ onBack }) {
                 <span className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/80 text-violet-500 shadow">
                   <Camera size={16} />
                 </span>
+                {parts.length > 0 && (
+                  <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-bold text-white/90 backdrop-blur-sm">
+                    {parts.join(' · ')}
+                  </span>
+                )}
               </div>
-              <span className="truncate px-3 pt-2 text-center text-sm font-black text-slate-700">
+              <span className="truncate px-2 py-2 text-center text-sm font-black text-slate-700">
                 {cleanName(a.name)}
-              </span>
-              <span className="truncate px-3 pb-2 text-center text-[11px] font-bold text-slate-400">
-                {parts.join(' · ') || 'Trống'}
               </span>
             </button>
           );
