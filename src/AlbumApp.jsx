@@ -8,7 +8,7 @@ import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 
 const API = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
-const SLIDESHOW_MS = 3500;
+const IMAGE_SLIDESHOW_MS = 2500; // ảnh: mỗi 2.5s (video thì chờ phát hết)
 
 // Gọi Drive API list. Chỉ cần API key vì folder đã chia sẻ công khai.
 const driveList = async (query, extra = {}) => {
@@ -258,6 +258,8 @@ export default function AlbumApp({ onBack }) {
   const closeLightbox = useCallback(() => { setLightbox(null); setPlaying(false); }, []);
   const goPrev = useCallback(() => setLightbox((i) => (i > 0 ? i - 1 : i)), []);
   const goNext = useCallback(() => setLightbox((i) => (i < media.length - 1 ? i + 1 : i)), [media.length]);
+  // Chuyển tiếp trong trình chiếu (quay vòng) — dùng khi hết giờ ảnh hoặc video phát xong.
+  const goNextLoop = useCallback(() => setLightbox((i) => (i === null ? i : (i + 1) % media.length)), [media.length]);
 
   // Bàn phím trong lightbox.
   useEffect(() => {
@@ -271,12 +273,14 @@ export default function AlbumApp({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [lightbox, goPrev, goNext, closeLightbox]);
 
-  // Trình chiếu tự động (lặp lại). Không phụ thuộc lightbox để bộ đếm chạy đều 1 nhịp.
+  // Trình chiếu tự động. Ảnh: chuyển sau 2.5s. Video: KHÔNG hẹn giờ — chờ video phát xong
+  // (VideoSlide gọi goNextLoop khi hết), để "phát từng video một".
   useEffect(() => {
-    if (!playing || media.length < 2) return undefined;
-    const id = setInterval(() => setLightbox((i) => (i === null ? i : (i + 1) % media.length)), SLIDESHOW_MS);
-    return () => clearInterval(id);
-  }, [playing, media.length]);
+    if (!playing || lightbox === null || media.length < 2) return undefined;
+    if (isVideo(media[lightbox]?.mimeType)) return undefined;
+    const t = setTimeout(goNextLoop, IMAGE_SLIDESHOW_MS);
+    return () => clearTimeout(t);
+  }, [playing, lightbox, media, goNextLoop]);
 
   // Tải sẵn ảnh kế/trước để lướt cho nhanh.
   useEffect(() => {
@@ -403,6 +407,12 @@ export default function AlbumApp({ onBack }) {
         {toast && (
           <div className="pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 rounded-full bg-black/75 px-4 py-2 text-sm font-bold text-white shadow-lg">
             {toast}
+          </div>
+        )}
+
+        {playing && video && (
+          <div className="pointer-events-none absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
+            Xem xong bấm › để chiếu tiếp
           </div>
         )}
       </div>
