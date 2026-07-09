@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="rainbow-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0f2fe"/>
+      <stop offset="1" stop-color="#bae6fd"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#rainbow-bg)"/>
+  <!-- mặt trời góc trên trái -->
+  <circle cx="52" cy="52" r="34" fill="#fde047"/>
+  <g stroke="#facc15" stroke-width="6" stroke-linecap="round">
+    <line x1="52" y1="-2" x2="52" y2="16"/>
+    <line x1="-2" y1="52" x2="16" y2="52"/>
+    <line x1="14" y1="14" x2="27" y2="27"/>
+    <line x1="90" y1="14" x2="77" y2="27"/>
+    <line x1="14" y1="90" x2="27" y2="77"/>
+  </g>
+  <!-- cầu vồng: 7 dải cung màu từ mép trái sang mép phải -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M-10 380 A 210 210 0 0 1 410 380" stroke="#ef4444" stroke-width="26"/>
+    <path d="M-10 380 A 184 184 0 0 1 410 380" stroke="#f97316" stroke-width="26"/>
+    <path d="M-10 380 A 158 158 0 0 1 410 380" stroke="#facc15" stroke-width="26"/>
+    <path d="M-10 380 A 132 132 0 0 1 410 380" stroke="#22c55e" stroke-width="26"/>
+    <path d="M-10 380 A 106 106 0 0 1 410 380" stroke="#0ea5e9" stroke-width="26"/>
+    <path d="M-10 380 A 80 80 0 0 1 410 380" stroke="#6366f1" stroke-width="26"/>
+    <path d="M-10 380 A 54 54 0 0 1 410 380" stroke="#a855f7" stroke-width="26"/>
+  </g>
+  <!-- ngôi sao lấp lánh -->
+  <g fill="#fef08a">
+    <polygon points="310,60 316,78 334,78 320,89 325,107 310,96 295,107 300,89 286,78 304,78"/>
+    <polygon points="360,150 364,162 376,162 366,169 370,181 360,174 350,181 354,169 344,162 356,162"/>
+    <polygon points="150,70 154,82 166,82 156,89 160,101 150,94 140,101 144,89 134,82 146,82"/>
+  </g>
+  <!-- mây trái (chân cầu vồng) -->
+  <g fill="#ffffff">
+    <ellipse cx="70" cy="352" rx="52" ry="34"/>
+    <circle cx="40" cy="350" r="28"/>
+    <circle cx="78" cy="326" r="34"/>
+    <circle cx="112" cy="350" r="26"/>
+  </g>
+  <!-- mây phải (chân cầu vồng) -->
+  <g fill="#ffffff">
+    <ellipse cx="330" cy="352" rx="52" ry="34"/>
+    <circle cx="300" cy="348" r="26"/>
+    <circle cx="326" cy="324" r="34"/>
+    <circle cx="366" cy="350" r="28"/>
+  </g>
+</svg>

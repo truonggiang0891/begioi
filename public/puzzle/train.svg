@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="train-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bfdbfe"/>
+      <stop offset="1" stop-color="#e0f2fe"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#train-sky)"/>
+  <!-- mặt trời -->
+  <circle cx="350" cy="56" r="30" fill="#fde047"/>
+  <!-- mây -->
+  <g fill="#ffffff">
+    <circle cx="70" cy="60" r="22"/>
+    <circle cx="98" cy="60" r="28"/>
+    <circle cx="128" cy="62" r="20"/>
+  </g>
+  <!-- cỏ nền -->
+  <rect x="0" y="316" width="400" height="84" fill="#86efac"/>
+  <!-- đường ray -->
+  <rect x="0" y="330" width="400" height="10" fill="#78350f"/>
+  <rect x="0" y="352" width="400" height="10" fill="#78350f"/>
+  <g fill="#a16207">
+    <rect x="24" y="330" width="12" height="32"/>
+    <rect x="96" y="330" width="12" height="32"/>
+    <rect x="168" y="330" width="12" height="32"/>
+    <rect x="240" y="330" width="12" height="32"/>
+    <rect x="312" y="330" width="12" height="32"/>
+    <rect x="368" y="330" width="12" height="32"/>
+  </g>
+  <!-- khói tròn từ ống khói -->
+  <g fill="#f8fafc" stroke="#cbd5e1" stroke-width="3">
+    <circle cx="96" cy="60" r="16"/>
+    <circle cx="118" cy="42" r="20"/>
+    <circle cx="146" cy="30" r="24"/>
+  </g>
+  <!-- TOA sau (màu vàng) -->
+  <rect x="248" y="180" width="130" height="112" rx="16" fill="#f59e0b"/>
+  <rect x="262" y="196" width="46" height="46" rx="8" fill="#fef3c7"/>
+  <rect x="318" y="196" width="46" height="46" rx="8" fill="#fef3c7"/>
+  <rect x="248" y="262" width="130" height="14" fill="#b45309"/>
+  <!-- móc nối -->
+  <rect x="230" y="256" width="26" height="10" fill="#334155"/>
+  <!-- ĐẦU TÀU (thân đỏ) -->
+  <rect x="40" y="150" width="176" height="142" rx="20" fill="#ef4444"/>
+  <!-- buồng lái xanh -->
+  <rect x="40" y="150" width="86" height="142" rx="20" fill="#3b82f6"/>
+  <!-- cửa sổ buồng lái -->
+  <rect x="58" y="172" width="52" height="48" rx="10" fill="#e0f2fe" stroke="#1d4ed8" stroke-width="5"/>
+  <!-- ống khói -->
+  <rect x="150" y="96" width="34" height="60" rx="6" fill="#dc2626"/>
+  <rect x="142" y="88" width="50" height="18" rx="8" fill="#991b1b"/>
+  <!-- dải trang trí thân -->
+  <rect x="126" y="228" width="90" height="18" fill="#fbbf24"/>
+  <!-- đèn vàng phía trước -->
+  <circle cx="200" cy="200" r="20" fill="#fde047" stroke="#f59e0b" stroke-width="5"/>
+  <circle cx="200" cy="200" r="7" fill="#fffbeb"/>
+  <!-- gầm tàu -->
+  <rect x="40" y="286" width="176" height="16" fill="#7f1d1d"/>
+  <!-- bánh xe -->
+  <g>
+    <circle cx="86" cy="308" r="26" fill="#1f2937" stroke="#fbbf24" stroke-width="6"/>
+    <circle cx="86" cy="308" r="8" fill="#9ca3af"/>
+    <circle cx="170" cy="308" r="26" fill="#1f2937" stroke="#fbbf24" stroke-width="6"/>
+    <circle cx="170" cy="308" r="8" fill="#9ca3af"/>
+    <circle cx="300" cy="308" r="22" fill="#1f2937" stroke="#fbbf24" stroke-width="6"/>
+    <circle cx="300" cy="308" r="7" fill="#9ca3af"/>
+    <circle cx="356" cy="308" r="22" fill="#1f2937" stroke="#fbbf24" stroke-width="6"/>
+    <circle cx="356" cy="308" r="7" fill="#9ca3af"/>
+  </g>
+  <!-- mặt cười trên đầu tàu -->
+  <g>
+    <ellipse cx="150" cy="196" rx="12" ry="14" fill="#ffffff"/>
+    <ellipse cx="188" cy="196" rx="12" ry="14" fill="#ffffff"/>
+    <circle cx="152" cy="199" r="6" fill="#1f2937"/>
+    <circle cx="186" cy="199" r="6" fill="#1f2937"/>
+    <path d="M150 226 q19 16 38 0" stroke="#7f1d1d" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

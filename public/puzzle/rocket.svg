@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="rocket-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="1" stop-color="#4c1d95"/>
+    </linearGradient>
+    <linearGradient id="rocket-flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde047"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#rocket-bg)"/>
+  <!-- ngoi sao vang phu kin khung -->
+  <g fill="#fde047">
+    <polygon points="50,50 55,63 68,63 57,71 61,84 50,76 39,84 43,71 32,63 45,63"/>
+    <polygon points="345,60 349,71 360,71 351,78 355,89 345,82 335,89 339,78 330,71 341,71"/>
+    <polygon points="80,340 84,351 95,351 86,358 90,369 80,362 70,369 74,358 65,351 76,351"/>
+    <polygon points="330,320 334,331 345,331 336,338 340,349 330,342 320,349 324,338 315,331 326,331"/>
+    <circle cx="120" cy="110" r="3"/>
+    <circle cx="300" cy="150" r="3"/>
+    <circle cx="60" cy="200" r="3"/>
+    <circle cx="360" cy="220" r="3"/>
+    <circle cx="150" cy="60" r="2.5"/>
+    <circle cx="250" cy="360" r="2.5"/>
+    <circle cx="40" cy="300" r="2.5"/>
+    <circle cx="370" cy="130" r="2.5"/>
+  </g>
+  <!-- hanh tinh nho -->
+  <circle cx="330" cy="250" r="26" fill="#38bdf8"/>
+  <ellipse cx="330" cy="250" rx="40" ry="12" fill="none" stroke="#f0abfc" stroke-width="5" opacity="0.8"/>
+  <circle cx="70" cy="120" r="18" fill="#f472b6"/>
+  <circle cx="64" cy="114" r="5" fill="#fbcfe8" opacity="0.7"/>
+  <!-- luong lua phun duoi -->
+  <path d="M175 300 q25 70 25 92 q0 -22 25 -92 z" fill="url(#rocket-flame)"/>
+  <path d="M186 300 q14 46 14 66 q0 -20 14 -66 z" fill="#fef08a"/>
+  <!-- than ten lua -->
+  <path d="M200 40 C 150 90, 148 210, 158 300 L 242 300 C 252 210, 250 90, 200 40 Z" fill="#f8fafc"/>
+  <!-- soc do than -->
+  <path d="M158 300 L 242 300 C 244 282, 245 262, 246 244 L 154 244 C 155 262, 156 282, 158 300 Z" fill="#ef4444"/>
+  <!-- chop nhon do -->
+  <path d="M200 40 C 172 68, 160 110, 156 140 C 180 128, 220 128, 244 140 C 240 110, 228 68, 200 40 Z" fill="#dc2626"/>
+  <!-- cua so tron xanh -->
+  <circle cx="200" cy="180" r="34" fill="#1e3a8a"/>
+  <circle cx="200" cy="180" r="34" fill="none" stroke="#f8fafc" stroke-width="6"/>
+  <circle cx="200" cy="180" r="24" fill="#38bdf8"/>
+  <circle cx="190" cy="170" r="8" fill="#e0f2fe" opacity="0.85"/>
+  <!-- 2 vay tam giac -->
+  <path d="M158 250 L 118 320 L 158 300 Z" fill="#dc2626"/>
+  <path d="M242 250 L 282 320 L 242 300 Z" fill="#dc2626"/>
+  <!-- vay giua nho -->
+  <path d="M200 300 L 190 330 L 210 330 Z" fill="#b91c1c"/>
+</svg>

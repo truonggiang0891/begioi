@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="unicorn-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede9fe"/>
+      <stop offset="1" stop-color="#fbcfe8"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#unicorn-bg)"/>
+  <!-- ngôi sao nền -->
+  <polygon points="60,60 66,78 85,78 70,90 76,108 60,96 44,108 50,90 35,78 54,78" fill="#fde68a"/>
+  <polygon points="345,80 350,94 365,94 353,103 358,118 345,109 332,118 337,103 325,94 340,94" fill="#fef08a"/>
+  <polygon points="330,320 335,334 350,334 338,343 343,358 330,349 317,358 322,343 310,334 325,334" fill="#fde68a"/>
+  <circle cx="70" cy="300" r="6" fill="#fef08a"/>
+  <circle cx="360" cy="200" r="5" fill="#fde68a"/>
+
+  <!-- bờm cầu vồng bồng bềnh quanh đầu -->
+  <g>
+    <circle cx="120" cy="90"  r="42" fill="#f87171"/>
+    <circle cx="80"  cy="140" r="42" fill="#fb923c"/>
+    <circle cx="66"  cy="200" r="42" fill="#fbbf24"/>
+    <circle cx="72"  cy="262" r="42" fill="#34d399"/>
+    <circle cx="105" cy="315" r="42" fill="#38bdf8"/>
+    <circle cx="160" cy="345" r="42" fill="#818cf8"/>
+    <circle cx="222" cy="352" r="42" fill="#c084fc"/>
+    <circle cx="285" cy="335" r="40" fill="#f472b6"/>
+    <circle cx="322" cy="290" r="38" fill="#fb7185"/>
+    <circle cx="300" cy="140" r="40" fill="#f472b6"/>
+    <circle cx="255" cy="95"  r="40" fill="#c084fc"/>
+  </g>
+
+  <!-- tai -->
+  <path d="M150 118 l-10 -46 44 26 z" fill="#fdf2f8"/>
+  <path d="M255 120 l14 -44 -46 24 z" fill="#fdf2f8"/>
+  <path d="M152 112 l-4 -26 22 16 z" fill="#f9a8d4"/>
+  <path d="M250 114 l6 -24 -24 14 z" fill="#f9a8d4"/>
+
+  <!-- sừng xoắn vàng -->
+  <polygon points="200,30 214,120 186,120" fill="#fbbf24"/>
+  <polygon points="200,30 207,75 193,75" fill="#fcd34d"/>
+  <g stroke="#f59e0b" stroke-width="4" stroke-linecap="round">
+    <line x1="191" y1="112" x2="209" y2="108"/>
+    <line x1="193" y1="94"  x2="207" y2="90"/>
+    <line x1="195" y1="76"  x2="205" y2="73"/>
+    <line x1="197" y1="60"  x2="203" y2="58"/>
+  </g>
+
+  <!-- mặt trắng kem -->
+  <ellipse cx="200" cy="220" rx="118" ry="120" fill="#fffdf7"/>
+  <ellipse cx="200" cy="255" rx="90" ry="80" fill="#fdf4ff"/>
+
+  <!-- má hồng -->
+  <circle cx="140" cy="255" r="22" fill="#fbb6ce"/>
+  <circle cx="260" cy="255" r="22" fill="#fbb6ce"/>
+
+  <!-- lông mi + mắt -->
+  <g stroke="#5b21b6" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M118 178 q22 -14 44 -4"/>
+    <path d="M238 174 q22 -10 44 4"/>
+  </g>
+  <ellipse cx="152" cy="215" rx="20" ry="26" fill="#ffffff"/>
+  <ellipse cx="248" cy="215" rx="20" ry="26" fill="#ffffff"/>
+  <circle cx="154" cy="220" r="12" fill="#3b0764"/>
+  <circle cx="246" cy="220" r="12" fill="#3b0764"/>
+  <circle cx="158" cy="215" r="4.5" fill="#ffffff"/>
+  <circle cx="250" cy="215" r="4.5" fill="#ffffff"/>
+  <!-- lông mi trên đuôi mắt -->
+  <g stroke="#5b21b6" stroke-width="4" stroke-linecap="round">
+    <line x1="130" y1="196" x2="120" y2="188"/>
+    <line x1="270" y1="196" x2="280" y2="188"/>
+  </g>
+
+  <!-- mũi + miệng -->
+  <ellipse cx="185" cy="288" rx="6" ry="4" fill="#d8749a"/>
+  <ellipse cx="215" cy="288" rx="6" ry="4" fill="#d8749a"/>
+  <path d="M185 300 q15 16 30 0" stroke="#a21caf" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>

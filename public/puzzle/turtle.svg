@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="turtle-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cffafe"/>
+      <stop offset="1" stop-color="#a7f3d0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#turtle-bg)"/>
+  <!-- co dai duoi day -->
+  <path d="M0 400 q30 -46 60 0 z" fill="#4ade80"/>
+  <path d="M60 400 q34 -54 68 0 z" fill="#22c55e"/>
+  <path d="M320 400 q34 -50 66 0 z" fill="#22c55e"/>
+  <!-- bong bong nuoc -->
+  <circle cx="60" cy="80" r="16" fill="#ffffff" opacity="0.55"/>
+  <circle cx="52" cy="74" r="5" fill="#ffffff" opacity="0.9"/>
+  <circle cx="330" cy="120" r="12" fill="#ffffff" opacity="0.55"/>
+  <circle cx="325" cy="116" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="350" cy="70" r="9" fill="#ffffff" opacity="0.5"/>
+  <!-- 4 chan tron -->
+  <ellipse cx="118" cy="300" rx="42" ry="34" fill="#4ade80"/>
+  <ellipse cx="300" cy="300" rx="42" ry="34" fill="#4ade80"/>
+  <ellipse cx="96" cy="180" rx="38" ry="32" fill="#22c55e"/>
+  <ellipse cx="316" cy="180" rx="38" ry="32" fill="#22c55e"/>
+  <!-- mong chan -->
+  <circle cx="100" cy="316" r="6" fill="#166534"/>
+  <circle cx="120" cy="322" r="6" fill="#166534"/>
+  <circle cx="282" cy="316" r="6" fill="#166534"/>
+  <circle cx="302" cy="322" r="6" fill="#166534"/>
+  <!-- duoi -->
+  <path d="M340 250 q40 6 44 34 q-30 6 -44 -14 z" fill="#22c55e"/>
+  <!-- dau tho ra cuoi -->
+  <circle cx="70" cy="230" r="46" fill="#86efac"/>
+  <circle cx="70" cy="230" r="46" fill="none" stroke="#22c55e" stroke-width="4"/>
+  <!-- ma hong -->
+  <circle cx="44" cy="244" r="9" fill="#fca5a5" opacity="0.8"/>
+  <!-- mat -->
+  <ellipse cx="58" cy="216" rx="12" ry="14" fill="#ffffff"/>
+  <ellipse cx="88" cy="216" rx="12" ry="14" fill="#ffffff"/>
+  <circle cx="60" cy="220" r="6" fill="#1e293b"/>
+  <circle cx="88" cy="220" r="6" fill="#1e293b"/>
+  <circle cx="62" cy="217" r="2.2" fill="#ffffff"/>
+  <circle cx="90" cy="217" r="2.2" fill="#ffffff"/>
+  <!-- mieng cuoi -->
+  <path d="M56 246 q16 14 34 0" stroke="#166534" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- mai rua to, hoa tiet luc giac nhieu mau -->
+  <ellipse cx="215" cy="230" rx="140" ry="118" fill="#a16207"/>
+  <ellipse cx="215" cy="222" rx="128" ry="106" fill="#ca8a04"/>
+  <!-- vien mai rang cua -->
+  <ellipse cx="215" cy="222" rx="128" ry="106" fill="none" stroke="#854d0e" stroke-width="5"/>
+  <!-- o luc giac trung tam -->
+  <polygon points="215,150 258,178 258,232 215,260 172,232 172,178" fill="#16a34a"/>
+  <polygon points="215,163 247,183 247,225 215,247 183,225 183,183" fill="#22c55e"/>
+  <!-- o luc giac xung quanh, mau tuong phan -->
+  <polygon points="215,120 245,138 245,150 215,150 185,150 185,138" fill="#0ea5e9"/>
+  <polygon points="270,150 300,168 300,205 272,196 258,178 258,150" fill="#f59e0b"/>
+  <polygon points="272,248 300,240 300,278 270,296 258,266 258,232" fill="#ef4444"/>
+  <polygon points="215,260 245,268 245,306 215,320 185,306 185,268" fill="#0ea5e9"/>
+  <polygon points="130,240 158,232 172,232 172,266 158,296 130,278" fill="#f59e0b"/>
+  <polygon points="130,168 160,150 172,150 172,178 158,196 130,205" fill="#ef4444"/>
+  <!-- vien noi cac o -->
+  <g fill="none" stroke="#854d0e" stroke-width="3">
+    <polygon points="215,150 258,178 258,232 215,260 172,232 172,178"/>
+    <polygon points="215,120 245,138 245,150 215,150 185,150 185,138"/>
+    <polygon points="270,150 300,168 300,205 272,196 258,178 258,150"/>
+    <polygon points="272,248 300,240 300,278 270,296 258,266 258,232"/>
+    <polygon points="215,260 245,268 245,306 215,320 185,306 185,268"/>
+    <polygon points="130,240 158,232 172,232 172,266 158,296 130,278"/>
+    <polygon points="130,168 160,150 172,150 172,178 158,196 130,205"/>
+  </g>
+  <!-- diem sang tren mai -->
+  <ellipse cx="170" cy="165" rx="22" ry="12" fill="#fef9c3" opacity="0.5"/>
+</svg>
