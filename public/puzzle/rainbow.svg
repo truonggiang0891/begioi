@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 432 432">
   <defs>
     <linearGradient id="rainbow-bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#e0f2fe"/>
       <stop offset="1" stop-color="#bae6fd"/>
     </linearGradient>
   </defs>
-  <rect width="400" height="400" fill="url(#rainbow-bg)"/>
+  <rect x="-16" y="-16" width="432" height="432" fill="url(#rainbow-bg)"/>
   <!-- mặt trời góc trên trái -->
   <circle cx="52" cy="52" r="34" fill="#fde047"/>
   <g stroke="#facc15" stroke-width="6" stroke-linecap="round">

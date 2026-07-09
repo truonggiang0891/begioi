@@ -183,65 +183,66 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, 
   const correctCount = order.reduce((acc, v, i) => acc + (v === i ? 1 : 0), 0);
 
   return (
-    <div className="flex w-full flex-col items-center gap-3">
-      {/* Hàng chỉ số: nước đi · thời gian · kỷ lục · robux */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
-        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-slate-600 shadow-sm" title="Số lần đổi chỗ">
-          <Move size={15} className="text-indigo-500" /> {moves}
-        </span>
-        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-slate-600 shadow-sm" title="Thời gian chơi">
-          <Timer size={15} className="text-sky-500" /> {fmtTime(seconds)}
-        </span>
-        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-amber-700 shadow-sm" title="Kỷ lục ít nước nhất">
-          <Trophy size={15} className="text-amber-500" /> {best == null ? '—' : best}
-        </span>
-        <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-sm font-black text-amber-700 shadow-sm" title="Tổng Robux của bé">
-          <Gem size={15} className="fill-yellow-300 text-yellow-500" /> {robuxBalance}
-        </span>
-      </div>
+    <div className="flex w-full flex-col items-center gap-2">
+      {!solved && (
+        <>
+          {/* Hàng chỉ số + nút gộp gọn: nước · giờ · kỷ lục · robux · gợi ý · xem · xáo */}
+          <div className="flex w-full max-w-[460px] flex-wrap items-center justify-center gap-1.5">
+            <span className="flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black text-slate-600 shadow-sm" title="Số lần đổi chỗ">
+              <Move size={14} className="text-indigo-500" /> {moves}
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black text-slate-600 shadow-sm" title="Thời gian chơi">
+              <Timer size={14} className="text-sky-500" /> {fmtTime(seconds)}
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black text-amber-700 shadow-sm" title="Kỷ lục ít nước nhất">
+              <Trophy size={14} className="text-amber-500" /> {best == null ? '—' : best}
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black text-amber-700 shadow-sm" title="Tổng Robux của bé">
+              <Gem size={14} className="fill-yellow-300 text-yellow-500" /> {robuxBalance}
+            </span>
+          </div>
 
-      {/* Thanh điều khiển: gợi ý · xem tranh · xáo lại */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={showHint}
-          disabled={hintsLeft <= 0 || solved}
-          className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-black shadow-sm transition ${
-            hintsLeft <= 0 || solved
-              ? 'cursor-not-allowed bg-white/50 text-slate-300'
-              : 'bg-white/80 text-amber-600 hover:bg-white'
-          }`}
-          title="Nhấp sáng cặp ô nên đổi chỗ"
-        >
-          <Lightbulb size={16} /> Gợi ý ({hintsLeft})
-        </button>
-        <button
-          type="button"
-          onClick={() => setPeek((p) => !p)}
-          className="flex items-center gap-1.5 rounded-full bg-white/80 px-4 py-1.5 text-sm font-black text-indigo-600 shadow-sm transition hover:bg-white"
-        >
-          {peek ? <EyeOff size={16} /> : <Eye size={16} />}
-          {peek ? 'Ẩn' : 'Xem tranh'}
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className="flex items-center gap-1.5 rounded-full bg-white/80 px-4 py-1.5 text-sm font-black text-orange-600 shadow-sm transition hover:bg-white"
-        >
-          <RotateCcw size={16} /> Xáo lại
-        </button>
-      </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={showHint}
+              disabled={hintsLeft <= 0}
+              className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black shadow-sm transition ${
+                hintsLeft <= 0 ? 'cursor-not-allowed bg-white/50 text-slate-300' : 'bg-white/80 text-amber-600 hover:bg-white'
+              }`}
+              title="Nhấp sáng cặp ô nên đổi chỗ"
+            >
+              <Lightbulb size={15} /> Gợi ý ({hintsLeft})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeek((p) => !p)}
+              className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-black text-indigo-600 shadow-sm transition hover:bg-white"
+            >
+              {peek ? <EyeOff size={15} /> : <Eye size={15} />}
+              {peek ? 'Ẩn' : 'Xem tranh'}
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-black text-orange-600 shadow-sm transition hover:bg-white"
+            >
+              <RotateCcw size={15} /> Xáo lại
+            </button>
+          </div>
 
-      {/* Thanh tiến độ số ô đã đúng */}
-      <div className="flex w-full max-w-[440px] items-center gap-2 px-1">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/60">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300"
-            style={{ width: `${(correctCount / (n * n)) * 100}%` }}
-          />
-        </div>
-        <span className="text-xs font-black text-slate-500">{correctCount}/{n * n}</span>
-      </div>
+          {/* Thanh tiến độ số ô đã đúng */}
+          <div className="flex w-full max-w-[440px] items-center gap-2 px-1">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/60">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300"
+                style={{ width: `${(correctCount / (n * n)) * 100}%` }}
+              />
+            </div>
+            <span className="text-[11px] font-black text-slate-500">{correctCount}/{n * n}</span>
+          </div>
+        </>
+      )}
 
       {/* Bảng ghép hình */}
       <div
@@ -329,33 +330,32 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, 
       {/* Chúc mừng khi hoàn thành */}
       {solved && <Fireworks />}
       {solved && (
-        <div className="flex flex-col items-center gap-3 rounded-3xl bg-white/90 px-6 py-4 text-center shadow-lg">
-          <div className="flex items-center gap-2 text-2xl font-black text-emerald-600">
-            <Sparkles className="text-amber-400" /> Giỏi quá! <Sparkles className="text-amber-400" />
+        <div className="mt-2 flex flex-col items-center gap-2 rounded-3xl bg-white/90 px-5 py-3 text-center shadow-lg">
+          <div className="flex items-center gap-2 text-xl font-black text-emerald-600">
+            <Sparkles size={20} className="text-amber-400" /> Giỏi quá! <Sparkles size={20} className="text-amber-400" />
           </div>
-          <p className="text-sm font-bold text-slate-500">
-            Bé đã ghép xong bức tranh {picture.name} rồi!
-          </p>
           {/* Thành tích ván này */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm font-black">
-            <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-indigo-700">
-              <Move size={14} /> {moves} nước
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs font-black">
+            <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-700">
+              <Move size={13} /> {moves} nước
             </span>
-            <span className="flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-sky-700">
-              <Timer size={14} /> {fmtTime(seconds)}
+            <span className="flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-sky-700">
+              <Timer size={13} /> {fmtTime(seconds)}
             </span>
+            {newRecord ? (
+              <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-amber-700">
+                <Trophy size={13} className="text-amber-500" /> Kỷ lục mới! 🎉
+              </span>
+            ) : (
+              best != null && (
+                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">
+                  <Trophy size={13} /> KL: {best}
+                </span>
+              )
+            )}
           </div>
-          {newRecord ? (
-            <p className="flex items-center gap-1 rounded-full bg-amber-100 px-4 py-1.5 text-sm font-black text-amber-700">
-              <Trophy size={15} className="text-amber-500" /> Kỷ lục mới! Ít nước nhất từ trước tới giờ 🎉
-            </p>
-          ) : (
-            best != null && (
-              <p className="text-xs font-bold text-slate-400">Kỷ lục ít nước: {best}</p>
-            )
-          )}
           {nextLevel && frozenFrontier && (
-            <p className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-black text-emerald-700">
+            <p className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
               🎉 Mở khóa mức {nextLevel.label} ({nextLevel.n}×{nextLevel.n})!
             </p>
           )}
@@ -363,7 +363,7 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, 
             <button
               type="button"
               onClick={reset}
-              className="rounded-full bg-white px-5 py-2.5 text-base font-black text-emerald-600 shadow-[0_4px_0_rgb(203,213,225)] ring-2 ring-emerald-200 transition active:translate-y-0.5"
+              className="rounded-full bg-white px-5 py-2 text-sm font-black text-emerald-600 shadow-[0_4px_0_rgb(203,213,225)] ring-2 ring-emerald-200 transition active:translate-y-0.5"
             >
               Chơi lại 🔁
             </button>
@@ -371,9 +371,9 @@ function PuzzleBoard({ picture, n, nextLevel, frontier, robuxBalance, onSolved, 
               <button
                 type="button"
                 onClick={onNext}
-                className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-orange-400 to-orange-500 px-5 py-2.5 text-base font-black text-white shadow-[0_4px_0_rgb(234,88,12)] transition active:translate-y-0.5"
+                className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-orange-400 to-orange-500 px-5 py-2 text-sm font-black text-white shadow-[0_4px_0_rgb(234,88,12)] transition active:translate-y-0.5"
               >
-                Mức {nextLevel.label} <ArrowRight size={18} />
+                Mức {nextLevel.label} <ArrowRight size={16} />
               </button>
             )}
           </div>
@@ -456,9 +456,9 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
       </div>
 
       {picture ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-3 py-4">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 py-2">
           {/* Chọn độ khó — mức khó chỉ mở khi đã vượt qua mức trước */}
-          <div className="mb-2 flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-white/70 p-1 shadow-sm">
+          <div className="mb-2 flex max-w-full shrink-0 items-center gap-1 overflow-x-auto rounded-full bg-white/70 p-1 shadow-sm">
             {LEVELS.map((l, idx) => {
               const locked = idx > unlockedIndex;
               const active = levelId === l.id;
@@ -468,7 +468,7 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
                   key={l.id}
                   disabled={locked}
                   onClick={() => !locked && setLevelId(l.id)}
-                  className={`flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-black transition ${
+                  className={`flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-black transition ${
                     locked
                       ? 'cursor-not-allowed text-slate-300'
                       : active
@@ -482,11 +482,6 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
               );
             })}
           </div>
-          <p className="mb-4 text-center text-xs font-bold text-slate-400">
-            {unlockedIndex >= LEVELS.length - 1
-              ? '🌟 Bé đã mở hết các mức rồi, giỏi lắm!'
-              : 'Ghép xong mức này để mở khóa mức khó hơn nhé! 🔒'}
-          </p>
 
           <PuzzleBoard
             key={boardKey}
