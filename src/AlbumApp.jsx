@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Camera, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Play, Pause, Download, Folder, Star } from 'lucide-react';
 import { ALBUM_CONFIG, isAlbumConfigured } from './albumConfig';
 
 // --- ALBUM CỦA BÉ ("Khoảnh khắc") ---
@@ -561,9 +561,6 @@ export default function AlbumApp({ onBack }) {
                     <Folder size={44} />
                   </span>
                 )}
-                <span className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/80 text-violet-500 shadow">
-                  <Camera size={16} />
-                </span>
                 {parts.length > 0 && (
                   <span className="absolute bottom-1 right-2 text-[11px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
                     {parts.join(' · ')}
