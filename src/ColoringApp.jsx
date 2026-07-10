@@ -894,8 +894,8 @@ export default function ColoringApp({
     const { canUndo, canRedo } = historyStatus;
 
     return (
-        <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
-            <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
+        <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-white md:bg-[#333a42]">
+            <div className="relative flex h-[92dvh] min-h-0 w-full max-w-[460px] flex-col overflow-hidden bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] text-center">
                     <div className="flex h-9 items-center justify-between gap-1.5 px-2.5 py-0.5">
                         <button
