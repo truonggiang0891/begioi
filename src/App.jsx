@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense, Component } from 'react';
 // Lazy-load các panel nặng để không nằm trong bundle tải đầu. Riêng ColoringApp
 // kéo theo ~2.6MB data tranh (Brainrot/Tổng hợp) -> tách ra chunk riêng, chỉ tải khi bé mở.
 const ColoringApp = lazy(() => import('./ColoringApp'));
@@ -19,6 +19,48 @@ function PanelLoading() {
       <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-500" />
       <div className="text-sm font-black text-purple-600">Đang tải...</div>
     </div>
+  );
+}
+
+// Lưới an toàn: nếu chunk lazy tải fail (vd mạng rớt giữa chừng) thì hiện nút thử lại
+// thay vì làm hỏng cả app.
+class PanelErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-4 bg-gradient-to-b from-purple-50 to-white px-6 text-center">
+          <div className="text-5xl" aria-hidden>😅</div>
+          <div className="text-base font-black text-purple-700">Ôi, chưa tải được phần này</div>
+          <div className="text-sm font-bold text-gray-500">Kiểm tra kết nối mạng rồi thử lại nhé!</div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-xl bg-purple-500 px-6 py-2.5 text-sm font-black text-white shadow-[0_4px_0_rgb(126,34,206)] transition active:translate-y-1 active:shadow-none"
+          >
+            Thử lại
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Bọc panel lazy: Error Boundary + Suspense (màn chờ).
+function LazyPanel({ children }) {
+  return (
+    <PanelErrorBoundary>
+      <Suspense fallback={<PanelLoading />}>{children}</Suspense>
+    </PanelErrorBoundary>
   );
 }
 
@@ -6355,7 +6397,7 @@ export default function App() {
       )}
 
       {!isSummary && showColoringPanel && (
-        <Suspense fallback={<PanelLoading />}>
+        <LazyPanel>
           <ColoringApp
             onBack={() => setShowColoringPanel(false)}
             robuxBalance={robuxBalance}
@@ -6365,22 +6407,22 @@ export default function App() {
             unlockedLevels={unlockedColoringLevels}
             onUnlockLevel={handleUnlockColoringLevel}
           />
-        </Suspense>
+        </LazyPanel>
       )}
 
       {!isSummary && showDrawingPanel && (
-        <Suspense fallback={<PanelLoading />}>
+        <LazyPanel>
           <DrawingApp
             onBack={() => setShowDrawingPanel(false)}
             robuxBalance={robuxBalance}
             drawingTimeLeftSec={drawingTimeLeftSec}
             unlimitedTime={drawingTimeExchangeCost <= 0}
           />
-        </Suspense>
+        </LazyPanel>
       )}
 
       {!isSummary && showGamesPanel && (
-        <Suspense fallback={<PanelLoading />}>
+        <LazyPanel>
           <GamesApp
             onBack={() => setShowGamesPanel(false)}
             timeLeftSec={gameTimeLeftSec}
@@ -6388,13 +6430,13 @@ export default function App() {
             onReward={handleGameReward}
             robuxBalance={robuxBalance}
           />
-        </Suspense>
+        </LazyPanel>
       )}
 
       {!isSummary && showAlbumPanel && (
-        <Suspense fallback={<PanelLoading />}>
+        <LazyPanel>
           <AlbumApp onBack={() => setShowAlbumPanel(false)} />
-        </Suspense>
+        </LazyPanel>
       )}
 
       {!isSummary && showReadingPanel && (
