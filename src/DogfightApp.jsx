@@ -3,7 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, Gem, Zap } from 'lucide-react';
 import { playSound, startMusic, killMusic, emojiFont } from './gameAudio';
 import GameHelp from './GameHelp';
 import GameOverModal from './GameOverModal';
-import { useJoystick, drawJoystick } from './gameJoystick';
+import { useTouchMove, moveToward, drawTouchTarget } from './gameJoystick';
 import { SoundToggle, SkillHUD, SkillToast } from './gameUI';
 import { SKILLS, skillMeta, randomSkill } from './gameSkills';
 import {
@@ -29,7 +29,6 @@ const EB_R = 5;
 const FIRE_EVERY = 14;
 const MAX_LIVES = 5;
 const MAX_GUN = 5;
-const JOY_R = 46;
 const BOSS_EVERY = 4;
 
 const DROP_IDS = ['laser', 'shield', 'bomb', 'points', 'life'];
@@ -74,7 +73,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
   const setOverBoth = (v) => { overRef.current = v; setOver(v); };
   const musicRef = useRef(false);
   const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('tense'); } };
-  const { joyRef, handlers } = useJoystick(canvasRef, W, H, JOY_R, { blocked: () => overRef.current, onStart: ensureMusic });
+  const { moveRef, handlers } = useTouchMove(canvasRef, W, H, { blocked: () => overRef.current, onStart: ensureMusic });
 
   const startWave = (g, w) => {
     g.wave = w; setWave(w);
@@ -154,11 +153,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
       stepParticles(gg.particles); stepFloaters(gg.floaters);
       if (gg.comboTimer > 0) { gg.comboTimer -= 1; if (gg.comboTimer === 0) gg.combo = 0; }
 
-      const joy = joyRef.current;
-      if (joy) {
-        gg.player.x = clamp(gg.player.x + (joy.dx / JOY_R) * PLAYER_SPEED, PLAYER_R, W - PLAYER_R);
-        gg.player.y = clamp(gg.player.y + (joy.dy / JOY_R) * PLAYER_SPEED, PLAYER_R, H - PLAYER_R);
-      }
+      moveToward(gg.player, moveRef.current, PLAYER_SPEED, PLAYER_R, W, H);
 
       if (gg.toSpawn > 0) {
         gg.spawnCd -= 1;
@@ -282,7 +277,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
       });
       if (gg.timers.shield > 0) { ctx.strokeStyle = 'rgba(56,189,248,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(gg.player.x, gg.player.y, PLAYER_R + 9, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
       if (!(gg.invuln > 0 && Math.floor(gg.frame / 4) % 2 === 0)) drawPlane(gg.player.x, gg.player.y, PLAYER_R, '#38bdf8', true);
-      drawJoystick(ctx, joyRef.current, JOY_R);
+      drawTouchTarget(ctx, moveRef.current);
       drawFloaters(ctx, gg.floaters);
       ctx.restore();
     };
@@ -304,7 +299,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
         <h1 className="truncate text-lg font-black text-white md:text-2xl">✈️ Không chiến hỗn chiến</h1>
         <div className="flex items-center gap-1.5">
           <GameHelp>
-            <p className="mb-1.5">Chạm &amp; kéo để <b>lái máy bay đi mọi hướng</b> — súng <b>tự bắn lên</b>. Máy bay địch bay tự do lao xuống &amp; bắn trả, né đạn nhé (cuối vài đợt có <b>trùm</b>)!</p>
+            <p className="mb-1.5">Chạm/kéo trong sân — <b>máy bay chạy tới ngón tay</b> của bé, súng <b>tự bắn lên</b>. Máy bay địch bay tự do lao xuống &amp; bắn trả, né đạn nhé (cuối vài đợt có <b>trùm</b>)!</p>
             <ul className="space-y-0.5">
               {DROP_IDS.map((id) => { const m = skillMeta(id); const nm = id === 'laser' ? 'Súng +' : m.name; return <li key={id}><span style={emojiFont}>{m.emoji}</span> <b>{nm}</b> — {id === 'laser' ? 'Bắn thêm 1 tia' : m.desc}</li>; })}
             </ul>

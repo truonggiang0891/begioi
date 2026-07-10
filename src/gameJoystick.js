@@ -1,12 +1,12 @@
 import { useRef } from 'react';
 
-// Cần lái ảo dùng chung cho các game arena (chạm-kéo bất kỳ đâu trong sân để đi).
-// Dùng: const { joyRef, handlers } = useJoystick(canvasRef, W, H, JOY_R, { blocked, onStart });
-//  - blocked(): trả true thì bỏ qua (vd đang over / đang tạm dừng)
-//  - onStart(): gọi khi bắt đầu chạm (vd bật nhạc nền)
-// Gắn {...handlers} vào thẻ bọc canvas. Trong vòng lặp đọc joyRef.current = {ox,oy,dx,dy}|null.
-export function useJoystick(canvasRef, W, H, joyR, opts = {}) {
-  const joyRef = useRef(null);
+// Điều khiển "đi theo ngón tay" (kiểu .io) dùng chung cho các game arena:
+// chạm/kéo tới đâu trong sân, nhân vật chạy tới đó. Trực quan, không cần joystick.
+// Dùng: const { moveRef, handlers } = useTouchMove(canvasRef, W, H, { blocked, onStart });
+//  - moveRef.current = { x, y } (điểm ngón tay, toạ độ canvas) hoặc null khi thả tay.
+// Trong vòng lặp: cho nhân vật đi VỀ PHÍA moveRef.current (xem helper moveToward).
+export function useTouchMove(canvasRef, W, H, opts = {}) {
+  const moveRef = useRef(null);
   const toCanvas = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     return { x: (e.clientX - rect.left) / rect.width * W, y: (e.clientY - rect.top) / rect.height * H };
@@ -14,31 +14,39 @@ export function useJoystick(canvasRef, W, H, joyR, opts = {}) {
   const onPointerDown = (e) => {
     if (opts.blocked && opts.blocked()) return;
     opts.onStart?.();
-    const p = toCanvas(e);
-    joyRef.current = { ox: p.x, oy: p.y, dx: 0, dy: 0 };
+    moveRef.current = toCanvas(e);
   };
   const onPointerMove = (e) => {
-    const j = joyRef.current;
-    if (!j || !(e.buttons || e.pointerType === 'touch')) return;
-    const p = toCanvas(e);
-    let dx = p.x - j.ox; let dy = p.y - j.oy;
-    const len = Math.hypot(dx, dy);
-    if (len > joyR) { dx = dx / len * joyR; dy = dy / len * joyR; }
-    j.dx = dx; j.dy = dy;
+    if (!moveRef.current || !(e.buttons || e.pointerType === 'touch')) return;
+    moveRef.current = toCanvas(e);
   };
-  const onPointerUp = () => { joyRef.current = null; };
-  return { joyRef, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp } };
+  const onPointerUp = () => { moveRef.current = null; };
+  return { moveRef, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp } };
 }
 
-// Vẽ cần lái lên canvas (gọi trong hàm draw của game).
-export function drawJoystick(ctx, joy, joyR) {
-  if (!joy) return;
-  ctx.globalAlpha = 0.5;
+// Cho nhân vật (obj có x,y) tiến về điểm target với tốc độ speed, kẹp trong biên.
+// Trả true nếu có di chuyển.
+export function moveToward(obj, target, speed, r, W, H) {
+  if (!target) return false;
+  const dx = target.x - obj.x;
+  const dy = target.y - obj.y;
+  const d = Math.hypot(dx, dy);
+  if (d < 2) return false;
+  const s = Math.min(speed, d);
+  obj.x = Math.max(r, Math.min(W - r, obj.x + (dx / d) * s));
+  obj.y = Math.max(r, Math.min(H - r, obj.y + (dy / d) * s));
+  return true;
+}
+
+// Vẽ dấu ngón tay (vòng nhỏ mờ) để bé thấy đang dẫn nhân vật tới đâu.
+export function drawTouchTarget(ctx, target) {
+  if (!target) return;
+  ctx.globalAlpha = 0.4;
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(joy.ox, joy.oy, joyR, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#38bdf8';
-  ctx.beginPath(); ctx.arc(joy.ox + joy.dx, joy.oy + joy.dy, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(target.x, target.y, 14, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(target.x, target.y, 3, 0, Math.PI * 2); ctx.fill();
   ctx.globalAlpha = 1;
   ctx.lineWidth = 1;
 }

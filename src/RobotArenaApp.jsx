@@ -3,7 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, Gem } from 'lucide-react';
 import { playSound, startMusic, killMusic, emojiFont } from './gameAudio';
 import GameHelp from './GameHelp';
 import GameOverModal from './GameOverModal';
-import { useJoystick, drawJoystick } from './gameJoystick';
+import { useTouchMove, moveToward, drawTouchTarget } from './gameJoystick';
 import { SoundToggle, SkillHUD, SkillToast } from './gameUI';
 import { SKILLS, skillMeta, randomSkill } from './gameSkills';
 import {
@@ -27,7 +27,6 @@ const EB_SPEED = 2.5;
 const EB_R = 5;
 const FIRE_EVERY = 22;      // frame giữa 2 phát (rapid -> nửa)
 const MAX_LIVES = 5;
-const JOY_R = 46;           // bán kính cần lái
 const BOSS_EVERY = 4;       // cứ 4 đợt có 1 trùm
 
 const DROP_IDS = ['rapid', 'laser', 'shield', 'x2', 'points', 'life'];
@@ -35,7 +34,6 @@ const DROP_WEIGHTS = { points: 5, rapid: 4, laser: 3, x2: 3, shield: 2, life: 1 
 const DROP_CHANCE = 0.16;
 const sec = (ms) => Math.round((ms / 1000) * 60);
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 const ENEMY_COLORS = ['#ef4444', '#fb923c', '#f472b6', '#a78bfa'];
 
@@ -90,7 +88,7 @@ export default function RobotArenaApp({ onBack, onReward, robuxBalance = 0 }) {
   const setOverBoth = (v) => { overRef.current = v; setOver(v); };
   const musicRef = useRef(false);
   const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('tense'); } };
-  const { joyRef, handlers } = useJoystick(canvasRef, W, H, JOY_R, { blocked: () => overRef.current, onStart: ensureMusic });
+  const { moveRef, handlers } = useTouchMove(canvasRef, W, H, { blocked: () => overRef.current, onStart: ensureMusic });
 
   const startWave = (g, w) => {
     g.wave = w;
@@ -204,12 +202,8 @@ export default function RobotArenaApp({ onBack, onReward, robuxBalance = 0 }) {
       stepFloaters(gg.floaters);
       if (gg.comboTimer > 0) { gg.comboTimer -= 1; if (gg.comboTimer === 0) gg.combo = 0; }
 
-      // di chuyển người chơi theo cần lái
-      const joy = joyRef.current;
-      if (joy) {
-        gg.player.x = clamp(gg.player.x + (joy.dx / JOY_R) * PLAYER_SPEED, PLAYER_R, W - PLAYER_R);
-        gg.player.y = clamp(gg.player.y + (joy.dy / JOY_R) * PLAYER_SPEED, PLAYER_R, H - PLAYER_R);
-      }
+      // di chuyển người chơi VỀ PHÍA ngón tay (đi theo ngón tay)
+      moveToward(gg.player, moveRef.current, PLAYER_SPEED, PLAYER_R, W, H);
 
       // sinh địch dần trong đợt
       if (gg.toSpawn > 0) {
@@ -358,7 +352,7 @@ export default function RobotArenaApp({ onBack, onReward, robuxBalance = 0 }) {
       }
       if (!(gg.invuln > 0 && Math.floor(gg.frame / 4) % 2 === 0)) drawRobot(gg.player.x, gg.player.y, PLAYER_R, '#38bdf8', false);
 
-      drawJoystick(ctx, joyRef.current, JOY_R);
+      drawTouchTarget(ctx, moveRef.current);
 
       drawFloaters(ctx, gg.floaters);
       ctx.restore();
@@ -386,7 +380,7 @@ export default function RobotArenaApp({ onBack, onReward, robuxBalance = 0 }) {
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🤖 Đấu trường Robot</h1>
         <div className="flex items-center gap-1.5">
           <GameHelp>
-            <p className="mb-1.5">Chạm &amp; kéo bất kỳ đâu trong sân để <b>lái</b> — súng <b>tự bắn</b> về robot gần nhất. Né đạn, sống sót qua từng đợt (cuối vài đợt có <b>trùm</b>)!</p>
+            <p className="mb-1.5">Chạm/kéo trong sân — <b>nhân vật chạy tới ngón tay</b> của bé. Súng <b>tự bắn</b> về robot gần nhất. Né đạn, sống sót qua từng đợt (cuối vài đợt có <b>trùm</b>)!</p>
             <ul className="space-y-0.5">
               {DROP_IDS.map((id) => { const m = skillMeta(id); return <li key={id}><span style={emojiFont}>{m.emoji}</span> <b>{m.name}</b> — {m.desc}</li>; })}
             </ul>

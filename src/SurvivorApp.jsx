@@ -3,7 +3,7 @@ import { ChevronLeft, RotateCcw, Heart, Trophy, Gem, Timer } from 'lucide-react'
 import { playSound, startMusic, killMusic } from './gameAudio';
 import GameHelp from './GameHelp';
 import GameOverModal from './GameOverModal';
-import { useJoystick, drawJoystick } from './gameJoystick';
+import { useTouchMove, moveToward, drawTouchTarget } from './gameJoystick';
 import { SoundToggle } from './gameUI';
 import {
   spawnBurst, stepParticles, drawParticles, spawnFloater, stepFloaters, drawFloaters,
@@ -20,10 +20,8 @@ import { useFitSize } from './useFitSize';
 const W = 340;
 const H = 480;
 const PLAYER_R = 14;
-const JOY_R = 46;
 const BULLET_R = 5;
 const BULLET_SPEED = 5;
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
@@ -66,7 +64,7 @@ export default function SurvivorApp({ onBack, onReward, robuxBalance = 0 }) {
   const setOverBoth = (v) => { overRef.current = v; setOver(v); };
   const musicRef = useRef(false);
   const ensureMusic = () => { if (!musicRef.current) { musicRef.current = true; startMusic('tense'); } };
-  const { joyRef, handlers } = useJoystick(canvasRef, W, H, JOY_R, { blocked: () => overRef.current || pausedRef.current, onStart: ensureMusic });
+  const { moveRef, handlers } = useTouchMove(canvasRef, W, H, { blocked: () => overRef.current || pausedRef.current, onStart: ensureMusic });
 
   const newGame = () => {
     gRef.current = {
@@ -134,8 +132,8 @@ export default function SurvivorApp({ onBack, onReward, robuxBalance = 0 }) {
       if (gg.frame % 30 === 0) setTimeSec(Math.floor(gg.frame / 60));
 
       // di chuyển
-      const joy = joyRef.current; const p = gg.player;
-      if (joy) { p.x = clamp(p.x + (joy.dx / JOY_R) * p.moveSpeed, PLAYER_R, W - PLAYER_R); p.y = clamp(p.y + (joy.dy / JOY_R) * p.moveSpeed, PLAYER_R, H - PLAYER_R); }
+      const p = gg.player;
+      moveToward(p, moveRef.current, p.moveSpeed, PLAYER_R, W, H);
 
       // sinh quái (dày dần theo thời gian)
       gg.spawnCd -= 1;
@@ -234,7 +232,7 @@ export default function SurvivorApp({ onBack, onReward, robuxBalance = 0 }) {
         ctx.fillStyle = '#0ea5e9';
         ctx.beginPath(); ctx.arc(p.x - 4, p.y - 3, 1.7, 0, Math.PI * 2); ctx.arc(p.x + 4, p.y - 3, 1.7, 0, Math.PI * 2); ctx.fill();
       }
-      drawJoystick(ctx, joyRef.current, JOY_R);
+      drawTouchTarget(ctx, moveRef.current);
       drawFloaters(ctx, gg.floaters);
       ctx.restore();
     };
@@ -270,7 +268,7 @@ export default function SurvivorApp({ onBack, onReward, robuxBalance = 0 }) {
         <h1 className="truncate text-lg font-black text-white md:text-2xl">🔫 Sinh tồn chọi bầy</h1>
         <div className="flex items-center gap-1.5">
           <GameHelp>
-            <p>Chạm &amp; kéo để <b>chạy né</b> — nhân vật <b>tự đánh</b> về con gần nhất. Cả biển quái lao vào cắn, né đi! Hạ quái nhặt <span className="text-emerald-300">ngọc 💎</span> để <b>lên cấp</b>, mỗi lần lên cấp <b>chọn 1 nâng cấp</b> (mạnh dần). Sống càng lâu càng giỏi.</p>
+            <p>Chạm/kéo trong sân — <b>nhân vật chạy tới ngón tay</b> của bé để né. Nhân vật <b>tự đánh</b> con gần nhất. Cả biển quái lao vào cắn, né đi! Hạ quái nhặt <span className="text-emerald-300">ngọc 💎</span> để <b>lên cấp</b>, mỗi lần lên cấp <b>chọn 1 nâng cấp</b>. Sống càng lâu càng giỏi.</p>
           </GameHelp>
           <SoundToggle />
           <button type="button" onClick={restart} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
