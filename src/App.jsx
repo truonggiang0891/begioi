@@ -1,14 +1,26 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import ColoringApp from './ColoringApp';
-import DrawingApp from './DrawingApp';
-import GamesApp from './GamesApp';
-import AlbumApp from './AlbumApp';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+// Lazy-load các panel nặng để không nằm trong bundle tải đầu. Riêng ColoringApp
+// kéo theo ~2.6MB data tranh (Brainrot/Tổng hợp) -> tách ra chunk riêng, chỉ tải khi bé mở.
+const ColoringApp = lazy(() => import('./ColoringApp'));
+const DrawingApp = lazy(() => import('./DrawingApp'));
+const GamesApp = lazy(() => import('./GamesApp'));
+const AlbumApp = lazy(() => import('./AlbumApp'));
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home, Camera, Rocket, Sparkles, Cloud } from 'lucide-react';
 import { CameraSticker, BookSticker, BrushSticker, PencilSticker, GamepadSticker, GemSticker } from './MenuIcons.jsx';
 import { loadStats, saveStats, applyAnswer, applyStudyTime, LEARN_STATS_KEY } from './statsStore';
 import { BADGE_MAP } from './achievements';
 import AchievementsPanel, { BadgeToast } from './AchievementsPanel';
 import ParentReport from './ParentReport';
+
+// Màn chờ toàn màn hình khi đang tải 1 panel lazy (Tô màu/Vẽ/Game/Album).
+function PanelLoading() {
+  return (
+    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-purple-50 to-white">
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-500" />
+      <div className="text-sm font-black text-purple-600">Đang tải...</div>
+    </div>
+  );
+}
 
 // --- ÂM THANH (Dùng Web Audio API để không cần file ngoài) ---
 const SOUND_BASE_VOLUME = 0.23;
@@ -6343,38 +6355,46 @@ export default function App() {
       )}
 
       {!isSummary && showColoringPanel && (
-        <ColoringApp
-          onBack={() => setShowColoringPanel(false)}
-          robuxBalance={robuxBalance}
-          unlockCost={settings.coloringUnlockCost}
-          coloringTimeLeftSec={coloringTimeLeftSec}
-          unlimitedTime={coloringTimeExchangeCost <= 0}
-          unlockedLevels={unlockedColoringLevels}
-          onUnlockLevel={handleUnlockColoringLevel}
-        />
+        <Suspense fallback={<PanelLoading />}>
+          <ColoringApp
+            onBack={() => setShowColoringPanel(false)}
+            robuxBalance={robuxBalance}
+            unlockCost={settings.coloringUnlockCost}
+            coloringTimeLeftSec={coloringTimeLeftSec}
+            unlimitedTime={coloringTimeExchangeCost <= 0}
+            unlockedLevels={unlockedColoringLevels}
+            onUnlockLevel={handleUnlockColoringLevel}
+          />
+        </Suspense>
       )}
 
       {!isSummary && showDrawingPanel && (
-        <DrawingApp
-          onBack={() => setShowDrawingPanel(false)}
-          robuxBalance={robuxBalance}
-          drawingTimeLeftSec={drawingTimeLeftSec}
-          unlimitedTime={drawingTimeExchangeCost <= 0}
-        />
+        <Suspense fallback={<PanelLoading />}>
+          <DrawingApp
+            onBack={() => setShowDrawingPanel(false)}
+            robuxBalance={robuxBalance}
+            drawingTimeLeftSec={drawingTimeLeftSec}
+            unlimitedTime={drawingTimeExchangeCost <= 0}
+          />
+        </Suspense>
       )}
 
       {!isSummary && showGamesPanel && (
-        <GamesApp
-          onBack={() => setShowGamesPanel(false)}
-          timeLeftSec={gameTimeLeftSec}
-          unlimitedTime={gameTimeExchangeCost <= 0}
-          onReward={handleGameReward}
-          robuxBalance={robuxBalance}
-        />
+        <Suspense fallback={<PanelLoading />}>
+          <GamesApp
+            onBack={() => setShowGamesPanel(false)}
+            timeLeftSec={gameTimeLeftSec}
+            unlimitedTime={gameTimeExchangeCost <= 0}
+            onReward={handleGameReward}
+            robuxBalance={robuxBalance}
+          />
+        </Suspense>
       )}
 
       {!isSummary && showAlbumPanel && (
-        <AlbumApp onBack={() => setShowAlbumPanel(false)} />
+        <Suspense fallback={<PanelLoading />}>
+          <AlbumApp onBack={() => setShowAlbumPanel(false)} />
+        </Suspense>
       )}
 
       {!isSummary && showReadingPanel && (
