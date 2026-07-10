@@ -1,5 +1,5 @@
-import { BRAINROT_START_LEVEL, brainrotColoringSVGs, brainrotEmojis, brainrotIds, brainrotNames } from './BrainrotColoringData';
-import { TONGHOP_START_LEVEL, tonghopColoringSVGs, tonghopEmojis, tonghopIds, tonghopNames } from './TongHopColoringData';
+import { BRAINROT_START_LEVEL, brainrotEmojis, brainrotIds, brainrotNames } from './BrainrotColoringData';
+import { TONGHOP_START_LEVEL, tonghopEmojis, tonghopIds, tonghopNames } from './TongHopColoringData';
 
 export { BRAINROT_START_LEVEL, brainrotEmojis, brainrotIds, brainrotNames };
 export { TONGHOP_START_LEVEL, tonghopEmojis, tonghopIds, tonghopNames };
@@ -1533,6 +1533,4 @@ export const coloringSVGs = {
             <path d="M288,318 A27,27 0 0,1 288,372" stroke="#1a202c" stroke-width="3" fill="none"/>
             <path d="M261,345 L315,345" stroke="#1a202c" stroke-width="3" fill="none"/>
         </svg>`,
-  ...brainrotColoringSVGs,
-  ...tonghopColoringSVGs,
 };

@@ -171,8 +171,7 @@ const isLikelyBackgroundElement = (element, svgElement, index) => {
 
 const getBackgroundConfirmKey = (level, index) => `${level}:${index}`;
 
-const buildSampleSvg = (level) => {
-    const sourceSvg = coloringSVGs[level];
+const buildSampleSvg = (level, sourceSvg) => {
     if (!sourceSvg || typeof DOMParser === 'undefined' || typeof XMLSerializer === 'undefined') {
         return sourceSvg || '';
     }
@@ -277,6 +276,11 @@ export default function ColoringApp({
     const undoStacksRef = useRef({});
     const redoStacksRef = useRef({});
     const progressByLevelRef = useRef({});
+    // Bản đồ SVG đầy đủ lúc chạy: built-in (nhúng sẵn) + category fetch động (Brainrot/Tổng hợp).
+    const loadedSvgsRef = useRef({ ...coloringSVGs });
+    const loadingCategoriesRef = useRef(new Set());
+    const [svgVersion, setSvgVersion] = useState(0); // bump khi có tranh mới -> render lại
+    const [isFetchingSvg, setIsFetchingSvg] = useState(false);
     const unlockedLevelSet = useMemo(
         () => new Set((Array.isArray(unlockedLevels) ? unlockedLevels : []).map(level => Number(level))),
         [unlockedLevels]
@@ -286,7 +290,11 @@ export default function ColoringApp({
     const displayTimeLeft = unlimitedTime
         ? '∞'
         : `${Math.floor(Math.max(0, coloringTimeLeftSec) / 60)}:${String(Math.max(0, coloringTimeLeftSec) % 60).padStart(2, '0')}`;
-    const sampleSvg = useMemo(() => buildSampleSvg(currentLevel), [currentLevel]);
+    const sampleSvg = useMemo(
+        () => buildSampleSvg(currentLevel, loadedSvgsRef.current[currentLevel]),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [currentLevel, svgVersion]
+    );
 
     const syncHistoryStatus = useCallback((level = currentLevelRef.current) => {
         const nextStatus = {
@@ -310,6 +318,10 @@ export default function ColoringApp({
         if (!svgContainerRef.current) return;
 
         svgContainerRef.current.querySelectorAll('.svg-wrapper').forEach(wrapper => {
+            // Chỉ chuẩn bị 1 lần/tranh: tranh đã tô rồi thì không đụng lại (tránh ghi đè initialFill khi append tranh mới).
+            if (wrapper.dataset.prepared === '1') return;
+            wrapper.dataset.prepared = '1';
+
             const svgElement = wrapper.querySelector('svg');
 
             // Tranh Brainrot / Tổng hợp bị gộp nhiều khối trong 1 path -> tách ra để bé tô từng khối riêng.
@@ -376,6 +388,52 @@ export default function ColoringApp({
         setTimeout(() => updateProgress(), 50);
     }, [prepareColoringElements, updateProgress]);
 
+    // Fetch động SVG các tranh Brainrot/Tổng hợp (đã tách ra public/coloring/*.json).
+    // Chỉ tải khi bé mở tới category đó -> chunk khởi động nhẹ, tranh cache dần (offline sau lần đầu).
+    const ensureLevelSvgLoaded = useCallback(async (level) => {
+        const category = level >= TONGHOP_START_LEVEL
+            ? 'tonghop'
+            : level >= BRAINROT_START_LEVEL
+                ? 'brainrot'
+                : null;
+        if (!category) return;                              // built-in đã nhúng sẵn
+        if (loadedSvgsRef.current[level]) return;           // đã có trong bộ nhớ
+        if (loadingCategoriesRef.current.has(category)) return; // đang tải
+
+        loadingCategoriesRef.current.add(category);
+        setIsFetchingSvg(true);
+        try {
+            const res = await fetch(`/coloring/${category}.json`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            Object.assign(loadedSvgsRef.current, data);
+
+            const container = svgContainerRef.current;
+            if (container) {
+                // Append (không rebuild) để không xoá nét tô đang có ở các tranh khác.
+                Object.entries(data).forEach(([id, svg]) => {
+                    if (container.querySelector(`[data-id="${id}"]`)) return;
+                    const wrapper = document.createElement('div');
+                    wrapper.setAttribute('data-id', id);
+                    wrapper.className = 'svg-wrapper w-full h-full max-w-full max-h-full flex items-center justify-center hidden';
+                    wrapper.innerHTML = svg;
+                    container.appendChild(wrapper);
+                });
+                prepareColoringElements();
+            }
+            setSvgVersion(prev => prev + 1);                // -> effect hiển thị chạy lại, hiện tranh vừa tải
+        } catch (error) {
+            loadingCategoriesRef.current.delete(category);  // lỗi -> cho phép thử lại lần sau
+            console.error('Không tải được tranh tô màu:', error);
+        } finally {
+            setIsFetchingSvg(false);
+        }
+    }, [prepareColoringElements]);
+
+    useEffect(() => {
+        ensureLevelSvgLoaded(currentLevel);
+    }, [currentLevel, ensureLevelSvgLoaded]);
+
     useEffect(() => {
         if (!svgContainerRef.current) return;
 
@@ -398,7 +456,7 @@ export default function ColoringApp({
         }
 
         setTimeout(() => updateProgress(currentLevel), 50);
-    }, [currentLevel, updateProgress]);
+    }, [currentLevel, updateProgress, svgVersion]);
 
     useEffect(() => {
         setUnlockNotice('');
@@ -993,6 +1051,15 @@ export default function ColoringApp({
                         onClick={handleSvgClick}
                         style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center', transition: 'transform 0.16s ease' }}
                     />
+
+                    {isFetchingSvg && (
+                        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#f1f5f9]/80 backdrop-blur-sm">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-violet-500" />
+                                <div className="text-sm font-bold text-slate-500">Đang tải tranh...</div>
+                            </div>
+                        </div>
+                    )}
 
                     {categoryEmpty && (
                         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#f1f5f9] px-6 text-center">

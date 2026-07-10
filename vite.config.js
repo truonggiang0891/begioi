@@ -14,11 +14,21 @@ export default defineConfig({
         // Precache app shell + code (gồm cả chunk Tô màu 2.8MB) + icon + puzzle.
         // KHÔNG precache 25MB ảnh Tập đọc và nhạc -> để runtime cache (cache dần khi dùng).
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
-        globIgnores: ['**/reading/**', '**/music/**'],
+        globIgnores: ['**/reading/**', '**/music/**', '**/coloring/**'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // cho phép chunk ColoringApp ~2.8MB
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html', // SPA: mở offline vẫn ra app
         runtimeCaching: [
+          {
+            // Tranh Tô màu (Brainrot/Tổng hợp) tách ra JSON: cache khi bé mở lần đầu -> offline được.
+            urlPattern: ({ url }) => url.pathname.startsWith('/coloring/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'coloring-svgs',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             // Ảnh bài Tập đọc: cache khi bé mở lần đầu -> sau đó offline được.
             urlPattern: ({ url }) => url.pathname.startsWith('/reading/'),
