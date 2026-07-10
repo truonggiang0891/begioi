@@ -2715,6 +2715,7 @@ export default function App() {
   const [showParentReport, setShowParentReport] = useState(false);
   const [newBadge, setNewBadge] = useState(null);
   const prevUnlockedRef = useRef(null);
+  const [pwaOfflineReady, setPwaOfflineReady] = useState(false);
   const [endSessionGuard, setEndSessionGuard] = useState(() => loadEndSessionGuard());
   const [userName, setUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
   const [draftUserName, setDraftUserName] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
@@ -3884,6 +3885,23 @@ export default function App() {
       setNewBadge(BADGE_MAP[newly[0]]);
     }
   }, [learnStats.unlockedBadges]);
+
+  // PWA: hiện toast "đã sẵn sàng dùng offline" khi service worker cache xong.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.__pwaOfflineReady) {
+      setPwaOfflineReady(true);
+      return undefined;
+    }
+    const handler = () => setPwaOfflineReady(true);
+    window.addEventListener('pwa-offline-ready', handler);
+    return () => window.removeEventListener('pwa-offline-ready', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!pwaOfflineReady) return undefined;
+    const timer = setTimeout(() => setPwaOfflineReady(false), 4500);
+    return () => clearTimeout(timer);
+  }, [pwaOfflineReady]);
 
   function handleTimeout() {
     if (!currentQ) return;
@@ -7001,6 +7019,15 @@ export default function App() {
       )}
 
       <BadgeToast badge={newBadge} onDone={() => setNewBadge(null)} />
+
+      {pwaOfflineReady && (
+        <div className="fixed inset-x-0 bottom-4 z-[65] flex justify-center px-4 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full border-2 border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 shadow-xl">
+            <span className="text-lg" aria-hidden>✅</span>
+            <span>Đã sẵn sàng dùng offline!</span>
+          </div>
+        </div>
+      )}
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes bounce-in {
