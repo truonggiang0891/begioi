@@ -4004,11 +4004,6 @@ export default function App() {
           </div>
 
           <div className="relative col-span-2 flex flex-col items-center justify-center gap-0.5 py-1 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
-            {!isSummary && isStagedLearningActive && gameState !== 'idle' && (
-              <div className="absolute right-2 top-1 text-[9px] font-semibold text-gray-400 md:right-3 md:top-2 md:text-[11px]">
-                {stageLabel}
-              </div>
-            )}
             <div className="flex items-center gap-1 md:gap-2 text-purple-600 font-bold text-sm md:text-lg">
               <Smartphone size={19} className="md:w-6 md:h-6 animate-pulse" /> Giờ xem điện thoại
             </div>
@@ -4313,6 +4308,11 @@ export default function App() {
               <Clock size={13} className="md:w-4 md:h-4 text-gray-300" />
               <span>{timer} giây</span>
             </div>
+            {isStagedLearningActive && stageLabel && (
+              <div className="pointer-events-none absolute left-1/2 top-2 z-10 max-w-[46%] -translate-x-1/2 truncate whitespace-nowrap text-center text-[10px] md:top-3 md:text-sm font-semibold text-gray-400">
+                {stageLabel}
+              </div>
+            )}
 
             {/* QUESTION */}
             <div className="text-center my-2 md:my-6 pt-1 md:pt-2">
