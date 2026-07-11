@@ -4304,15 +4304,17 @@ export default function App() {
                 Kiếm Robux
               </div>
             )}
-            <div className="absolute top-2 right-3 md:top-3 md:right-4 z-10 flex items-center gap-1 text-[11px] md:text-sm font-semibold text-gray-400">
-              <Clock size={13} className="md:w-4 md:h-4 text-gray-300" />
-              <span>{timer} giây</span>
-            </div>
-            {isStagedLearningActive && stageLabel && (
-              <div className="pointer-events-none absolute left-1/2 top-2 z-10 max-w-[46%] -translate-x-1/2 truncate whitespace-nowrap text-center text-[10px] md:top-3 md:text-sm font-semibold text-gray-400">
-                {stageLabel}
+            <div className="absolute top-2 right-3 md:top-3 md:right-4 z-10 flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-1 text-[11px] md:text-sm font-semibold text-gray-400">
+                <Clock size={13} className="md:w-4 md:h-4 text-gray-300" />
+                <span>{timer} giây</span>
               </div>
-            )}
+              {isStagedLearningActive && stageLabel && (
+                <div className="max-w-[9rem] truncate whitespace-nowrap text-[10px] md:text-sm font-semibold text-gray-400">
+                  {stageLabel}
+                </div>
+              )}
+            </div>
 
             {/* QUESTION */}
             <div className="text-center my-2 md:my-6 pt-1 md:pt-2">
