@@ -80,7 +80,7 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
   }, [onReward, timeLeftSec]);
 
   const rewardToastEl = rewardToast && (
-    <div key={rewardToast.key} className="pointer-events-none fixed left-1/2 top-16 z-[80] -translate-x-1/2 animate-[reward-pop_2.2s_ease-out_forwards]">
+    <div key={rewardToast.key} className="pointer-events-none fixed left-1/2 top-[calc(4rem+env(safe-area-inset-top))] z-[80] -translate-x-1/2 animate-[reward-pop_2.2s_ease-out_forwards]">
       <div className="flex flex-col items-center gap-1 rounded-2xl border-2 border-yellow-300 bg-slate-900/90 px-5 py-2.5 shadow-2xl">
         <div className="flex items-center gap-1.5 text-xl font-black text-yellow-300">
           <Gem size={20} className="fill-yellow-300/40" /> +{rewardToast.rb} Robux!
@@ -167,7 +167,7 @@ export default function GamesApp({ onBack, timeLeftSec = 0, unlimitedTime = fals
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-sky-50 to-emerald-100 px-4 py-5">
+    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-sky-50 to-emerald-100 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <div className="mb-4 flex w-full max-w-md shrink-0 items-center justify-between gap-2">
         <button
           type="button"

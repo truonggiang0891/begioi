@@ -358,7 +358,7 @@ export default function MemoryApp({ onBack, onReward, robuxBalance = 0 }) {
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-b from-violet-50 to-sky-100">
+    <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-violet-50 to-sky-100">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/50 bg-white/40 px-3 py-2 backdrop-blur">
         <button
           type="button"

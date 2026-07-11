@@ -353,7 +353,7 @@ export default function CatchApp({ onBack, onReward, robuxBalance = 0 }) {
   const anyBuff = slowLeft > 0 || doubleLeft > 0 || magnetLeft > 0;
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-b from-orange-400 to-amber-100">
+    <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-orange-400 to-amber-100">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/30 bg-black/10 px-3 py-2">
         <button type="button" onClick={() => onBack?.()} className="flex items-center gap-1 rounded-full bg-white/30 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
           <ChevronLeft size={18} /> Thoát

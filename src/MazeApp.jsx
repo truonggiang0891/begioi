@@ -351,7 +351,7 @@ export default function MazeApp({ onBack, onReward, robuxBalance = 0 }) {
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900">
+    <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900">
       {/* Hiệu ứng CSS: đường gợi ý nhấp nháy + lấp lánh khi nhặt ngọc */}
       <style>{`
         @keyframes maze-hint-pulse { 0%,100% { opacity:.35; transform:scale(.7) } 50% { opacity:1; transform:scale(1) } }

@@ -544,7 +544,7 @@ export default function FruitSliceApp({ onBack, onReward, robuxBalance = 0 }) {
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col bg-gradient-to-b from-slate-800 to-slate-900">
+    <div className="relative flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-slate-800 to-slate-900">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-black/20 px-3 py-2">
         <button
           type="button"

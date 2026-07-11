@@ -194,7 +194,7 @@ export default function WhackApp({ onBack, onReward, robuxBalance = 0 }) {
   const mult = comboMultiplier(combo);
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-b from-emerald-700 to-emerald-900">
+    <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-emerald-700 to-emerald-900">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/20 bg-black/20 px-3 py-2">
         <button type="button" onClick={() => onBack?.()} className="flex items-center gap-1 rounded-full bg-white/20 px-3 py-2 text-sm font-black text-white transition hover:bg-white/30">
           <ChevronLeft size={18} /> Thoát

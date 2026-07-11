@@ -172,7 +172,7 @@ export default function StackApp({ onBack, onReward, robuxBalance = 0 }) {
   const restart = () => newGame();
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-b from-sky-500 to-cyan-300">
+    <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-sky-500 to-cyan-300">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/20 bg-black/10 px-3 py-2">
         <button type="button" onClick={() => onBack?.()} className="flex items-center gap-1 rounded-full bg-white/25 px-3 py-2 text-sm font-black text-white transition hover:bg-white/40">
           <ChevronLeft size={18} /> Thoát

@@ -428,7 +428,7 @@ export default function Match3App({ onBack, onReward, robuxBalance = 0 }) {
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col bg-gradient-to-b from-indigo-950 via-purple-900 to-fuchsia-950">
+    <div className="relative flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-indigo-950 via-purple-900 to-fuchsia-950">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-black/20 px-3 py-2">
         <button type="button" onClick={() => onBack?.()} className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-2 text-sm font-black text-white transition hover:bg-white/25">
           <ChevronLeft size={18} /> Thoát

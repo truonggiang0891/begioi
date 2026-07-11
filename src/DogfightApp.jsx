@@ -291,7 +291,7 @@ export default function DogfightApp({ onBack, onReward, robuxBalance = 0 }) {
   const restart = () => newGame();
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-b from-slate-800 to-slate-900">
+    <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-slate-800 to-slate-900">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-black/20 px-3 py-2">
         <button type="button" onClick={() => onBack?.()} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white/90 transition hover:bg-white/20">
           <ChevronLeft size={18} /> Thoát
