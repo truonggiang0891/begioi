@@ -22,7 +22,7 @@ export const landscapeEmojis = ['🏔️', '🏡', '🏖️'];
 export const landscapeNames = ['Núi & Mặt Trời', 'Ngôi Nhà Nhỏ', 'Bãi Biển'];
 
 export const colorThemes = {
-    nature: ["#2ecc71", "#27ae60", "#3498db", "#2980b9", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#8e44ad", "#34495e", "#000000", "#fdfdfd"],
+    nature: ["#000000", "#2ecc71", "#27ae60", "#3498db", "#2980b9", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#8e44ad", "#34495e", "#fdfdfd"],
     candy: ["#ff7597", "#ffb3c6", "#ffc6ff", "#e8c5ff", "#bde0fe", "#a2d2ff", "#ffea00", "#98ece8", "#e1fad2", "#fcd7bc", "#c084fc", "#e0a96e"],
     magic: ["#a8a2f8", "#6d5dfc", "#4158d0", "#c850c0", "#ffcc70", "#ff416c", "#ff4b2b", "#1a2a6c", "#b21f1f", "#fdbb2d", "#22e39a", "#14e0d0"]
 };
