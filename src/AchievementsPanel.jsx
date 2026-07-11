@@ -1,5 +1,5 @@
 // --- BẢNG THÀNH TÍCH (giao diện cho bé) + Chúc mừng khi mở khoá huy hiệu ---
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { XCircle, Lock } from 'lucide-react';
 import { computeBadgeBoard } from './achievements';
 
@@ -12,11 +12,15 @@ const TIER_STYLE = {
 
 // Toast chúc mừng nổi lên giữa màn hình khi bé vừa mở khoá huy hiệu mới.
 export function BadgeToast({ badge, onDone }) {
+  // Giữ onDone trong ref để timer chỉ phụ thuộc `badge`. Nếu phụ thuộc onDone,
+  // mỗi lần App re-render (đồng hồ đếm giây) sẽ tạo onDone mới -> reset timer -> popup không tự tắt.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
     if (!badge) return undefined;
-    const timer = setTimeout(onDone, 3200);
+    const timer = setTimeout(() => onDoneRef.current(), 5000);
     return () => clearTimeout(timer);
-  }, [badge, onDone]);
+  }, [badge]);
 
   if (!badge) return null;
 

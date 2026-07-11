@@ -11,15 +11,13 @@ const opCorrect = (stats, op) => stats.byOp?.[op]?.c || 0;
 
 // tier chỉ dùng để tô màu: 'bronze' | 'silver' | 'gold' | 'diamond'
 export const BADGES = [
-  // --- Cột mốc số câu đúng ---
-  { id: 'correct_10', emoji: '🌱', title: 'Khởi đầu', desc: 'Trả lời đúng 10 câu', tier: 'bronze',
-    target: 10, progress: (s) => s.lifetimeCorrect },
-  { id: 'correct_50', emoji: '⭐', title: 'Chăm chỉ', desc: 'Trả lời đúng 50 câu', tier: 'bronze',
-    target: 50, progress: (s) => s.lifetimeCorrect },
+  // --- Cột mốc số câu đúng (chỉ mốc lớn) ---
   { id: 'correct_100', emoji: '🏅', title: 'Giỏi giang', desc: 'Trả lời đúng 100 câu', tier: 'silver',
     target: 100, progress: (s) => s.lifetimeCorrect },
   { id: 'correct_300', emoji: '🏆', title: 'Xuất sắc', desc: 'Trả lời đúng 300 câu', tier: 'gold',
     target: 300, progress: (s) => s.lifetimeCorrect },
+  { id: 'correct_500', emoji: '💎', title: 'Siêu sao', desc: 'Trả lời đúng 500 câu', tier: 'diamond',
+    target: 500, progress: (s) => s.lifetimeCorrect },
   { id: 'correct_1000', emoji: '👑', title: 'Nhà vô địch', desc: 'Trả lời đúng 1000 câu', tier: 'diamond',
     target: 1000, progress: (s) => s.lifetimeCorrect },
 
