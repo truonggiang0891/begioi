@@ -1216,7 +1216,7 @@ export default function ColoringApp({
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-2.5 border-t border-[#e2e8f0] bg-white px-3 pt-2.5 pb-4">
+                <div className="flex shrink-0 flex-col gap-2.5 border-t border-[#e2e8f0] bg-white px-3 pt-2.5 pb-[max(1.75rem,env(safe-area-inset-bottom))]">
                     <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5">
                         {Object.keys(colorThemes).map(theme => (
                             <button
