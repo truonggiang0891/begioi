@@ -1102,7 +1102,7 @@ export default function ColoringApp({
                             onClick={() => toggleFavorite(currentLevel)}
                             aria-pressed={isCurrentFavorite}
                             aria-label={isCurrentFavorite ? 'Bỏ yêu thích nhân vật này' : 'Thả tim nhân vật yêu thích'}
-                            className={`absolute left-2 top-0.5 z-[12] grid h-8 w-8 place-items-center rounded-full border shadow-sm backdrop-blur transition active:scale-90 ${isCurrentFavorite ? 'border-rose-200 bg-rose-50' : 'border-white/80 bg-white/90'}`}
+                            className={`absolute left-1 top-0.5 z-[12] grid h-8 w-8 place-items-center rounded-full border shadow-sm backdrop-blur transition active:scale-90 ${isCurrentFavorite ? 'border-rose-200 bg-rose-50' : 'border-white/80 bg-white/90'}`}
                         >
                             <Heart size={16} className={isCurrentFavorite ? 'fill-rose-500 text-rose-500 animate-[cf-badge-pop_0.4s_ease]' : 'text-slate-400'} />
                         </button>
