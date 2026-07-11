@@ -993,7 +993,7 @@ export default function ColoringApp({
                                     type="button"
                                     key={id}
                                     onClick={(event) => handleLevelSelect(id, event)}
-                                    className={`relative flex h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-2xl text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
+                                    className={`relative flex h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#d8e0ea] text-2xl text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
                                 >
                                     <span className={!isUnlocked ? 'opacity-55' : ''} style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                         {emoji || '?'}
@@ -1227,7 +1227,7 @@ export default function ColoringApp({
                                     setActiveColor(colorThemes[theme][0]);
                                     setIsEraserActive(false);
                                 }}
-                                className={`h-10 rounded-lg border-none px-1 text-sm font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
+                                className={`h-10 rounded-lg border-none px-1 text-sm font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#d8e0ea] text-[#718096]'}`}
                             >
                                 {THEME_LABELS[theme] || theme}
                             </button>
@@ -1273,7 +1273,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Xem mẫu phối màu"
                             aria-label="Xem mẫu phối màu"
-                            className="grid h-12 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#fbd9ec] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Sparkles size={19} />
                         </button>
@@ -1283,7 +1283,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS}
                             title="Xem 3D"
                             aria-label="Xem 3D"
-                            className="grid h-12 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#dfe4ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Cuboid size={19} />
                         </button>
@@ -1293,7 +1293,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canUndo}
                             title="Hoàn tác"
                             aria-label="Hoàn tác"
-                            className="grid h-12 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#d8e0ea] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Undo2 size={19} />
                         </button>
@@ -1303,7 +1303,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canRedo}
                             title="Làm lại"
                             aria-label="Làm lại"
-                            className="grid h-12 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#d8e0ea] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Redo2 size={19} />
                         </button>
@@ -1313,7 +1313,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Cục tẩy"
                             aria-label="Cục tẩy"
-                            className={`grid h-12 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
+                            className={`grid h-12 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#d8e0ea] text-[#334155]'}`}
                         >
                             <Eraser size={19} />
                         </button>
@@ -1323,7 +1323,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Vẽ lại"
                             aria-label="Vẽ lại"
-                            className="grid h-12 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#fcbcbc] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <RotateCcw size={19} />
                         </button>
