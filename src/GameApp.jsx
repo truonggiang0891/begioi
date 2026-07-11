@@ -441,7 +441,7 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
   return (
     <div className={`flex h-full w-full flex-col bg-gradient-to-b ${picture ? picture.bg : 'from-orange-50 to-amber-100'}`}>
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/50 bg-white/40 px-3 py-2 backdrop-blur">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/50 bg-white/40 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
         <button
           type="button"
           onClick={() => (picture ? setSelectedId(null) : onBack?.())}
@@ -456,7 +456,7 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
       </div>
 
       {picture ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 py-2">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {/* Chọn độ khó — mức khó chỉ mở khi đã vượt qua mức trước */}
           <div className="mb-2 flex max-w-full shrink-0 items-center gap-1 overflow-x-auto rounded-full bg-white/70 p-1 shadow-sm">
             {LEVELS.map((l, idx) => {
@@ -497,7 +497,7 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
         </div>
       ) : (
         // Chọn tranh
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <p className="mb-4 text-center text-base font-bold text-slate-500">
             Bé chọn một bức tranh để ghép nhé!
           </p>
