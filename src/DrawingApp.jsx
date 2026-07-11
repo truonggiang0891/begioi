@@ -122,7 +122,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                 )}
 
                 {lesson && (
-                    <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex min-h-0 flex-1 flex-col justify-evenly gap-1">
                         <div className="grid shrink-0 grid-cols-2 gap-1.5 px-2.5 py-1.5">
                             <button
                                 type="button"
@@ -140,9 +140,9 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                             </button>
                         </div>
 
-                        <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-2 py-1">
+                        <div className="relative flex min-h-0 shrink items-center justify-center overflow-hidden bg-[#f1f5f9] px-2 py-1">
                             {mode === 'guide' ? (
-                                <svg viewBox="0 0 300 300" className="h-auto w-full max-w-full" style={{ aspectRatio: '1 / 1' }} xmlns="http://www.w3.org/2000/svg">
+                                <svg viewBox="0 0 300 300" className="h-auto w-full max-w-full max-h-[48vh]" style={{ aspectRatio: '1 / 1' }} xmlns="http://www.w3.org/2000/svg">
                                     <rect x="4" y="4" width="292" height="292" rx="16" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
                                     <g stroke="#cbd5e1" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: shapesUpTo(lesson.steps, stepIndex) }} />
                                     <g stroke="#ef4444" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: lesson.steps[stepIndex].shapes }} />
@@ -151,7 +151,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                                 <svg
                                     ref={svgRef}
                                     viewBox="0 0 300 300"
-                                    className="h-auto w-full max-w-full touch-none"
+                                    className="h-auto w-full max-w-full max-h-[48vh] touch-none"
                                     style={{ aspectRatio: '1 / 1' }}
                                     xmlns="http://www.w3.org/2000/svg"
                                     onPointerDown={handlePointerDown}
