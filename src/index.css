@@ -6,7 +6,8 @@ html,
 body,
 #root {
   height: 100%;
-  background: #ffffff;
+  /* Nền xanh nhạt sky-100 để dải safe-area trên cùng đồng màu với nền app bên dưới */
+  background: #e0f2fe;
 }
 
 body {
