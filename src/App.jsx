@@ -4450,7 +4450,7 @@ export default function App() {
       )}
 
       {!isSummary && showColoringAccessPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] text-center">
           <div className="w-full max-w-sm rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
             <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-amber-100 text-amber-600">
               <LockKeyhole size={30} />
@@ -4539,7 +4539,7 @@ export default function App() {
       )}
 
       {!isSummary && showDrawingAccessPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] text-center">
           <div className="w-full max-w-sm rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
             <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-pink-100 text-pink-600">
               <LockKeyhole size={30} />
@@ -4618,7 +4618,7 @@ export default function App() {
       )}
 
       {!isSummary && showGameAccessPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] text-center">
           <div className="w-full max-w-sm rounded-2xl border-4 border-white bg-white p-5 shadow-2xl">
             <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-orange-100 text-orange-600">
               <Gamepad2 size={30} />
@@ -4745,7 +4745,7 @@ export default function App() {
             role="dialog"
             aria-modal="true"
             aria-label="Tập đọc"
-            className="flex h-full w-full flex-col bg-white"
+            className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-white"
           >
             <div className={`flex shrink-0 items-center justify-between gap-1.5 border-b px-2.5 py-0.5 md:px-6 md:py-1.5 ${
               selectedReading && selectedReadingCompleted && !readingSummary
@@ -5157,7 +5157,7 @@ export default function App() {
       )}
 
       {!isSummary && showHistoryPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div
             role="dialog"
             aria-modal="true"

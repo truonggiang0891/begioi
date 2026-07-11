@@ -44,8 +44,8 @@ export default function AchievementsPanel({ stats, onClose }) {
   const unlockedCount = board.filter(b => b.unlocked).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 md:p-4">
-      <div className="flex h-[92dvh] max-h-[92dvh] w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 md:px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="flex h-[92dvh] max-h-full w-full max-w-lg flex-col rounded-2xl border-4 border-white bg-white p-3 shadow-2xl md:rounded-3xl md:p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-lg font-black text-amber-600 md:text-xl">

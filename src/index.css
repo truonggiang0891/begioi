@@ -14,6 +14,25 @@ body {
   overflow: hidden;
 }
 
+/* Cảm ứng cho app trẻ em: bỏ ô xám nhấp nháy khi chạm, chặn bôi đen chữ &
+   menu Copy/Share khi giữ lâu. Vẫn chừa ô nhập liệu để gõ/sửa bình thường. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 #root {
   height: 100dvh;
   /* Lấn bớt ~20px vùng safe-area để nội dung dồn lên (vẫn chừa đủ cho đồng hồ/pin status bar) */

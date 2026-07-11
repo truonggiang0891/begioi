@@ -153,7 +153,7 @@ function ZoomableImage({ src, alt, onError, onPrev, onNext }) {
 
 function NeedConfig({ onBack }) {
   return (
-    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-5 py-6">
+    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="mb-4 flex w-full max-w-md items-center justify-between">
         <button
           type="button"
@@ -358,7 +358,7 @@ export default function AlbumApp({ onBack }) {
     const item = media[lightbox];
     const video = isVideo(item.mimeType);
     return (
-      <div className="fixed inset-0 z-[70] flex flex-col bg-black/95">
+      <div className="fixed inset-0 z-[70] flex flex-col bg-black/95 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-3 text-white">
           <span className="min-w-0 flex-1 truncate text-sm font-bold opacity-80">{item.name}</span>
           <span className="shrink-0 text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>
@@ -484,7 +484,7 @@ export default function AlbumApp({ onBack }) {
   // ----- BÊN TRONG 1 ALBUM -----
   if (current) {
     return (
-      <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-4 py-5">
+      <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="mb-4 flex w-full max-w-3xl shrink-0 items-center justify-between gap-2">
           <button
             type="button"
@@ -553,7 +553,7 @@ export default function AlbumApp({ onBack }) {
 
   // ----- DANH SÁCH ALBUM -----
   return (
-    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-4 py-5">
+    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-violet-50 to-sky-100 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <div className="mb-4 flex w-full max-w-3xl shrink-0 items-center justify-between gap-2">
         <button
           type="button"
