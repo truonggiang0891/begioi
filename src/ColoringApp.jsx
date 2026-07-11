@@ -894,8 +894,8 @@ export default function ColoringApp({
     const { canUndo, canRedo } = historyStatus;
 
     return (
-        <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-white md:bg-[#333a42]">
-            <div className="relative flex h-[92dvh] min-h-0 w-full max-w-[460px] flex-col overflow-hidden bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
+        <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
+            <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] text-center">
                     <div className="flex h-9 items-center justify-between gap-1.5 px-2.5 py-0.5">
                         <button
@@ -1216,7 +1216,7 @@ export default function ColoringApp({
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-1 border-t border-[#e2e8f0] bg-white px-2 pt-1 pb-3">
+                <div className="flex shrink-0 flex-col gap-2.5 border-t border-[#e2e8f0] bg-white px-3 pt-2.5 pb-4">
                     <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5">
                         {Object.keys(colorThemes).map(theme => (
                             <button
@@ -1227,13 +1227,13 @@ export default function ColoringApp({
                                     setActiveColor(colorThemes[theme][0]);
                                     setIsEraserActive(false);
                                 }}
-                                className={`h-8 rounded-lg border-none px-1 text-xs font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
+                                className={`h-10 rounded-lg border-none px-1 text-sm font-black transition-colors ${activeTheme === theme ? 'bg-[#2d3748] text-white' : 'bg-[#edf2f7] text-[#718096]'}`}
                             >
                                 {THEME_LABELS[theme] || theme}
                             </button>
                         ))}
                         <label
-                            className="relative grid h-8 w-10 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
+                            className="relative grid h-10 w-12 cursor-pointer place-items-center rounded-lg border-2 border-[#dbe4ee] bg-white shadow-sm"
                             title="Chọn màu tự do"
                             aria-label="Chọn màu tự do"
                         >
@@ -1250,7 +1250,7 @@ export default function ColoringApp({
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-6 justify-items-center gap-1">
+                    <div className="grid grid-cols-6 justify-items-center gap-1.5">
                         {colorThemes[activeTheme].map((color, index) => (
                             <button
                                 type="button"
@@ -1260,20 +1260,20 @@ export default function ColoringApp({
                                     setIsEraserActive(false);
                                 }}
                                 style={{ backgroundColor: color }}
-                                className={`h-10 w-10 cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-11 md:w-11 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-[#cbd5e0]'}`}
+                                className={`h-12 w-12 cursor-pointer rounded-full border-2 shadow-[0_2px_6px_rgba(0,0,0,0.16)] transition-transform md:h-12 md:w-12 ${!isEraserActive && normalizeFill(activeColor) === normalizeFill(color) ? 'scale-105 border-[#1a202c]' : 'border-[#cbd5e0]'}`}
                                 aria-label={`Chọn màu ${index + 1}`}
                             />
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-6 gap-1">
+                    <div className="grid grid-cols-6 gap-1.5">
                         <button
                             type="button"
                             onClick={() => { setShowThreeDPreview(false); setShowSamplePreview(prev => !prev); }}
                             disabled={!isCurrentUnlocked}
                             title="Xem mẫu phối màu"
                             aria-label="Xem mẫu phối màu"
-                            className="grid h-9 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#fdf2f8] text-[#db2777] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Sparkles size={19} />
                         </button>
@@ -1283,7 +1283,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || progress < THREE_PREVIEW_READY_PROGRESS}
                             title="Xem 3D"
                             aria-label="Xem 3D"
-                            className="grid h-9 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#eef2ff] text-[#4f46e5] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Cuboid size={19} />
                         </button>
@@ -1293,7 +1293,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canUndo}
                             title="Hoàn tác"
                             aria-label="Hoàn tác"
-                            className="grid h-9 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Undo2 size={19} />
                         </button>
@@ -1303,7 +1303,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked || !canRedo}
                             title="Làm lại"
                             aria-label="Làm lại"
-                            className="grid h-9 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#edf2f7] text-[#334155] transition disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Redo2 size={19} />
                         </button>
@@ -1313,7 +1313,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Cục tẩy"
                             aria-label="Cục tẩy"
-                            className={`grid h-9 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
+                            className={`grid h-12 place-items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${isEraserActive ? 'bg-[#2d3748] text-white shadow-sm' : 'bg-[#edf2f7] text-[#334155]'}`}
                         >
                             <Eraser size={19} />
                         </button>
@@ -1323,7 +1323,7 @@ export default function ColoringApp({
                             disabled={!isCurrentUnlocked}
                             title="Vẽ lại"
                             aria-label="Vẽ lại"
-                            className="grid h-9 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="grid h-12 place-items-center rounded-full bg-[#fed7d7] text-[#c53030] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <RotateCcw size={19} />
                         </button>
