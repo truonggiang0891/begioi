@@ -897,30 +897,30 @@ export default function ColoringApp({
         <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
             <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] text-center">
-                    <div className="flex h-9 items-center justify-between gap-1.5 px-2.5 py-0.5">
+                    <div className="flex h-12 items-center justify-between gap-1.5 px-2.5 py-1">
                         <button
                             type="button"
                             onClick={onBack}
-                            className="h-7 shrink-0 rounded-lg bg-[#e2e8f0] px-2.5 text-xs font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
+                            className="h-9 shrink-0 rounded-lg bg-[#e2e8f0] px-3 text-sm font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
                         >
                             Trở lại
                         </button>
-                        <h1 className="m-0 min-w-0 flex-1 truncate text-sm font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
+                        <h1 className="m-0 min-w-0 flex-1 truncate text-base font-black text-[#2d3748]">Bé Tập Phối Màu</h1>
                         <div className="flex shrink-0 items-center gap-1">
                             <button
                                 type="button"
                                 onClick={() => setShowClearAllConfirm(true)}
                                 title="Xóa hết tất cả tranh đã tô để vẽ lại"
                                 aria-label="Xóa hết tất cả tranh đã tô để vẽ lại"
-                                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-600 transition hover:bg-rose-200 active:scale-90"
+                                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-600 transition hover:bg-rose-200 active:scale-90"
                             >
                                 <Trash2 size={14} />
                             </button>
-                            <div className="flex h-7 items-center gap-1 rounded-full bg-emerald-100 px-2 text-xs font-black text-emerald-700">
+                            <div className="flex h-9 items-center gap-1 rounded-full bg-emerald-100 px-2 text-xs font-black text-emerald-700">
                                 <Clock size={14} />
                                 {displayTimeLeft}
                             </div>
-                            <div className="flex h-7 items-center gap-1 rounded-full bg-yellow-100 px-2 text-xs font-black text-yellow-700">
+                            <div className="flex h-9 items-center gap-1 rounded-full bg-yellow-100 px-2 text-xs font-black text-yellow-700">
                                 <Gem size={14} className="fill-yellow-200" />
                                 {robuxBalance}
                             </div>
@@ -930,7 +930,7 @@ export default function ColoringApp({
                     <div className="flex gap-1.5 overflow-x-auto px-2.5 py-1 scrollbar-none">
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
+                            className={`flex h-10 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border-none px-3.5 text-[13px] font-black transition-all ${currentCategory === 'favorite' ? 'bg-rose-500 text-white shadow-[0_3px_6px_rgba(244,63,94,0.35)]' : 'bg-rose-100 text-rose-600'}`}
                             onClick={() => handleCategorySwitch('favorite')}
                         >
                             <Heart size={13} className={currentCategory === 'favorite' ? 'fill-white' : 'fill-rose-500'} />
@@ -938,50 +938,50 @@ export default function ColoringApp({
                         </button>
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3.5 text-[13px] font-black transition-all ${currentCategory ==='animal' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('animal')}
                         >
                             Động Vật (30)
                         </button>
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3.5 text-[13px] font-black transition-all ${currentCategory ==='pokemon' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('pokemon')}
                         >
                             Pokemon (30)
                         </button>
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='brainrot' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3.5 text-[13px] font-black transition-all ${currentCategory ==='brainrot' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('brainrot')}
                         >
                             Brainrot ({brainrotEmojis.length})
                         </button>
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='tonghop' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3.5 text-[13px] font-black transition-all ${currentCategory ==='tonghop' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('tonghop')}
                         >
                             Đặc biệt ({tonghopEmojis.length})
                         </button>
                         <button
                             type="button"
-                            className={`flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3 text-[11px] font-black transition-all ${currentCategory ==='landscape' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                            className={`flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border-none px-3.5 text-[13px] font-black transition-all ${currentCategory ==='landscape' ? 'bg-[#3182ce] text-white shadow-[0_3px_6px_rgba(49,130,206,0.3)]' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             onClick={() => handleCategorySwitch('landscape')}
                         >
                             Phong Cảnh (3)
                         </button>
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto px-2.5 pb-1 pt-1 scroll-smooth scrollbar-none">
+                    <div className="flex gap-2.5 overflow-x-auto px-2.5 pb-1.5 pt-1.5 scroll-smooth scrollbar-none">
                         {favoritesEmpty && (
-                            <div className="flex h-10 items-center gap-1.5 px-1 text-xs font-bold text-slate-400">
+                            <div className="flex h-12 items-center gap-1.5 px-1 text-xs font-bold text-slate-400">
                                 <Heart size={14} className="text-rose-300" />
                                 Chưa có nhân vật yêu thích — chạm nút tim để thêm nhé!
                             </div>
                         )}
                         {categoryEmpty && (
-                            <div className="flex h-10 items-center px-1 text-xs font-bold text-slate-400">
+                            <div className="flex h-12 items-center px-1 text-xs font-bold text-slate-400">
                                 Mục này đang rỗng
                             </div>
                         )}
@@ -993,7 +993,7 @@ export default function ColoringApp({
                                     type="button"
                                     key={id}
                                     onClick={(event) => handleLevelSelect(id, event)}
-                                    className={`relative flex h-10 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-xl text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
+                                    className={`relative flex h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent bg-[#edf2f7] text-2xl text-gray-900 shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-all ${!isUnlocked ? 'opacity-80' : ''} ${id === currentLevel ? 'scale-110 border-[#3182ce] bg-[#ebf8ff] shadow-[0_4px_8px_rgba(49,130,206,0.2)]' : ''}`}
                                 >
                                     <span className={!isUnlocked ? 'opacity-55' : ''} style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif' }}>
                                         {emoji || '?'}
