@@ -1044,24 +1044,6 @@ export default function ColoringApp({
                     </div>
                 )}
 
-                {!favoritesEmpty && !categoryEmpty && isCurrentUnlocked && (
-                    <div className="flex shrink-0 items-center justify-between gap-2 px-3 pb-1 pt-0.5">
-                        <button
-                            type="button"
-                            onClick={() => toggleFavorite(currentLevel)}
-                            aria-pressed={isCurrentFavorite}
-                            aria-label={isCurrentFavorite ? 'Bỏ yêu thích nhân vật này' : 'Thả tim nhân vật yêu thích'}
-                            className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border shadow-sm transition active:scale-90 ${isCurrentFavorite ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-white'}`}
-                        >
-                            <Heart size={19} className={isCurrentFavorite ? 'fill-rose-500 text-rose-500 animate-[cf-badge-pop_0.4s_ease]' : 'text-slate-400'} />
-                        </button>
-                        <div className={`flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black shadow-sm transition-colors ${progress === 100 ? 'animate-[cf-badge-pop_0.5s_ease] border-white bg-gradient-to-r from-amber-400 to-pink-500 text-white' : 'border-slate-200 bg-white text-[#334155]'}`}>
-                            <span className="truncate">{currentCharacterName}</span>
-                            <span className="shrink-0">{progress === 100 ? '🎉 100%' : `${progress}%`}</span>
-                        </div>
-                    </div>
-                )}
-
                 <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f1f5f9] px-1 py-0.5">
                     <div
                         className={`flex h-full w-full items-center justify-center transition ${!favoritesEmpty && !categoryEmpty && isCurrentUnlocked ? '' : 'pointer-events-none opacity-0'}`}
@@ -1105,6 +1087,25 @@ export default function ColoringApp({
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {!favoritesEmpty && !categoryEmpty && isCurrentUnlocked && (
+                        <div className={`pointer-events-none absolute right-2 top-1 z-[12] flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-black shadow-sm backdrop-blur transition-colors ${progress === 100 ? 'animate-[cf-badge-pop_0.5s_ease] border-white bg-gradient-to-r from-amber-400 to-pink-500 text-white' : 'border-white/80 bg-white/90 text-[#334155]'}`}>
+                            <span className="truncate">{currentCharacterName}</span>
+                            <span className="shrink-0">{progress === 100 ? '🎉 100%' : `${progress}%`}</span>
+                        </div>
+                    )}
+
+                    {!favoritesEmpty && !categoryEmpty && isCurrentUnlocked && (
+                        <button
+                            type="button"
+                            onClick={() => toggleFavorite(currentLevel)}
+                            aria-pressed={isCurrentFavorite}
+                            aria-label={isCurrentFavorite ? 'Bỏ yêu thích nhân vật này' : 'Thả tim nhân vật yêu thích'}
+                            className={`absolute left-2 top-1 z-[12] grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition active:scale-90 ${isCurrentFavorite ? 'border-rose-200 bg-rose-50' : 'border-white/80 bg-white/90'}`}
+                        >
+                            <Heart size={19} className={isCurrentFavorite ? 'fill-rose-500 text-rose-500 animate-[cf-badge-pop_0.4s_ease]' : 'text-slate-400'} />
+                        </button>
                     )}
 
                     {isCurrentUnlocked && showFireworks && (
@@ -1343,10 +1344,10 @@ export default function ColoringApp({
                     animation: fadeIn 0.25s ease;
                 }
 
-                /* Khung tô chính: full-width nhưng vẫn co vừa chiều cao (không tràn/cắt) */
+                /* Chỉ khóa full-width cho khung tô chính; ảnh mẫu/3D vẫn vừa khung */
                 .svg-wrapper .artwork-svg {
                     height: auto !important;
-                    max-height: 100% !important;
+                    max-height: none !important;
                     aspect-ratio: 1 / 1;
                 }
 
