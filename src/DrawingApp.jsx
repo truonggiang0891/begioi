@@ -79,22 +79,22 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
         <div className="fixed inset-0 z-50 flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-white md:items-center md:bg-[#333a42]">
             <div className="relative flex h-full min-h-0 w-full max-w-[460px] flex-col bg-white shadow-[0_15px_35px_rgba(0,0,0,0.5)] md:h-[92vh] md:max-h-[860px] md:max-w-[520px] md:rounded-[28px] md:border-[6px] md:border-[#1a202c]">
                 <header className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc]">
-                    <div className="flex h-11 items-center justify-between gap-1.5 px-2.5 py-1">
+                    <div className="flex h-12 items-center justify-between gap-1.5 px-2.5 py-1">
                         <button
                             type="button"
                             onClick={lesson ? backToGallery : onBack}
-                            className="h-8 shrink-0 rounded-lg bg-[#e2e8f0] px-3 text-xs font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
+                            className="h-9 shrink-0 rounded-lg bg-[#e2e8f0] px-3 text-sm font-black text-[#4a5568] transition hover:bg-[#cbd5e0]"
                         >
                             {lesson ? 'Bài khác' : 'Trở lại'}
                         </button>
-                        <h1 className="m-0 min-w-0 flex-1 truncate text-center text-sm font-black text-[#2d3748]">
+                        <h1 className="m-0 min-w-0 flex-1 truncate text-center text-base font-black text-[#2d3748]">
                             {lesson ? lesson.name : 'Học Vẽ Từng Bước'}
                         </h1>
                         <div className="flex shrink-0 items-center gap-1">
-                            <div className="flex h-8 items-center gap-1 rounded-full bg-emerald-100 px-2 text-xs font-black text-emerald-700">
+                            <div className="flex h-9 items-center gap-1 rounded-full bg-emerald-100 px-2 text-xs font-black text-emerald-700">
                                 <Clock size={14} />{timeLabel}
                             </div>
-                            <div className="flex h-8 items-center gap-1 rounded-full bg-yellow-100 px-2 text-xs font-black text-yellow-700">
+                            <div className="flex h-9 items-center gap-1 rounded-full bg-yellow-100 px-2 text-xs font-black text-yellow-700">
                                 <Gem size={14} className="fill-yellow-200" />{robuxBalance}
                             </div>
                         </div>
@@ -127,14 +127,14 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                             <button
                                 type="button"
                                 onClick={() => setMode('guide')}
-                                className={`h-9 rounded-full text-xs font-black transition ${mode === 'guide' ? 'bg-[#3182ce] text-white shadow' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                                className={`h-11 rounded-full text-sm font-black transition ${mode === 'guide' ? 'bg-[#3182ce] text-white shadow' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             >
                                 Xem hướng dẫn
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setMode('draw')}
-                                className={`h-9 rounded-full text-xs font-black transition ${mode === 'draw' ? 'bg-[#3182ce] text-white shadow' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
+                                className={`h-11 rounded-full text-sm font-black transition ${mode === 'draw' ? 'bg-[#3182ce] text-white shadow' : 'bg-[#e2e8f0] text-[#4a5568]'}`}
                             >
                                 Vẽ theo
                             </button>
@@ -172,7 +172,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                         </div>
 
                         {mode === 'guide' ? (
-                            <div className="shrink-0 border-t border-[#e2e8f0] bg-white px-3 pb-3 pt-2">
+                            <div className="shrink-0 border-t border-[#e2e8f0] bg-white px-3 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-2">
                                 <div className="mb-2 rounded-xl bg-pink-50 px-3 py-2 text-center text-sm font-black text-pink-700">
                                     Bước {stepIndex + 1}: {lesson.steps[stepIndex].hint}
                                 </div>
@@ -186,7 +186,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                                         type="button"
                                         onClick={() => setStepIndex(index => Math.max(0, index - 1))}
                                         disabled={stepIndex === 0}
-                                        className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-slate-100 text-sm font-black text-slate-600 transition disabled:opacity-40"
+                                        className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-[#c5d0de] text-sm font-black text-slate-700 transition disabled:opacity-40"
                                     >
                                         <ChevronLeft size={18} />Bước trước
                                     </button>
@@ -210,7 +210,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                                 </div>
                             </div>
                         ) : (
-                            <div className="shrink-0 border-t border-[#e2e8f0] bg-white px-3 pb-3 pt-2">
+                            <div className="shrink-0 border-t border-[#e2e8f0] bg-white px-3 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-2">
                                 <div className="mb-2 flex items-center justify-center gap-2">
                                     {DRAW_COLORS.map(color => (
                                         <button
@@ -218,7 +218,7 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                                             type="button"
                                             onClick={() => setActiveColor(color)}
                                             style={{ backgroundColor: color }}
-                                            className={`h-9 w-9 rounded-full border-2 shadow transition ${activeColor === color ? 'scale-110 border-[#1a202c]' : 'border-white'}`}
+                                            className={`h-12 w-12 rounded-full border-2 shadow transition ${activeColor === color ? 'scale-110 border-[#1a202c]' : 'border-white'}`}
                                             aria-label={`Chọn màu ${color}`}
                                         />
                                     ))}
@@ -228,14 +228,14 @@ export default function DrawingApp({ onBack, robuxBalance = 0, drawingTimeLeftSe
                                         type="button"
                                         onClick={undoStroke}
                                         disabled={strokes.length === 0}
-                                        className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-slate-100 text-sm font-black text-slate-600 transition disabled:opacity-40"
+                                        className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-[#c5d0de] text-sm font-black text-slate-700 transition disabled:opacity-40"
                                     >
                                         <Undo2 size={18} />Hoàn tác
                                     </button>
                                     <button
                                         type="button"
                                         onClick={clearStrokes}
-                                        className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-rose-100 text-sm font-black text-rose-600 transition hover:bg-rose-200"
+                                        className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-[#f9a8a8] text-sm font-black text-rose-700 transition hover:bg-[#f78888]"
                                     >
                                         <RotateCcw size={18} />Xóa hết
                                     </button>
