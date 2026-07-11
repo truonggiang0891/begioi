@@ -2905,7 +2905,7 @@ export default function App() {
     }`}>
       {/* ROLE LOGIN */}
       {!isSummary && (
-      <div className="w-full max-w-lg shrink-0 bg-white rounded-3xl shadow-lg border-4 border-white mb-3 p-1.5 md:p-2.5">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-3xl shadow-lg border-4 border-white mb-1.5 md:mb-3 p-1.5 md:p-2.5">
         <div className="grid grid-cols-3 gap-1.5 md:gap-2.5">
           <button
             type="button"
@@ -3951,7 +3951,7 @@ export default function App() {
 
       {/* HEADER */}
       {!isSummary && (
-      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-3">
+      <div className="w-full max-w-lg shrink-0 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-white mb-1.5 md:mb-3">
         <div className="bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 text-white py-3 md:py-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none"
                style={{ backgroundImage: 'radial-gradient(circle, #fff 10%, transparent 10%)', backgroundSize: '20px 20px' }}></div>
