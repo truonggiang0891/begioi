@@ -3980,30 +3980,30 @@ export default function App() {
         </div>
         
         {/* STATS */}
-        <div className="p-1 md:p-4 grid grid-cols-3 gap-1 md:gap-3 bg-white">
+        <div className="px-1 py-0.5 md:p-4 grid grid-cols-3 gap-1 md:gap-3 bg-white">
           {/* 3 thẻ học tập — cùng một hệ, tông nhạt dịu mắt, giữ màu ngữ nghĩa ở icon & số */}
-          <div className="flex flex-col items-center justify-center gap-0.5 py-1 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+          <div className="flex flex-col items-center justify-center gap-0.5 py-0.5 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
             <div className="flex items-center gap-1 text-green-600 font-bold text-[11px] sm:text-xs md:text-base">
               <CheckCircle size={15} className="md:w-5 md:h-5" /> Đã đúng
             </div>
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-green-600">{correctTotal}</div>
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-0.5 py-1 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+          <div className="flex flex-col items-center justify-center gap-0.5 py-0.5 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
             <div className="flex items-center gap-1 text-amber-600 font-bold text-[11px] sm:text-xs md:text-base">
               <BookOpen size={15} className="md:w-5 md:h-5" /> Cần ôn
             </div>
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600">{activeReviewList.length}</div>
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-0.5 py-1 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+          <div className="flex flex-col items-center justify-center gap-0.5 py-0.5 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
             <div className="flex items-center gap-1 text-blue-600 font-bold text-[11px] sm:text-xs md:text-base">
               <Star size={15} className="md:w-5 md:h-5" /> Chưa làm
             </div>
             <div className="text-lg sm:text-2xl md:text-3xl font-black text-blue-600">{activeUnseenList.length}</div>
           </div>
 
-          <div className="relative col-span-2 flex flex-col items-center justify-center gap-0.5 py-1 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
+          <div className="relative col-span-2 flex flex-col items-center justify-center gap-0.5 py-0.5 px-1.5 md:p-2.5 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200/80">
             <div className="flex items-center gap-1 md:gap-2 text-purple-600 font-bold text-sm md:text-lg">
               <Smartphone size={19} className="md:w-6 md:h-6 animate-pulse" /> Giờ xem điện thoại
             </div>
@@ -4013,7 +4013,7 @@ export default function App() {
           </div>
 
           {/* Robux — phần thưởng, nổi bật bằng gradient vàng gold */}
-          <div className="relative flex flex-col items-center justify-center gap-0.5 overflow-hidden py-1 px-1.5 md:p-2.5 rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-300 to-yellow-400 border-2 border-amber-300 shadow-[0_3px_0_rgb(217,119,6)]">
+          <div className="relative flex flex-col items-center justify-center gap-0.5 overflow-hidden py-0.5 px-1.5 md:p-2.5 rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-300 to-yellow-400 border-2 border-amber-300 shadow-[0_3px_0_rgb(217,119,6)]">
             <div className="pointer-events-none absolute -right-2 -top-3 h-9 w-9 rounded-full bg-white/25" />
             <div className="relative flex items-center gap-1 text-yellow-900 font-extrabold text-[11px] sm:text-xs md:text-base">
               <Gem size={15} className="md:w-5 md:h-5" /> Robux
@@ -4028,7 +4028,7 @@ export default function App() {
       <div className={`w-full max-w-lg bg-white rounded-2xl md:rounded-3xl shadow-xl border-4 border-white relative flex flex-col justify-center ${
         isSummary
           ? 'p-2 md:p-4'
-          : `${isFeedbackPaused ? 'min-h-[280px]' : 'min-h-[215px]'} md:min-h-[390px] p-2.5 md:p-6`
+          : `${isFeedbackPaused ? 'min-h-[235px]' : 'min-h-[215px]'} md:min-h-[390px] p-2.5 md:p-6`
       }`}>
         {stageNotice && (
           <div className="absolute left-1/2 top-10 z-30 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-green-200 bg-white px-4 py-1.5 text-sm font-black text-green-600 shadow-lg animate-bounce-in md:top-14 md:text-lg">
