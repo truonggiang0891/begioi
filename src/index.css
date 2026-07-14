@@ -34,6 +34,7 @@ textarea,
 }
 
 #root {
+  height: 100vh; /* fallback cho iOS cũ chưa hỗ trợ dvh */
   height: 100dvh;
   /* Lấn bớt ~20px vùng safe-area để nội dung dồn lên (vẫn chừa đủ cho đồng hồ/pin status bar) */
   padding-top: max(0.25rem, calc(env(safe-area-inset-top) - 1.25rem));
@@ -87,7 +88,8 @@ textarea,
 }
 
 .app-shell {
-  height: 100dvh;
+  /* Cao đúng bằng vùng nội dung của #root (đã trừ safe-area), tránh tràn xuống đáy */
+  height: 100%;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
@@ -97,7 +99,8 @@ textarea,
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-top: 1.25rem;
-  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  /* Đáy safe-area đã được #root xử lý -> ở đây chỉ cần đệm nhìn nhỏ, tránh tính 2 lần */
+  padding-bottom: 1.25rem;
 }
 
 .app-shell--scroll {
