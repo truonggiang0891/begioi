@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense, Comp
 const ColoringApp = lazy(() => import('./ColoringApp'));
 const DrawingApp = lazy(() => import('./DrawingApp'));
 const GamesApp = lazy(() => import('./GamesApp'));
+const TowerMathApp = lazy(() => import('./TowerMathApp'));
 const AlbumApp = lazy(() => import('./AlbumApp'));
 import { Play, CheckCircle, XCircle, Clock, Smartphone, Star, BookOpen, RotateCcw, StopCircle, BarChart, AlertTriangle, UserRound, ShieldCheck, Settings, Save, LogOut, LockKeyhole, Volume2, PencilLine, ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Brush, Gamepad2, Gem, Home, Camera, Rocket, Sparkles, Cloud } from 'lucide-react';
 import { CameraSticker, BookSticker, BrushSticker, PencilSticker, GamepadSticker, GemSticker } from './MenuIcons.jsx';
@@ -992,6 +993,7 @@ export default function App() {
   const [sessionHistory, setSessionHistory] = useState(() => loadSessionHistory());
   const [learnStats, setLearnStats] = useState(() => loadStats());
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showTowerPanel, setShowTowerPanel] = useState(false);
   const [showParentReport, setShowParentReport] = useState(false);
   const [newBadge, setNewBadge] = useState(null);
   const prevUnlockedRef = useRef(null);
@@ -3004,6 +3006,15 @@ export default function App() {
           <div className="mt-1.5 grid grid-cols-2 gap-1.5 md:mt-2 md:gap-2">
             <button
               type="button"
+              onClick={() => setShowTowerPanel(true)}
+              aria-label="Chơi Tháp Quỷ Toán"
+              className="col-span-2 flex min-w-0 items-center justify-center gap-1.5 rounded-xl md:rounded-2xl py-2.5 px-2 font-extrabold text-[13px] sm:text-base md:text-xl text-white transition-all active:translate-y-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 shadow-[0_4px_0_rgb(88,28,135)] hover:brightness-105"
+            >
+              <span className="text-lg md:text-2xl" aria-hidden>🏰</span> <span className="truncate">Tháp Quỷ Toán</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 setActiveHistoryTab('math');
                 setShowHistoryPanel(prev => !prev);
@@ -4736,6 +4747,16 @@ export default function App() {
       {!isSummary && showAlbumPanel && (
         <LazyPanel>
           <AlbumApp onBack={() => setShowAlbumPanel(false)} />
+        </LazyPanel>
+      )}
+
+      {!isSummary && showTowerPanel && (
+        <LazyPanel>
+          <TowerMathApp
+            onBack={() => setShowTowerPanel(false)}
+            onReward={handleGameReward}
+            robuxBalance={robuxBalance}
+          />
         </LazyPanel>
       )}
 
