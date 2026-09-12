@@ -439,7 +439,7 @@ export default function GameApp({ onBack, onReward, robuxBalance = 0 }) {
   const boardKey = `${selectedId}-${levelId}`;
 
   return (
-    <div className={`flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b ${picture ? picture.bg : 'from-orange-50 to-amber-100'}`}>
+    <div className={`flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] bg-gradient-to-b ${picture ? picture.bg : 'from-orange-50 to-amber-100'}`}>
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/50 bg-white/40 px-3 py-2 backdrop-blur">
         <button

@@ -104,7 +104,7 @@ export default function TowerMathApp({ onBack, onExamReward, robuxBalance = 0 })
   }, [stage, progress]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-indigo-950 via-purple-900 to-slate-900">
+    <div className="fixed inset-0 z-[60] flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] bg-gradient-to-b from-indigo-950 via-purple-900 to-slate-900">
       {/* Header — ẩn khi đang thi để dành chỗ (bài thi có thanh trên riêng) */}
       {!(stage && questions) && (
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-black/25 px-3 py-2">

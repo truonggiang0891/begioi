@@ -358,7 +358,7 @@ export default function AlbumApp({ onBack }) {
     const item = media[lightbox];
     const video = isVideo(item.mimeType);
     return (
-      <div className="fixed inset-0 z-[70] flex flex-col bg-black/95 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed inset-0 z-[70] flex flex-col bg-black/95 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-3 text-white">
           <span className="min-w-0 flex-1 truncate text-sm font-bold opacity-80">{item.name}</span>
           <span className="shrink-0 text-sm font-bold opacity-70">{lightbox + 1}/{media.length}</span>

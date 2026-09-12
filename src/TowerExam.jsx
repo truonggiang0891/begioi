@@ -262,7 +262,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
           <div className="mb-1.5 text-center text-xs font-black text-amber-300">
             📖 Xem lại câu sai {reviewPos + 1}/{wrongCount}
           </div>
-          <div className="grid gap-2 landscape:grid-cols-2">
+          <div className="grid gap-2 landscape:grid-cols-[1.7fr_1fr]">
             <Panel tone="amber" title="Câu bé làm sai" className="max-h-[46dvh] landscape:max-h-none">
               <QuestionBody q={rq} />
             </Panel>
@@ -333,7 +333,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
           <div className="shrink-0 text-center text-xs font-black text-amber-300">
             💪 Luyện lại — còn {remaining.length} câu · câu này đúng {done}/{DRILL_TIMES} lần
           </div>
-          <div className="grid min-h-0 flex-1 gap-2 landscape:grid-cols-2">
+          <div className="grid min-h-0 flex-1 gap-2 landscape:grid-cols-[1.7fr_1fr]">
             <Panel tone="amber" title="Nội dung câu hỏi">
               <QuestionBody q={dq} />
             </Panel>
@@ -410,7 +410,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
   return (
     <>
       <TopBar />
-      <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 landscape:grid-cols-2">
+      <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 landscape:grid-cols-[1.7fr_1fr]">
         <Panel tone="amber" title="Nội dung câu hỏi">
           <QuestionBody q={q} />
         </Panel>

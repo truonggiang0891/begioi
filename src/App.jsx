@@ -4776,7 +4776,7 @@ export default function App() {
             role="dialog"
             aria-modal="true"
             aria-label="Tập đọc"
-            className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-white"
+            className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] bg-white"
           >
             <div className={`flex shrink-0 items-center justify-between gap-1.5 border-b px-2.5 py-0.5 md:px-6 md:py-1.5 ${
               selectedReading && selectedReadingCompleted && !readingSummary
