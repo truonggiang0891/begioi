@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ChevronLeft, Gem, Lock, Check } from 'lucide-react';
 import { playSound, emojiFont } from './gameAudio';
 import { SoundToggle } from './gameUI';
 import GameHelp from './GameHelp';
 import TowerExam, { EXAM_MINUTES, DRILL_TIMES } from './TowerExam';
-import { getExam } from './towerExams';
+import { drawExam, isExamReady, bankSize, EXAM_SIZE } from './towerExams';
 import {
   TOWER_ZONES, TOWER_TIERS, stageKey,
   loadProgress, saveProgress, isCleared, isUnlocked,
@@ -52,7 +52,7 @@ function ZoneMap({ progress, onPick }) {
                 {TOWER_TIERS.map((tier) => {
                   const unlocked = isUnlocked(progress, zi, tier.id);
                   const cleared = isCleared(progress, zone.id, tier.id);
-                  const ready = Boolean(getExam(zone.id, tier.id));
+                  const ready = isExamReady();
                   return (
                     <button
                       key={tier.id}
@@ -90,7 +90,9 @@ export default function TowerMathApp({ onBack, onExamReward, robuxBalance = 0 })
   const [stage, setStage] = useState(null); // { zoneIndex, tier }
 
   const zone = stage ? TOWER_ZONES[stage.zoneIndex] : null;
-  const questions = stage ? getExam(zone.id, stage.tier.id) : null;
+  // Rút đề MỘT LẦN mỗi khi bé vào ải (không rút lại trong thân render,
+  // nếu không bộ câu hỏi sẽ đổi liên tục giữa chừng bài thi).
+  const questions = useMemo(() => (stage && isExamReady() ? drawExam() : null), [stage]);
 
   // Lưu ý: KHÔNG đặt side-effect trong hàm cập nhật state (StrictMode gọi 2 lần).
   const handleCleared = useCallback(() => {
@@ -154,7 +156,8 @@ export default function TowerMathApp({ onBack, onExamReward, robuxBalance = 0 })
           <div className="text-5xl">🛠️</div>
           <h2 className="text-xl font-black text-white">Đề thi đang được chuẩn bị</h2>
           <p className="max-w-xs text-sm font-bold text-white/70">
-            {zone.emoji} {zone.name} — {stage.tier.label} sắp có đề. Bé thi ải khác trước nhé!
+            Kho đề mới có <b>{bankSize()}</b>/{EXAM_SIZE} câu. Cần thêm{' '}
+            <b>{Math.max(0, EXAM_SIZE - bankSize())}</b> câu nữa là bé thi được.
           </p>
           <button
             type="button"

@@ -1,10 +1,12 @@
-// --- ĐỀ THI: 👾 VÙNG ĐẤT QUÁI SỐ — ẢI THƯỜNG ---
+// --- KHO CÂU HỎI THÁP QUỶ TOÁN ---
+// Kho dùng chung cho MỌI ải. Mỗi lần vào ải, app rút ngẫu nhiên 30 câu từ kho này.
+// Thêm câu mới = thêm phần tử vào mảng (id không được trùng).
 // Chép từ bộ đề gốc do phụ huynh cung cấp.
 // q  : đề bài dạng chữ (để rỗng nếu đề nằm trong ảnh)
 // img: ảnh đề đã cắt từ bản gốc (nằm ở public/tower/z01/)
 // type: 'choice' (chọn đáp án) | 'fill' (gõ đáp án)
 
-const Z01 = [
+const BANK = [
   {
     id: 1, type: 'choice', q: 'Hình trên có mấy con bướm?', img: '/tower/z01/q01.webp',
     options: ['2', '3', '5', '4'], answer: '4',
@@ -187,4 +189,4 @@ const Z01 = [
   },
 ];
 
-export default Z01;
+export default BANK;
