@@ -45,12 +45,16 @@ function Panel({ tone, title, children, className = '' }) {
 /* Nội dung câu hỏi: chữ + ảnh */
 function QuestionBody({ q }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 overflow-y-auto p-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-2 p-2">
       {q.q && (
-        <div className="text-center text-base font-black leading-snug text-white md:text-xl">{q.q}</div>
+        <div className="shrink-0 overflow-y-auto text-center text-base font-black leading-snug text-white md:text-xl">
+          {q.q}
+        </div>
       )}
       {q.img && (
-        <img src={q.img} alt="" className="max-h-full w-auto max-w-full rounded-lg bg-white object-contain p-1" />
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <img src={q.img} alt="" className="h-full w-full rounded-lg bg-white object-contain p-1" />
+        </div>
       )}
     </div>
   );
@@ -333,7 +337,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
           <div className="shrink-0 text-center text-xs font-black text-amber-300">
             💪 Luyện lại — còn {remaining.length} câu · câu này đúng {done}/{DRILL_TIMES} lần
           </div>
-          <div className="grid min-h-0 flex-1 gap-2 landscape:grid-cols-[1.7fr_1fr]">
+          <div className="grid min-h-0 flex-1 grid-rows-[3fr_2fr] gap-2 landscape:grid-rows-none landscape:grid-cols-[1.7fr_1fr]">
             <Panel tone="amber" title="Nội dung câu hỏi">
               <QuestionBody q={dq} />
             </Panel>
@@ -410,7 +414,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
   return (
     <>
       <TopBar />
-      <div className="grid min-h-0 flex-1 gap-2 px-2 pb-2 landscape:grid-cols-[1.7fr_1fr]">
+      <div className="grid min-h-0 flex-1 grid-rows-[3fr_2fr] gap-2 px-2 pb-2 landscape:grid-rows-none landscape:grid-cols-[1.7fr_1fr]">
         <Panel tone="amber" title="Nội dung câu hỏi">
           <QuestionBody q={q} />
         </Panel>
