@@ -2109,6 +2109,15 @@ export default function App() {
     setRobuxBalance(prev => normalizeRobuxBalance(prev + amount));
   }
 
+  // Phần thưởng bài thi Tháp Quỷ Toán: cộng/trừ giờ xem điện thoại (phút) + Robux.
+  // Chỉ được gọi sau khi bé hoàn thành bài thi VÀ luyện lại hết các câu sai.
+  function handleTowerExamReward(minutes, robux) {
+    const m = Number(minutes) || 0;
+    const rb = Math.round(Number(robux) || 0);
+    if (m) updateScreenTime(Math.round(m * 60));
+    if (rb) updateRobux(rb);
+  }
+
   // Phần thưởng Robux từ game -> cộng thẳng vào Robux tổng (mỗi lần 1..10).
   const handleGameReward = useCallback((amount) => {
     const rb = Math.max(0, Math.min(10, Math.round(Number(amount) || 0)));
@@ -4755,6 +4764,7 @@ export default function App() {
           <TowerMathApp
             onBack={() => setShowTowerPanel(false)}
             onReward={handleGameReward}
+            onExamReward={handleTowerExamReward}
             robuxBalance={robuxBalance}
           />
         </LazyPanel>
