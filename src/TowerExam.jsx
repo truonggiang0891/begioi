@@ -43,17 +43,116 @@ function Panel({ tone, title, children, className = '' }) {
 }
 
 /* Nội dung câu hỏi: chữ + ảnh */
+/* Ảnh đề: chụm 2 ngón để phóng to, kéo để xem quanh, nhấp đúp để phóng/thu nhanh.
+   Có thêm nút +/-/reset cho bé nào chưa quen thao tác chụm ngón. */
+function ZoomImage({ src }) {
+  const [scale, setScale] = useState(1);
+  const [tx, setTx] = useState(0);
+  const [ty, setTy] = useState(0);
+  const g = useRef({});
+
+  useEffect(() => { setScale(1); setTx(0); setTy(0); }, [src]);
+
+  const clampScale = (v) => Math.min(5, Math.max(1, v));
+  const reset = () => { setScale(1); setTx(0); setTy(0); };
+  const bump = (f) => setScale((v) => {
+    const nv = clampScale(v * f);
+    if (nv === 1) { setTx(0); setTy(0); }
+    return nv;
+  });
+
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+  const onTouchStart = (e) => {
+    const t = e.touches;
+    if (t.length === 2) {
+      g.current.mode = 'pinch';
+      g.current.startDist = dist(t) || 1;
+      g.current.startScale = scale;
+      return;
+    }
+    const now = Date.now();
+    if (g.current.lastTap && now - g.current.lastTap < 300) {   // nhấp đúp
+      g.current.lastTap = 0; g.current.mode = null;
+      if (scale > 1) reset(); else setScale(2.5);
+      return;
+    }
+    g.current.lastTap = now;
+    g.current.mode = scale > 1 ? 'pan' : null;
+    g.current.startX = t[0].clientX; g.current.startY = t[0].clientY;
+    g.current.startTx = tx; g.current.startTy = ty;
+  };
+
+  const onTouchMove = (e) => {
+    const t = e.touches;
+    if (g.current.mode === 'pinch' && t.length === 2) {
+      setScale(clampScale(g.current.startScale * (dist(t) / g.current.startDist)));
+    } else if (g.current.mode === 'pan' && t.length === 1) {
+      setTx(g.current.startTx + (t[0].clientX - g.current.startX));
+      setTy(g.current.startTy + (t[0].clientY - g.current.startY));
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (g.current.mode === 'pinch' && scale < 1.05) reset();
+    g.current.mode = null;
+  };
+
+  // Chuột (để thử trên máy tính)
+  const onWheel = (e) => bump(e.deltaY < 0 ? 1.15 : 1 / 1.15);
+  const onMouseDown = (e) => {
+    if (scale <= 1) return;
+    g.current.mouse = { x: e.clientX, y: e.clientY, tx, ty };
+  };
+  const onMouseMove = (e) => {
+    if (!g.current.mouse) return;
+    setTx(g.current.mouse.tx + (e.clientX - g.current.mouse.x));
+    setTy(g.current.mouse.ty + (e.clientY - g.current.mouse.y));
+  };
+  const endMouse = () => { g.current.mouse = null; };
+
+  return (
+    <div
+      className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-white"
+      style={{ touchAction: 'none' }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={endMouse}
+      onMouseLeave={endMouse}
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="h-full w-full select-none object-contain p-1"
+        style={{ transform: `translate(${tx}px, ${ty}px) scale(${scale})`, transition: g.current.mode ? 'none' : 'transform .18s ease' }}
+      />
+      <div className="absolute bottom-1 right-1 flex items-center gap-1">
+        <button type="button" aria-label="Thu nhỏ" onClick={() => bump(1 / 1.4)}
+          className="grid h-7 w-7 place-items-center rounded-full bg-slate-900/60 text-base font-black text-white">−</button>
+        <button type="button" aria-label="Phóng to" onClick={() => bump(1.4)}
+          className="grid h-7 w-7 place-items-center rounded-full bg-slate-900/60 text-base font-black text-white">+</button>
+        {scale > 1 && (
+          <button type="button" aria-label="Về cỡ gốc" onClick={reset}
+            className="grid h-7 w-7 place-items-center rounded-full bg-slate-900/60 text-[10px] font-black text-white">1:1</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Ảnh ở TRÊN, chữ đề ở DƯỚI cho dễ đọc. */
 function QuestionBody({ q }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 p-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-2">
+      {q.img && <ZoomImage src={q.img} />}
       {q.q && (
-        <div className="shrink-0 overflow-y-auto text-center text-base font-black leading-snug text-white md:text-xl">
+        <div className="max-h-[38%] shrink-0 overflow-y-auto text-center text-base font-black leading-snug text-white md:text-xl">
           {q.q}
-        </div>
-      )}
-      {q.img && (
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <img src={q.img} alt="" className="h-full w-full rounded-lg bg-white object-contain p-1" />
         </div>
       )}
     </div>
@@ -337,7 +436,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
           <div className="shrink-0 text-center text-xs font-black text-amber-300">
             💪 Luyện lại — còn {remaining.length} câu · câu này đúng {done}/{DRILL_TIMES} lần
           </div>
-          <div className="grid min-h-0 flex-1 grid-rows-[3fr_2fr] gap-2 landscape:grid-rows-none landscape:grid-cols-[1.7fr_1fr]">
+          <div className="grid min-h-0 flex-1 grid-rows-[2fr_1fr] gap-2 landscape:grid-rows-none landscape:grid-cols-[2fr_1fr]">
             <Panel tone="amber" title="Nội dung câu hỏi">
               <QuestionBody q={dq} />
             </Panel>
@@ -414,7 +513,7 @@ export default function TowerExam({ questions, zone, tier, onExit, onCleared, on
   return (
     <>
       <TopBar />
-      <div className="grid min-h-0 flex-1 grid-rows-[3fr_2fr] gap-2 px-2 pb-2 landscape:grid-rows-none landscape:grid-cols-[1.7fr_1fr]">
+      <div className="grid min-h-0 flex-1 grid-rows-[2fr_1fr] gap-2 px-2 pb-2 landscape:grid-rows-none landscape:grid-cols-[2fr_1fr]">
         <Panel tone="amber" title="Nội dung câu hỏi">
           <QuestionBody q={q} />
         </Panel>
