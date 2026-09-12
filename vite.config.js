@@ -13,7 +13,7 @@ export default defineConfig({
       workbox: {
         // Precache app shell + code (gồm cả chunk Tô màu 2.8MB) + icon + puzzle.
         // KHÔNG precache 25MB ảnh Tập đọc và nhạc -> để runtime cache (cache dần khi dùng).
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,webmanifest}'],
         globIgnores: ['**/reading/**', '**/music/**', '**/coloring/**'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // cho phép chunk ColoringApp ~2.8MB
         cleanupOutdatedCaches: true,
