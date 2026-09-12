@@ -1,4 +1,4 @@
-// --- ĐỀ THI: 👾 VÙNG ĐẤT QUÁI SỐ — ẢI THƯỜNG (30 câu) ---
+// --- ĐỀ THI: 👾 VÙNG ĐẤT QUÁI SỐ — ẢI THƯỜNG ---
 // Chép từ bộ đề gốc do phụ huynh cung cấp.
 // q  : đề bài dạng chữ (để rỗng nếu đề nằm trong ảnh)
 // img: ảnh đề đã cắt từ bản gốc (nằm ở public/tower/z01/)
@@ -163,6 +163,27 @@ const Z01 = [
     id: 30, type: 'choice', q: '', img: '/tower/z01/q30.png',
     options: ['Con khỉ', 'Con sư tử'], answer: 'Con sư tử',
     explain: 'Dãy lặp lại: sư tử rồi đến khỉ. Hình cuối cùng là khỉ nên tiếp theo phải là sư tử.',
+  },
+  // --- Bổ sung từ bộ ảnh chụp ngang ---
+  {
+    id: 31, type: 'fill', q: 'Điền số thích hợp: Trên bàn có … quyển sổ.', img: '/tower/z01/q31.png',
+    options: [], answer: '1',
+    explain: 'Trên bàn chỉ có một quyển sổ màu trắng, mấy thứ còn lại là bút và kéo, nên điền số 1.',
+  },
+  {
+    id: 32, type: 'choice', q: 'Bộ phận nào trên cơ thể có số lượng là hai?', img: null,
+    options: ['Sợi tóc', 'Lỗ mũi', 'Đầu', 'Ngón tay'], answer: 'Lỗ mũi',
+    explain: 'Mỗi bạn chỉ có 1 cái đầu, tóc thì rất nhiều sợi, ngón tay có 10, còn mũi có đúng 2 lỗ mũi.',
+  },
+  {
+    id: 33, type: 'choice', q: 'Xe ô tô có mấy bánh xe?', img: '/tower/z01/q33.png',
+    options: ['1 bánh xe', '2 bánh xe', '4 bánh xe', '3 bánh xe'], answer: '4 bánh xe',
+    explain: 'Xe ô tô có 2 bánh phía trước và 2 bánh phía sau, tất cả là 4 bánh xe.',
+  },
+  {
+    id: 34, type: 'fill', q: 'Số ? — điền số còn thiếu vào quả cà chua có dấu hỏi.', img: '/tower/z01/q34.png',
+    options: [], answer: '7',
+    explain: 'Các quả cà chua xếp theo thứ tự từ 1 đến 10. Sau số 6 là số 7, nên dấu ? là 7.',
   },
 ];
 

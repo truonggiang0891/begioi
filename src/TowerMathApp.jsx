@@ -105,7 +105,8 @@ export default function TowerMathApp({ onBack, onExamReward, robuxBalance = 0 })
 
   return (
     <div className="fixed inset-0 z-[60] flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-gradient-to-b from-indigo-950 via-purple-900 to-slate-900">
-      {/* Header */}
+      {/* Header — ẩn khi đang thi để dành chỗ (bài thi có thanh trên riêng) */}
+      {!(stage && questions) && (
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-black/25 px-3 py-2">
         <button
           type="button"
@@ -124,7 +125,7 @@ export default function TowerMathApp({ onBack, onExamReward, robuxBalance = 0 })
             </span>
           )}
           <GameHelp>
-            Mỗi ải là một <b>bài thi {EXAM_MINUTES} câu trong {EXAM_MINUTES} phút</b>.
+            Mỗi ải là một <b>bài thi làm trong {EXAM_MINUTES} phút</b>. Nên <b>xoay ngang điện thoại</b> cho dễ nhìn.
             Phải làm <b>hết bài</b> mới được thưởng: mỗi câu đúng <b>+1 phút xem điện thoại và +2 Robux</b>,
             mỗi câu sai <b>−2,5 phút và −5 Robux</b>.
             Thi xong bé phải xem lại các câu sai kèm lời giải, rồi <b>làm lại mỗi câu sai đúng {DRILL_TIMES} lần</b> thì mới nhận thưởng.
@@ -132,6 +133,7 @@ export default function TowerMathApp({ onBack, onExamReward, robuxBalance = 0 })
           <SoundToggle />
         </div>
       </div>
+      )}
 
       {!stage && <ZoneMap progress={progress} onPick={(zoneIndex, tier) => setStage({ zoneIndex, tier })} />}
 
