@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 420" width="840" height="840">
+<rect width="420" height="420" fill="#fff"/>
+<polygon points="210,80 236,184 340,210 236,236 210,340 184,236 80,210 184,184"
+ fill="#8CC63F" stroke="#5E9022" stroke-width="3"/>
+<circle cx="210" cy="70" r="34" fill="#F5B301" stroke="#B37F00" stroke-width="3"/><text x="210" y="82" font-family="system-ui,Arial" font-size="34" font-weight="700" text-anchor="middle" fill="#3A2A00">5</text><circle cx="70" cy="210" r="34" fill="#F5B301" stroke="#B37F00" stroke-width="3"/><text x="70" y="222" font-family="system-ui,Arial" font-size="34" font-weight="700" text-anchor="middle" fill="#3A2A00">4</text><circle cx="350" cy="210" r="34" fill="#F5B301" stroke="#B37F00" stroke-width="3"/><text x="350" y="222" font-family="system-ui,Arial" font-size="34" font-weight="700" text-anchor="middle" fill="#3A2A00">9</text><circle cx="210" cy="350" r="34" fill="#F5B301" stroke="#B37F00" stroke-width="3"/><text x="210" y="362" font-family="system-ui,Arial" font-size="34" font-weight="700" text-anchor="middle" fill="#3A2A00">?</text>
+<text x="176" y="176" font-family="system-ui,Arial" font-size="30" font-weight="700" text-anchor="middle" fill="#20330A">3</text>
+<text x="248" y="176" font-family="system-ui,Arial" font-size="30" font-weight="700" text-anchor="middle" fill="#20330A">2</text>
+<text x="176" y="258" font-family="system-ui,Arial" font-size="30" font-weight="700" text-anchor="middle" fill="#20330A">1</text>
+<text x="248" y="258" font-family="system-ui,Arial" font-size="30" font-weight="700" text-anchor="middle" fill="#20330A">...</text>
+</svg>

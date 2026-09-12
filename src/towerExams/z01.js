@@ -16,17 +16,17 @@ const Z01 = [
     explain: 'Đếm 19, 20, 21 — số ở giữa là 20. Mà 20 chính là 2 chục.',
   },
   {
-    id: 3, type: 'fill', q: 'Số ?', img: '/tower/z01/q03.webp',
+    id: 3, type: 'fill', q: 'Số ?', img: '/tower/z01/q03.svg',
     options: [], answer: '4',
     explain: '2 ngôi sao cộng thêm 2 ngôi sao là 4 ngôi sao (2 + 2 = 4).',
   },
   {
-    id: 4, type: 'fill', q: 'Điền số thích hợp: Chữ T trong hình gồm … khối lập phương.', img: '/tower/z01/q04.webp',
+    id: 4, type: 'fill', q: 'Điền số thích hợp: Chữ T trong hình gồm … khối lập phương.', img: '/tower/z01/q04.svg',
     options: [], answer: '5',
     explain: 'Chữ T có 3 khối nằm ngang ở trên và 2 khối xếp dọc ở dưới, tất cả là 5 khối lập phương.',
   },
   {
-    id: 5, type: 'fill', q: 'Số ?', img: '/tower/z01/q05.webp',
+    id: 5, type: 'fill', q: 'Số ?', img: '/tower/z01/q05.svg',
     options: [], answer: '9',
     explain: 'Nhìn mẫu: 6 và 3 gộp lại được 9. Tương tự, 2 và 7 gộp lại cũng được 9.',
   },
@@ -51,12 +51,12 @@ const Z01 = [
     explain: 'So sánh độ dài của bốn xe, chiếc xe tải C kéo dài hơn tất cả nên xe C dài nhất.',
   },
   {
-    id: 10, type: 'choice', q: 'Bàn cờ có dạng hình gì?', img: '/tower/z01/q10.webp',
+    id: 10, type: 'choice', q: 'Bàn cờ có dạng hình gì?', img: '/tower/z01/q10.svg',
     options: ['Hình vuông', 'Hình tròn', 'Hình tam giác'], answer: 'Hình vuông',
     explain: 'Bàn cờ có 4 cạnh bằng nhau và 4 góc vuông, đó là hình vuông.',
   },
   {
-    id: 11, type: 'fill', q: 'Số ?', img: '/tower/z01/q11.webp',
+    id: 11, type: 'fill', q: 'Số ?', img: '/tower/z01/q11.svg',
     options: [], answer: '10',
     explain: 'Đếm được 7 cái chai, rồi lấy 7 cộng 3 bằng 10.',
   },
@@ -71,7 +71,7 @@ const Z01 = [
     explain: 'Bé lấy 7 trừ 6 được 1. Thử lại: 7 − 1 = 6, đúng rồi!',
   },
   {
-    id: 14, type: 'choice', q: 'Số cần điền vào dấu hỏi chấm gồm:', img: '/tower/z01/q14.webp',
+    id: 14, type: 'choice', q: 'Số cần điền vào dấu hỏi chấm gồm:', img: '/tower/z01/q14.svg',
     options: ['2 chục 2 đơn vị', '1 chục 4 đơn vị', '1 chục 8 đơn vị', '2 chục 4 đơn vị'],
     answer: '1 chục 8 đơn vị',
     explain: 'Dãy số đếm thêm 2: 10, 12, 14, 16, rồi đến 18. Số 18 gồm 1 chục và 8 đơn vị.',
@@ -129,12 +129,12 @@ const Z01 = [
     explain: 'Dãy hình lặp lại theo nhóm ba: xe trượt tuyết – khăn quàng – bông tuyết. Sau xe trượt tuyết và khăn quàng thì đến lượt bông tuyết.',
   },
   {
-    id: 25, type: 'fill', q: 'Số cần điền vào dấu hỏi chấm là …', img: '/tower/z01/q25.webp',
+    id: 25, type: 'fill', q: 'Số cần điền vào dấu hỏi chấm là …', img: '/tower/z01/q25.svg',
     options: [], answer: '8',
     explain: 'Mỗi số ở đầu cánh bằng tổng hai số bên trong cạnh nó: 3 + 2 = 5, 3 + 1 = 4. Vậy số còn thiếu bên trong là 9 − 2 = 7, nên dấu ? là 1 + 7 = 8.',
   },
   {
-    id: 26, type: 'fill', q: 'Hình trên có … hình tròn.', img: '/tower/z01/q26.webp',
+    id: 26, type: 'fill', q: 'Hình trên có … hình tròn.', img: '/tower/z01/q26.svg',
     options: [], answer: '2',
     explain: 'Chú chim có 2 hình tròn: hình tròn vàng làm mình và hình tròn hồng làm đầu.',
   },
@@ -144,7 +144,7 @@ const Z01 = [
     explain: 'Nam chen vào giữa Vũ (thứ hai) và Hà, nên Nam đứng ngay sau Vũ là thứ ba (Hà lùi xuống thứ tư).',
   },
   {
-    id: 28, type: 'choice', q: 'Biết mỗi hàng, mỗi cột đều có đủ 4 quả trứng khác nhau. Hình cần điền vào ô có dấu hỏi chấm là:', img: '/tower/z01/q28.webp',
+    id: 28, type: 'choice', q: 'Biết mỗi hàng, mỗi cột đều có đủ 4 quả trứng khác nhau. Hình cần điền vào ô có dấu hỏi chấm là:', img: '/tower/z01/q28.svg',
     options: [
       'Trứng vàng cam vằn xanh',
       'Trứng hồng cam kẻ sọc',
@@ -181,7 +181,7 @@ const Z01 = [
     explain: 'Xe ô tô có 2 bánh phía trước và 2 bánh phía sau, tất cả là 4 bánh xe.',
   },
   {
-    id: 34, type: 'fill', q: 'Số ? — điền số còn thiếu vào quả cà chua có dấu hỏi.', img: '/tower/z01/q34.webp',
+    id: 34, type: 'fill', q: 'Số ? — điền số còn thiếu vào quả cà chua có dấu hỏi.', img: '/tower/z01/q34.svg',
     options: [], answer: '7',
     explain: 'Các quả cà chua xếp theo thứ tự từ 1 đến 10. Sau số 6 là số 7, nên dấu ? là 7.',
   },
